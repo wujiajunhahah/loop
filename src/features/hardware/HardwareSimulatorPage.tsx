@@ -78,8 +78,11 @@ export function HardwareBindPage() {
   const [ownerId, setOwnerId] = useState('person-mei')
   const [recipientId, setRecipientId] = useState('person-lin')
   const [message, setMessage] = useState('Waiting for verified binding.')
+  const [binding, setBinding] = useState(false)
+  const [entrusting, setEntrusting] = useState(false)
 
   async function bind() {
+    setBinding(true)
     try {
       await simulatorBridge.bindDevice({
         deviceId,
@@ -89,10 +92,13 @@ export function HardwareBindPage() {
       setMessage(`Verified binding created for ${deviceId}.`)
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Binding failed')
+    } finally {
+      setBinding(false)
     }
   }
 
   async function entrust() {
+    setEntrusting(true)
     try {
       await simulatorBridge.entrustDevice({
         deviceId,
@@ -102,6 +108,8 @@ export function HardwareBindPage() {
       setMessage(`Entrustment verified for recipient ${recipientId}.`)
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Entrustment failed')
+    } finally {
+      setEntrusting(false)
     }
   }
 
@@ -115,7 +123,7 @@ export function HardwareBindPage() {
         <label>Owner identity<input value={ownerId} onChange={(event) => setOwnerId(event.target.value)} /></label>
         <label>Recipient identity<input value={recipientId} onChange={(event) => setRecipientId(event.target.value)} /></label>
       </div>
-      <div className="sim-actions"><button className="button button--secondary" onClick={bind}>Verify and bind</button><button className="button button--primary" onClick={entrust}>Verify and entrust</button></div>
+      <div className="sim-actions"><button className="button button--secondary" onClick={() => void bind()} disabled={binding || entrusting}>{binding ? 'Binding...' : 'Verify and bind'}</button><button className="button button--primary" onClick={() => void entrust()} disabled={binding || entrusting}>{entrusting ? 'Entrusting...' : 'Verify and entrust'}</button></div>
       <p className="sim-notice" role="status">{message}</p>
     </section>
   )
@@ -129,6 +137,7 @@ export function HardwareTriggerPage() {
   const [recipientId, setRecipientId] = useState(binding?.recipientId ?? 'person-lin')
   const [transitions, setTransitions] = useState<EntryEventTransition[]>([])
   const [message, setMessage] = useState('Ready to produce an event.')
+  const [triggering, setTriggering] = useState(false)
 
   useEffect(
     () => simulatorBridge.subscribeLifecycle((transition) => {
@@ -138,16 +147,23 @@ export function HardwareTriggerPage() {
   )
 
   async function trigger() {
-    const result = await simulatorController.triggerAndEnterRecipient({
-      deviceId,
-      recipientId,
-      relationshipId: 'relationship-mei-lin',
-      source,
-      triggerReason,
-      allowFallback: true,
-      payload: { source: 'hardware-simulator' },
-    })
-    setMessage(result.outcome === 'accepted' ? `Verified event consumed (${result.policyOutcome}). Entering recipient flow.` : `Event rejected: ${result.outcome} / ${result.policyOutcome}.`)
+    setTriggering(true)
+    try {
+      const result = await simulatorController.triggerAndEnterRecipient({
+        deviceId,
+        recipientId,
+        relationshipId: 'relationship-mei-lin',
+        source,
+        triggerReason,
+        allowFallback: true,
+        payload: { source: 'hardware-simulator' },
+      })
+      setMessage(result.outcome === 'accepted' ? `Verified event consumed (${result.policyOutcome}). Entering recipient flow.` : `Event rejected: ${result.outcome} / ${result.policyOutcome}.`)
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Trigger failed')
+    } finally {
+      setTriggering(false)
+    }
   }
 
   return (
@@ -159,7 +175,7 @@ export function HardwareTriggerPage() {
         <label>Trigger reason<select value={triggerReason} onChange={(event) => setTriggerReason(event.target.value as TriggerReason)}>{triggerReasons.map((reason) => <option key={reason}>{reason}</option>)}</select></label>
         <label>Device ID<input value={deviceId} onChange={(event) => setDeviceId(event.target.value)} /></label>
         <label>Recipient ID<input value={recipientId} onChange={(event) => setRecipientId(event.target.value)} /></label>
-        <button className="button button--primary" onClick={trigger}>Trigger event</button>
+        <button className="button button--primary" onClick={() => void trigger()} disabled={triggering}>{triggering ? 'Triggering...' : 'Trigger event'}</button>
       </div>
       <p className="sim-notice" role="status">{message}</p>
       <ol className="event-timeline" aria-label="Event lifecycle">

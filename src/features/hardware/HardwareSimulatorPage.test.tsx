@@ -1,5 +1,5 @@
-import { render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, describe, expect, it } from 'vitest'
 import {
   HardwareBindPage,
   HardwareSimulatorPage,
@@ -8,6 +8,8 @@ import {
 } from './HardwareSimulatorPage'
 
 describe('hardware simulator pages', () => {
+  afterEach(() => cleanup())
+
   it('exposes the requested simulator routes and abstract feedback', () => {
     render(<HardwareSimulatorPage />)
 
@@ -45,5 +47,13 @@ describe('hardware simulator pages', () => {
     ])
     expect(screen.getByLabelText('Trigger reason')).toHaveValue('user_opened')
     expect(screen.getByRole('list', { name: 'Event lifecycle' })).toBeInTheDocument()
+  })
+
+  it('marks simulator actions as busy while an async operation is in flight', () => {
+    render(<HardwareBindPage />)
+    fireEvent.click(screen.getByRole('button', { name: 'Verify and bind' }))
+
+    expect(screen.getByRole('button', { name: 'Binding...' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Verify and entrust' })).toBeDisabled()
   })
 })
