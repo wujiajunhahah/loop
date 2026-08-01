@@ -56,6 +56,11 @@ export function RecipientExperience({ data = standaloneRecipientData }: { data?:
   const [presentation, setPresentation] = useState<{ original: RecipientAgentResult; derived?: RecipientAgentResult }>()
   const [artifact, setArtifact] = useState<SourceBackedInteractionArtifact>()
   const [loading, setLoading] = useState(false)
+  const [presentationError, setPresentationError] = useState('')
+  const [artifactError, setArtifactError] = useState('')
+  const [savingArtifact, setSavingArtifact] = useState(false)
+  const [savingResponse, setSavingResponse] = useState(false)
+  const [playbackError, setPlaybackError] = useState('')
   const [playing, setPlaying] = useState(false)
   const [response, setResponse] = useState('')
   const [savedResponse, setSavedResponse] = useState(false)
@@ -67,17 +72,21 @@ export function RecipientExperience({ data = standaloneRecipientData }: { data?:
   }, [data])
 
   useEffect(() => {
-    if (path !== 'memory' || presentation || !interaction) return
+    if (path !== 'memory' || presentation || presentationError || !interaction) return
     let cancelled = false
     setLoading(true)
-    void data.loadPresentation(interaction).then((next) => {
-      if (!cancelled) {
-        setPresentation(next)
-        setLoading(false)
-      }
-    })
+    void data.loadPresentation(interaction)
+      .then((next) => {
+        if (!cancelled) setPresentation(next)
+      })
+      .catch((error: unknown) => {
+        if (!cancelled) setPresentationError(error instanceof Error ? error.message : '内容加载失败，请重试。')
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
     return () => { cancelled = true }
-  }, [data, interaction, path, presentation])
+  }, [data, interaction, path, presentation, presentationError])
 
   const choose = (choice: RecipientChoice, next?: string) => {
     setSession((current) => chooseRecipientAction(current, choice))
@@ -85,31 +94,56 @@ export function RecipientExperience({ data = standaloneRecipientData }: { data?:
   }
 
   const enterMemory = () => {
+    setPresentationError('')
+    setArtifactError('')
+    setPlaybackError('')
     setInteraction(data.createInteraction(session))
     go(`/recipient/memory/${snapshot.context.id}`)
   }
 
   const accept = async () => {
     if (!presentation || !interaction) return
-    const nextArtifact = await data.createArtifact(interaction, presentation.derived ?? presentation.original)
-    setArtifact(nextArtifact)
-    setSession((current) => chooseRecipientAction(current, 'accept'))
-    go('/recipient/complete')
+    setSavingArtifact(true)
+    setArtifactError('')
+    try {
+      const nextArtifact = await data.createArtifact(interaction, presentation.derived ?? presentation.original)
+      setArtifact(nextArtifact)
+      setSession((current) => chooseRecipientAction(current, 'accept'))
+      go('/recipient/complete')
+    } catch (error) {
+      setArtifactError(error instanceof Error ? error.message : '明信片保存失败，请重试。')
+    } finally {
+      setSavingArtifact(false)
+    }
   }
 
   const playOriginal = async () => {
     setPlaying(true)
-    await playbackService.play({ kind: 'original', modality: snapshot.asset.modality, uri: snapshot.asset.uri, capturedAt: snapshot.asset.capturedAt })
-    setPlaying(false)
+    setPlaybackError('')
+    try {
+      await playbackService.play({ kind: 'original', modality: snapshot.asset.modality, uri: snapshot.asset.uri, capturedAt: snapshot.asset.capturedAt })
+    } catch (error) {
+      setPlaybackError(error instanceof Error ? error.message : '原始内容播放失败，请重试。')
+    } finally {
+      setPlaying(false)
+    }
   }
 
   const saveResponse = async (event: FormEvent) => {
     event.preventDefault()
     if (!response.trim() || !interaction || !presentation) return
-    const nextArtifact = await data.createArtifact(interaction, presentation.derived ?? presentation.original, response)
-    setArtifact(nextArtifact)
-    setSavedResponse(true)
-    setResponse('')
+    setSavingResponse(true)
+    setArtifactError('')
+    try {
+      const nextArtifact = await data.createArtifact(interaction, presentation.derived ?? presentation.original, response)
+      setArtifact(nextArtifact)
+      setSavedResponse(true)
+      setResponse('')
+    } catch (error) {
+      setArtifactError(error instanceof Error ? error.message : '回应保存失败，请重试。')
+    } finally {
+      setSavingResponse(false)
+    }
   }
 
   const restart = () => {
@@ -131,11 +165,12 @@ export function RecipientExperience({ data = standaloneRecipientData }: { data?:
 
   if (path === 'memory') {
     if (!interaction) return <section className="recipient-shell"><p className="eyebrow">Recipient request · restart required</p><h1>这次查看需要重新确认。</h1><p className="recipient-lead">页面刷新后不会恢复接收者授权状态。请从入口重新主动进入，系统不会绕过身份确认。</p><button className="button button--primary" onClick={restart}>回到接收者入口</button></section>
+    if (presentationError) return <section className="recipient-shell"><p className="eyebrow">Recipient request · recovery</p><h1>内容暂时无法打开。</h1><p className="recipient-lead">Agent 没有返回可验证内容，当前互动仍未完成。</p><div className="form-errors" role="alert">{presentationError}</div><button className="button button--primary" onClick={() => { setPresentationError(''); setLoading(true) }}>重试加载</button><button className="text-button" onClick={() => choose('close', '/')}>关闭</button></section>
     if (loading || !presentation) return <section className="recipient-shell"><p className="eyebrow">Recipient request · source-backed</p><h1>正在准备留给你的内容。</h1><p className="recipient-lead">只整理已授权来源，不会替 Mei 生成新的事实、决定或自由对话。</p></section>
-    return <section className="recipient-shell"><p className="eyebrow">Source-backed interaction</p><h1>{snapshot.context.topic}</h1><p className="recipient-lead">来源、生成模式和 AI 状态都可以在下方检查。</p><div className="provenance-grid"><article><span className="tag tag--original">Original source</span><h2>{snapshot.asset.modality === 'audio' ? '真实留下的声音' : '真实留下的原始内容'}</h2><p>原始素材保持不变。你准备好后，再主动查看或播放。</p>{inlineOriginal && <blockquote className="original-content">{inlineOriginal}</blockquote>}<button className="button button--secondary" onClick={() => void playOriginal()} disabled={playing}>{playing ? '正在播放原声' : snapshot.asset.modality === 'audio' ? '播放原声' : '查看原始内容'} <span aria-hidden="true">▶</span></button><Provenance result={presentation.original} /></article>{presentation.derived && <article><span className="tag tag--organized">AI-generated</span><h2>{presentation.derived.content}</h2><p>这是基于已授权 Context 的整理内容，不是 {snapshot.recipient.subjectName} 的原话。</p><Provenance result={presentation.derived} /></article>}</div><div className="recipient-actions"><button className="button button--primary" onClick={() => void accept()}>接受并保存明信片 <span aria-hidden="true">→</span></button><button className="button button--secondary" onClick={() => choose('postpone', '/')}>稍后查看</button><button className="text-button" onClick={() => choose('skip', '/')}>跳过</button><button className="text-button" onClick={() => choose('close', '/')}>关闭</button></div></section>
+    return <section className="recipient-shell"><p className="eyebrow">Source-backed interaction</p><h1>{snapshot.context.topic}</h1><p className="recipient-lead">来源、生成模式和 AI 状态都可以在下方检查。</p>{artifactError && <div className="form-errors" role="alert">{artifactError}</div>}{playbackError && <div className="form-errors" role="alert">{playbackError}</div>}<div className="provenance-grid"><article><span className="tag tag--original">Original source</span><h2>{snapshot.asset.modality === 'audio' ? '真实留下的声音' : '真实留下的原始内容'}</h2><p>原始素材保持不变。你准备好后，再主动查看或播放。</p>{inlineOriginal && <blockquote className="original-content">{inlineOriginal}</blockquote>}<button className="button button--secondary" onClick={() => void playOriginal()} disabled={playing}>{playing ? '正在播放原声' : snapshot.asset.modality === 'audio' ? '播放原声' : '查看原始内容'} <span aria-hidden="true">▶</span></button><Provenance result={presentation.original} /></article>{presentation.derived && <article><span className="tag tag--organized">AI-generated</span><h2>{presentation.derived.content}</h2><p>这是基于已授权 Context 的整理内容，不是 {snapshot.recipient.subjectName} 的原话。</p><Provenance result={presentation.derived} /></article>}</div><div className="recipient-actions"><button className="button button--primary" onClick={() => void accept()} disabled={savingArtifact}>{savingArtifact ? '明信片保存中...' : '接受并保存明信片'} <span aria-hidden="true">→</span></button><button className="button button--secondary" onClick={() => choose('postpone', '/')}>稍后查看</button><button className="text-button" onClick={() => choose('skip', '/')}>跳过</button><button className="text-button" onClick={() => choose('close', '/')}>关闭</button></div></section>
   }
 
   if (!artifact) return <section className="recipient-shell"><p className="eyebrow">InteractionArtifact · restart required</p><h1>这次明信片尚未生成。</h1><p className="recipient-lead">页面刷新后不会伪造已完成的互动。请重新主动进入并选择保存明信片。</p><button className="button button--primary" onClick={restart}>回到接收者入口</button></section>
 
-  return <section className="recipient-shell"><p className="eyebrow">InteractionArtifact · postcard</p><h1>这张远行明信片已经为你留存。</h1><p className="recipient-lead">它只记录这次接收者主动进入的结果，不会自动回写为 {snapshot.recipient.subjectName} 的内容。</p><div className="completion-grid"><div className="completion-number">01</div><div><span className="tag tag--organized">{artifact.generationLabel}</span><h2>{artifact.generatedSummary}</h2><p>Artifact ID · {artifact.id}<br />来源 Context ID · {artifact.sourceContextIds.join(', ')}</p></div></div><form className="response-form" onSubmit={(event) => void saveResponse(event)}><label htmlFor="recipient-response">留下一个接收者回应</label><textarea id="recipient-response" value={response} onChange={(event) => setResponse(event.target.value)} placeholder="今天想记下什么？" rows={4} /><button className="button button--primary" type="submit">保存回应 <span aria-hidden="true">↗</span></button>{savedResponse && <p className="form-note" role="status">已保存为 recipient-authored response。</p>}</form><button className="text-button" onClick={restart}>回到入口</button></section>
+  return <section className="recipient-shell"><p className="eyebrow">InteractionArtifact · postcard</p><h1>这张远行明信片已经为你留存。</h1><p className="recipient-lead">它只记录这次接收者主动进入的结果，不会自动回写为 {snapshot.recipient.subjectName} 的内容。</p>{artifactError && <div className="form-errors" role="alert">{artifactError}</div>}<div className="completion-grid"><div className="completion-number">01</div><div><span className="tag tag--organized">{artifact.generationLabel}</span><h2>{artifact.generatedSummary}</h2><p>Artifact ID · {artifact.id}<br />来源 Context ID · {artifact.sourceContextIds.join(', ')}</p></div></div><form className="response-form" onSubmit={(event) => void saveResponse(event)}><label htmlFor="recipient-response">留下一个接收者回应</label><textarea id="recipient-response" value={response} onChange={(event) => setResponse(event.target.value)} placeholder="今天想记下什么？" rows={4} /><button className="button button--primary" type="submit" disabled={savingResponse}>{savingResponse ? '回应保存中...' : '保存回应'} <span aria-hidden="true">↗</span></button>{savedResponse && <p className="form-note" role="status">已保存为 recipient-authored response。</p>}</form><button className="text-button" onClick={restart}>回到入口</button></section>
 }
