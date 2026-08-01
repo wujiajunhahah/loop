@@ -30,10 +30,10 @@ write claims / reports in this canonical root.
 
 - `origin/main` points to `4df8023` (`docs: polish hackathon demo readme`).
 - Current branch: `agent/loop-v2-integration`.
-- Current HEAD and `origin/agent/loop-v2-integration` point to `fc6394f`
-  (`fix: recover capture relationship loading`).
+- Current HEAD and `origin/agent/loop-v2-integration` point to `2f42ff2`
+  (`fix: guard hardware simulator async actions`).
 - The current working tree is clean.
-- Verification on the current integrated branch: 15 test files / 84 tests
+- Verification on the current integrated branch: 15 test files / 85 tests
   passed, typecheck passed, production build passed, and `git diff --check`
   passed.
 - `npm test -- --run` can occasionally spend longer starting parallel Vitest
