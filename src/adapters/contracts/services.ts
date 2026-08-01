@@ -6,7 +6,49 @@ import type {
   Memory,
   OriginalContent,
   Relationship,
+  ContextItem,
+  EntryEvent,
+  GenerationPolicy,
+  Interaction,
+  InteractionArtifact,
+  OriginalAsset,
+  TriggerPolicy,
 } from '../../domain'
+
+export interface CaptureContextInput {
+  context: ContextItem
+  originalAsset: OriginalAsset
+}
+
+export interface ContextCapturePort {
+  capture(input: CaptureContextInput): Promise<ContextItem>
+}
+
+export interface RelationshipContextPort {
+  getRelationship(id: string): Promise<Relationship | undefined>
+  getContextForRecipient(
+    relationshipId: string,
+    recipientId: string,
+  ): Promise<readonly ContextItem[]>
+  getGenerationPolicy(relationshipId: string): Promise<GenerationPolicy | undefined>
+  getTriggerPolicy(relationshipId: string): Promise<TriggerPolicy | undefined>
+}
+
+export interface InteractionPort {
+  run(interaction: Interaction): Promise<Interaction>
+}
+
+export interface InteractionArtifactPort {
+  save(artifact: InteractionArtifact): Promise<void>
+  get(id: string): Promise<InteractionArtifact | undefined>
+}
+
+export type EntryEventListener = (event: EntryEvent) => void
+
+export interface EntryEventPort {
+  subscribe(listener: EntryEventListener): () => void
+  publish(event: EntryEvent): Promise<void>
+}
 
 export interface CaptureMemoryInput {
   ownerId: string

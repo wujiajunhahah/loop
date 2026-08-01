@@ -5,13 +5,31 @@ export interface Person {
   displayName: string
 }
 
-export interface Relationship {
+export interface V2Relationship {
+  contractVersion: 2
+  id: EntityId
+  subjectId: EntityId
+  /** @deprecated Use subjectId. Retained while the offline demo migrates. */
+  ownerId: EntityId
+  recorderIds: readonly EntityId[]
+  recipientId: EntityId
+  buyerId?: EntityId
+  label: string
+  kind: 'parent_child' | 'partners' | 'friends' | 'grandparent_descendant' | 'other'
+  status: 'draft' | 'active' | 'entrusted' | 'closed'
+}
+
+/** @deprecated V1 fixture projection. New code must create a V2Relationship. */
+export interface LegacyRelationship {
+  contractVersion?: 1
   id: EntityId
   ownerId: EntityId
   recipientId: EntityId
   label: string
   status: 'draft' | 'active' | 'entrusted' | 'closed'
 }
+
+export type Relationship = V2Relationship | LegacyRelationship
 
 export type MemoryVisibility =
   | 'public_persona'

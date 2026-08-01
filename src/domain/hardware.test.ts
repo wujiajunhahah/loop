@@ -1,8 +1,21 @@
 import { describe, expect, it, vi } from 'vitest'
 import { MockHardwareBridge } from '../data/mockServices'
-import { createHardwareEvent } from './hardware'
+import { createEntryEvent, createHardwareEvent } from './hardware'
 
 describe('hardware events', () => {
+  it('uses one entry shape for software and interchangeable physical sources', () => {
+    const event = createEntryEvent({
+      id: 'entry-1',
+      source: 'software',
+      type: 'open',
+      recipientId: 'recipient-a',
+      occurredAt: '2026-08-01T00:00:00.000Z',
+    })
+
+    expect(event).toMatchObject({ source: 'software', type: 'open', payload: {} })
+    expect(event).not.toHaveProperty('deviceId')
+  })
+
   it('represents a generic bridge event without device-specific fields', () => {
     const event = createHardwareEvent({
       id: 'event-1',
