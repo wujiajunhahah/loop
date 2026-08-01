@@ -29,3 +29,36 @@
 - 测试结果：聚焦测试 2 files / 8 tests passed；完整测试首次因 Vitest worker pool 启动超时未完成，verbose 诊断显示 4 个 worker timeout，遗漏的 4 个测试文件以单 worker 运行 37/37 通过；最后一次 `npm test -- --run` 15 files / 81 tests passed；`npm run typecheck` passed。
 - 剩余风险：刷新仍会丢失离线内存草稿，这是已知 MVP 限制；没有引入持久化来扩大范围。
 - 下一轮计划：完成 build、diff 检查并提交；随后只做一次整体状态审查，若没有新的可验证 P0/P1 缺陷则停止迭代。
+
+## Round 4 · 03:17
+
+- 时间：2026-08-02 03:17
+- 问题证据：Recipient 的 `loadPresentation`、`createArtifact` 和原始内容播放调用没有 `catch` 或错误 UI；失败时可能永久 loading、静默停留在错误状态，或让演示者重复点击并产生未处理 Promise。
+- 修改文件：`src/features/recipient/RecipientExperience.tsx`、`src/features/recipient/RecipientExperience.test.tsx`。
+- 测试结果：聚焦测试 2 files / 8 tests passed；`npm test -- --run` 15 files / 83 tests passed；`npm run typecheck` passed；`npm run build` passed；`git diff --check` passed。
+- commit：`be6b349 fix: recover recipient async failures`
+- push 结果：已推送 `origin/agent/loop-v2-integration`，`4df8023..be6b349`。
+- 剩余风险：Capture 的 `listRelationships()` 仍缺少错误 UI；硬件 trigger 仍需补异步失败状态；完整并发 Vitest 偶发 worker 启动慢，但单 worker 和本轮完整测试均通过。
+- 下一轮计划：修复 Capture 关系目录加载失败的静默状态，并同步 `.loop/STATUS.md` 的实际基线。
+
+## Round 5 · 03:20
+
+- 时间：2026-08-02 03:20
+- 问题证据：`CaptureFlow` 的 `listRelationships()` 只有 success handler，没有 error handler；目录失败时页面显示空选择器，无法区分加载失败和暂无关系，也不能恢复。
+- 修改文件：`src/features/capture/CaptureFlow.tsx`、`src/features/capture/CaptureFlow.test.tsx`。
+- 测试结果：聚焦测试 2 files / 9 tests passed；`npm test -- --run` 15 files / 84 tests passed；`npm run typecheck` passed；`npm run build` passed；`git diff --check` passed。
+- commit：`fc6394f fix: recover capture relationship loading`
+- push 结果：已推送 `origin/agent/loop-v2-integration`，`be6b349..fc6394f`。
+- 剩余风险：Hardware trigger 页面仍缺少自己的 async error / busy 状态；旧版 standalone service 仍保留为 Recipient 单元测试 fixture。
+- 下一轮计划：修正 `.loop/STATUS.md` 的分支、HEAD、远端和测试基线，避免后续协作依据过时事实。
+
+## Round 6 · 03:22
+
+- 时间：2026-08-02 03:22
+- 问题证据：`.loop/STATUS.md` 仍记录 `ecf6ffc`、11 个测试文件 / 45 个测试和 TASK-009 尚未开始，与当前 `agent/loop-v2-integration`、`origin/main`、`origin/agent/loop-v2-integration` 和实际 15/84 验证结果不一致。
+- 修改文件：`.loop/STATUS.md`。
+- 测试结果：文档修改后 `npm test -- --run` 15 files / 84 tests passed；`npm run typecheck` passed；`npm run build` passed；`git diff --check` passed。
+- commit：`9209c3c docs: refresh integration status baseline`
+- push 结果：已推送 `origin/agent/loop-v2-integration`，`fc6394f..9209c3c`。
+- 剩余风险：`origin/main` 仍是已发布的 `4df8023`，当前质量迭代只推送 feature 分支；并发 Vitest worker 偶发启动慢已记录为环境风险。
+- 下一轮计划：检查 Hardware trigger 的异步失败和重复点击路径；若没有新的可验证 P0/P1 问题则停止。
