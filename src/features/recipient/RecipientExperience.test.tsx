@@ -46,4 +46,16 @@ describe('recipient experience demo', () => {
     fireEvent.click(screen.getByRole('button', { name: /保存回应/ }))
     await screen.findByText('已保存为 recipient-authored response。')
   })
+
+  it.each([
+    ['/recipient/memory/context-tomato-eggs', '这次查看需要重新确认。'],
+    ['/recipient/complete', '这次明信片尚未生成。'],
+  ])('recovers an in-memory route after refresh: %s', (route, message) => {
+    window.location.hash = route
+    render(<RecipientExperience />)
+
+    expect(screen.getByRole('heading', { name: message })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: '回到接收者入口' }))
+    expect(window.location.hash).toBe('#/recipient')
+  })
 })
