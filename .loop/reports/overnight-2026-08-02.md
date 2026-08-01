@@ -84,3 +84,10 @@
 - push 结果：两次普通 push 均因 GitHub 网络不可用失败：第一次 `Recv failure: Connection was reset`，第二次无法连接 `github.com:443`。未 force push，未继续重试。
 - 剩余风险：`origin/agent/loop-v2-integration` 最后确认仍为 `2f42ff2`；本地 `4c49eb3` 尚未推送。报告本身将在本地追加提交后保持可追溯。
 - 下一轮计划：停止代码迭代；网络恢复后只需推送当前 feature 分支的未发布提交，不需要重新运行或改写历史。
+
+## Final verification · 03:31
+
+- 运行证据：本地 `npm run dev -- --host 127.0.0.1` 启动成功；`http://127.0.0.1:5173/` 和 `http://127.0.0.1:5173/#/recipient` 均返回 HTTP 200。
+- 浏览器证据：本机 Edge headless 渲染 `#/recipient` 成功，DOM 包含 `pull_only`、`The rainy walk home` 和“主动进入”入口。
+- 限定说明：没有进行截图级响应式布局验收；此前环境缺少可用浏览器，本次只完成无头路由/首屏 smoke check。
+- push 结果：最终本地文档提交仍未推送；最近一次 push 两次网络失败已记录在 Round 8，未继续重试。
