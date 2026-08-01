@@ -175,6 +175,11 @@ export function CaptureFlow({
   }
 
   const save = async () => {
+    const draftErrors = validateDraft()
+    if (draftErrors.length) {
+      setErrors(draftErrors)
+      return
+    }
     if (!selected) {
       setErrors(['关系资料尚未载入，请返回重新选择。'])
       return
@@ -269,6 +274,16 @@ export function CaptureFlow({
   }
 
   if (route === '/capture/success') {
+    if (!savedId) {
+      return (
+        <section className="capture-success">
+          <p className="eyebrow">Context result · restart required</p>
+          <h1>没有可恢复的保存结果。</h1>
+          <p className="page-header__description">离线 Demo 刷新后不会伪造已保存状态。请重新录入并完成所有者审核。</p>
+          <a className="button button--primary" href="#/capture/new">重新录入 Context</a>
+        </section>
+      )
+    }
     return (
       <section className="capture-success">
         <p className="eyebrow">Context saved</p>
@@ -286,6 +301,17 @@ export function CaptureFlow({
   }
 
   if (route === '/capture/review') {
+    const draftErrors = validateDraft()
+    if (draftErrors.length) {
+      return (
+        <section className="capture-success">
+          <p className="eyebrow">Owner review · restart required</p>
+          <h1>记录草稿需要重新开始。</h1>
+          <p className="page-header__description">页面刷新后，未保存草稿不会被恢复或当作已审核内容。请返回编辑器重新填写。</p>
+          <a className="button button--primary" href="#/capture/new">返回 Context 编辑器</a>
+        </section>
+      )
+    }
     return (
       <div className="capture-page">
         <header className="page-header">
