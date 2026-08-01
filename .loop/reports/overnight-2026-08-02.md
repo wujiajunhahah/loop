@@ -62,3 +62,25 @@
 - push 结果：已推送 `origin/agent/loop-v2-integration`，`fc6394f..9209c3c`。
 - 剩余风险：`origin/main` 仍是已发布的 `4df8023`，当前质量迭代只推送 feature 分支；并发 Vitest worker 偶发启动慢已记录为环境风险。
 - 下一轮计划：检查 Hardware trigger 的异步失败和重复点击路径；若没有新的可验证 P0/P1 问题则停止。
+
+## Round 7 · 03:26
+
+- 时间：2026-08-02 03:26
+- 问题证据：`HardwareTriggerPage.trigger()` 没有捕获 controller Promise，也没有 busy 锁；Bind / Entrust 同样允许重复点击。原有硬件页面测试还缺少 `cleanup()`，多个 render 会污染 DOM。
+- 修改文件：`src/features/hardware/HardwareSimulatorPage.tsx`、`src/features/hardware/HardwareSimulatorPage.test.tsx`。
+- 测试结果：聚焦测试 1 file / 4 tests passed；`npm test -- --run` 15 files / 85 tests passed；`npm run typecheck` passed；`npm run build` passed；`git diff --check` passed。
+- commit：`2f42ff2 fix: guard hardware simulator async actions`
+- push 结果：已推送 `origin/agent/loop-v2-integration`，`8051354..2f42ff2`。
+- 剩余风险：状态文档中的 HEAD 和测试数量需要随本轮提交同步；真实浏览器和真实媒体仍未验证。
+- 下一轮计划：同步 `.loop/STATUS.md` 的最终当前 HEAD 和 15/85 基线；若没有新的可验证问题则停止。
+
+## Round 8 · 03:28
+
+- 时间：2026-08-02 03:28
+- 问题证据：本轮提交硬件修复后，`.loop/STATUS.md` 的当前 HEAD 和测试数量再次落后一轮；协作状态必须反映 `2f42ff2` 和 15/85。
+- 修改文件：`.loop/STATUS.md`。
+- 测试结果：`npm test -- --run` 15 files / 85 tests passed；`npm run typecheck` passed；`npm run build` passed；`git diff --check` passed。
+- commit：`4c49eb3 docs: sync final quality baseline`
+- push 结果：两次普通 push 均因 GitHub 网络不可用失败：第一次 `Recv failure: Connection was reset`，第二次无法连接 `github.com:443`。未 force push，未继续重试。
+- 剩余风险：`origin/agent/loop-v2-integration` 最后确认仍为 `2f42ff2`；本地 `4c49eb3` 尚未推送。报告本身将在本地追加提交后保持可追溯。
+- 下一轮计划：停止代码迭代；网络恢复后只需推送当前 feature 分支的未发布提交，不需要重新运行或改写历史。
