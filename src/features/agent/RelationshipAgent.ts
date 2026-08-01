@@ -31,8 +31,14 @@ export class RelationshipAgent implements RelationshipAgentPort {
     }
 
     const selected =
-      context.sections.relationship_specific[0] ??
-      context.sections.public_persona[0]
+      context.sections.relationship_specific.at(-1) ??
+      context.sections.public_persona.at(-1)
+    if (!selected) {
+      throw new AgentError(
+        'INSUFFICIENT_CONTEXT',
+        `No presentable content is available for relationship ${input.relationshipId}.`,
+      )
+    }
     const content = this.present(selected)
     const planned = this.plannedInteractions.inviteNext(
       input.relationshipId,

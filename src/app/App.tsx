@@ -3,6 +3,7 @@ import { CapturePage } from './pages/CapturePage'
 import { HardwarePage } from './pages/HardwarePage'
 import { HomePage } from './pages/HomePage'
 import { RecipientPage } from './pages/RecipientPage'
+import { HardwareBindPage, HardwareSimulatorPage, HardwareTriggerPage, hardwareSimulatorRoutes } from '../features/hardware/HardwareSimulatorPage'
 
 const pages = {
   '/': HomePage,
@@ -12,6 +13,9 @@ const pages = {
   '/capture/success': CapturePage,
   '/recipient': RecipientPage,
   '/hardware': HardwarePage,
+  [hardwareSimulatorRoutes.overview]: HardwareSimulatorPage,
+  [hardwareSimulatorRoutes.bind]: HardwareBindPage,
+  [hardwareSimulatorRoutes.trigger]: HardwareTriggerPage,
 } as const
 
 function subscribeToHash(onChange: () => void) {
@@ -53,7 +57,7 @@ export function App() {
       <main>
         <Page />
       </main>
-      <footer>Loop MVP foundation / local mock mode</footer>
+      <footer>Loop MVP / offline mock mode / recipient remains in control</footer>
     </div>
   )
 }

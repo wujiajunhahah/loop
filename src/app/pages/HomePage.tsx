@@ -22,9 +22,9 @@ export function HomePage() {
   return (
     <>
       <PageHeader
-        eyebrow="Loop foundation"
-        title="A relationship can keep its context."
-        description="The software foundation keeps original memories, permissions, recipient choice, and physical triggers separate and inspectable."
+        eyebrow="Loop offline demo"
+        title="让真实的关系，继续抵达。"
+        description="记录者留下真实内容并设定边界，接收者主动打开，Relationship Agent 只在授权范围内整理，戒指把这次进入变成可验证的实体入口。"
       />
 
       <div className="entry-grid">
@@ -41,8 +41,7 @@ export function HomePage() {
       </div>
 
       <StatusPanel title="Offline demo foundation" state="ready">
-        Seed data and in-memory adapters are active. No hardware, backend, or API
-        key is required.
+        可在无网络、无 API、无真实硬件时完成“记录、托付、触发、验证、呈现、继续计划、留下回应”的完整 Demo。
       </StatusPanel>
     </>
   )

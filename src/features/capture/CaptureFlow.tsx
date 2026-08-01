@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { AgentPolicy, MemoryModality, Relationship } from '../../domain'
-import { contextCaptureService, relationshipStore } from '../../data/services'
+import { contextCaptureService, demoPlans, demoPolicies, relationshipStore } from '../../data/services'
 
 type CaptureKind = 'memory' | 'blessing' | 'plan' | 'original-only' | 'ai-organized'
 type InputMode = 'text' | 'audio' | 'image'
@@ -104,6 +104,29 @@ export function CaptureFlow({ route }: { route: string }) {
         capturedAt: new Date().toISOString(),
       },
     })
+    const policy = demoPolicies.find((item) => item.relationshipId === relationship?.id)
+    if (policy) {
+      policy.allowAiOrganization = draft.allowAiOrganization
+      policy.allowParaphrase = draft.allowAiOrganization
+      if (!policy.allowedMemoryIds.includes(memory.id)) policy.allowedMemoryIds.push(memory.id)
+    }
+    if (draft.allowAiOrganization) {
+      memory.organized = {
+        kind: 'ai_organized',
+        text: `整理入口：${draft.topic.trim()}。${draft.meaning.trim()}`,
+        sourceMemoryIds: [memory.id],
+        reviewedByOwner: true,
+      }
+    }
+    if (draft.kind === 'plan' && draft.planTitle.trim() && relationship) {
+      const plan = demoPlans.find((item) => item.relationshipId === relationship.id)
+      if (plan) {
+        plan.title = draft.planTitle.trim()
+        plan.invitation = draft.planInvitation.trim() || '等你准备好时，和我一起继续这项计划。'
+        plan.memoryIds = [memory.id]
+        plan.status = 'available'
+      }
+    }
     setSavedId(memory.id)
     setSaving(false)
     window.location.hash = '#/capture/success'

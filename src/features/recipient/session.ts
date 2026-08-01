@@ -17,7 +17,7 @@ export const demoPlan = {
 
 export function createRecipientSession(): RecipientSession {
   return {
-    id: 'recipient-session-demo',
+    id: 'session-demo',
     relationshipId: demoRecipient.relationshipId,
     recipientId: demoRecipient.id,
     initiatedByRecipient: true,

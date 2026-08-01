@@ -13,6 +13,7 @@ export function HardwarePage() {
         Mark, touch, wear, confirm, and dismiss events can be emitted without a
         physical device.
       </StatusPanel>
+      <ButtonLink to="/hardware-simulator" tone="primary">Open simulator</ButtonLink>
     </>
   )
 }
