@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { MockHardwareBridge } from './MockHardwareBridge'
-import { hardwareEventTypes, type VerificationProof } from './types'
+import { triggerSources, type VerificationProof } from './types'
 
 const ownerProof: VerificationProof = {
   identityId: 'owner-a',
@@ -37,31 +37,35 @@ describe('MockHardwareBridge', () => {
     await prepareBridge(bridge)
   })
 
-  it('standardizes every supported source as the same verified event shape', async () => {
+  it('publishes every supported source as the same verified EntryEvent shape', async () => {
     const listener = vi.fn()
     bridge.subscribe(listener)
 
-    for (const eventType of hardwareEventTypes) {
+    for (const source of triggerSources) {
       const result = await bridge.trigger({
         deviceId: 'device-a',
         recipientId: 'recipient-a',
-        eventType,
-        payload: { sequence: eventType },
+        relationshipId: 'relationship-a',
+        source,
+        payload: { sequence: source },
       })
 
+      expect(result.verificationStatus).toBe('verified')
       expect(result.event).toEqual({
-        eventId: expect.any(String),
-        deviceId: 'device-a',
-        deviceType: 'keepsake-token',
+        id: expect.any(String),
+        source:
+          source === 'nfc' || source === 'ble' || source === 'software'
+            ? source
+            : 'device',
+        type: 'open',
         recipientId: 'recipient-a',
-        eventType,
+        relationshipId: 'relationship-a',
         occurredAt: '2026-08-01T09:00:00.000Z',
-        verificationStatus: 'verified',
-        payload: { sequence: eventType },
+        payload: { sequence: source },
       })
     }
 
-    expect(listener).toHaveBeenCalledTimes(hardwareEventTypes.length)
+    expect(listener).toHaveBeenCalledTimes(triggerSources.length)
   })
 
   it('rejects invalid recipient identity before publishing to consumers', async () => {
@@ -72,11 +76,11 @@ describe('MockHardwareBridge', () => {
       eventId: 'invalid-recipient-event',
       deviceId: 'device-a',
       recipientId: 'recipient-b',
-      eventType: 'nfc',
+      source: 'nfc',
     })
 
     expect(result.outcome).toBe('invalid_identity')
-    expect(result.event.verificationStatus).toBe('rejected')
+    expect(result.verificationStatus).toBe('rejected')
     expect(listener).not.toHaveBeenCalled()
     expect(bridge.getFeedback()).toEqual({
       led: 'error',
@@ -92,7 +96,7 @@ describe('MockHardwareBridge', () => {
       eventId: 'same-event',
       deviceId: 'device-a',
       recipientId: 'recipient-a',
-      eventType: 'tap' as const,
+      source: 'tap' as const,
     }
 
     expect((await bridge.trigger(input)).outcome).toBe('accepted')
@@ -114,31 +118,51 @@ describe('MockHardwareBridge', () => {
     const result = await unbound.trigger({
       deviceId: 'device-b',
       recipientId: 'recipient-a',
-      eventType: 'ble',
+      source: 'ble',
     })
     expect(result.outcome).toBe('unbound_device')
   })
 
-  it('converts unavailable physical input to a traceable simulated event', async () => {
+  it('converts unavailable physical input to a traceable software event', async () => {
     bridge.setAvailable(false, 'Demo device disconnected')
 
     const result = await bridge.trigger({
       deviceId: 'device-a',
       recipientId: 'recipient-a',
-      eventType: 'gesture',
+      source: 'gesture',
       payload: { direction: 'forward' },
       allowFallback: true,
     })
 
-    expect(result).toMatchObject({ outcome: 'accepted', fallbackUsed: true })
+    expect(result).toMatchObject({
+      outcome: 'accepted',
+      triggerSource: 'software',
+      fallbackUsed: true,
+    })
     expect(result.event).toMatchObject({
-      eventType: 'simulated',
-      verificationStatus: 'verified',
+      source: 'software',
       payload: {
         direction: 'forward',
-        originalEventType: 'gesture',
+        originalSource: 'gesture',
         fallback: true,
       },
+    })
+  })
+
+  it('rejects unavailable hardware when software fallback is disabled', async () => {
+    bridge.setAvailable(false)
+
+    const result = await bridge.trigger({
+      deviceId: 'device-a',
+      recipientId: 'recipient-a',
+      source: 'touch',
+      allowFallback: false,
+    })
+
+    expect(result).toMatchObject({
+      outcome: 'unavailable_hardware',
+      verificationStatus: 'rejected',
+      fallbackUsed: false,
     })
   })
 })

@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import type {
-  HardwareEventTransition,
-  HardwareEventType,
+  EntryEventTransition,
+  TriggerSource,
 } from '../../adapters/hardware'
-import { hardwareEventTypes } from '../../adapters/hardware'
+import { triggerSources } from '../../adapters/hardware'
+import type { TriggerReason } from '../../domain'
 import { simulatorBridge, simulatorController } from './simulatorStore'
+import { triggerReasons } from './triggerPolicy'
 import './hardwareSimulator.css'
 
 export const hardwareSimulatorRoutes = {
@@ -61,7 +63,7 @@ export function HardwareSimulatorPage() {
         <article>
           <span className="sim-number">02</span>
           <h2>Standard event</h2>
-          <p>All physical and software sources produce the same HardwareEvent shape.</p>
+          <p>All physical and software sources produce the same EntryEvent shape.</p>
           <a className="button button--primary" href={`#${hardwareSimulatorRoutes.trigger}`}>Open trigger lab</a>
         </article>
       </div>
@@ -121,10 +123,11 @@ export function HardwareBindPage() {
 
 export function HardwareTriggerPage() {
   const binding = simulatorBridge.getBindings().find((item) => item.recipientId)
-  const [eventType, setEventType] = useState<HardwareEventType>('touch')
+  const [source, setSource] = useState<TriggerSource>('touch')
+  const [triggerReason, setTriggerReason] = useState<TriggerReason>('user_opened')
   const [deviceId, setDeviceId] = useState(binding?.deviceId ?? 'loop-demo-device')
   const [recipientId, setRecipientId] = useState(binding?.recipientId ?? 'person-lin')
-  const [transitions, setTransitions] = useState<HardwareEventTransition[]>([])
+  const [transitions, setTransitions] = useState<EntryEventTransition[]>([])
   const [message, setMessage] = useState('Ready to produce an event.')
 
   useEffect(
@@ -138,11 +141,13 @@ export function HardwareTriggerPage() {
     const result = await simulatorController.triggerAndEnterRecipient({
       deviceId,
       recipientId,
-      eventType,
+      relationshipId: 'relationship-mei-lin',
+      source,
+      triggerReason,
       allowFallback: true,
       payload: { source: 'hardware-simulator' },
     })
-    setMessage(result.outcome === 'accepted' ? 'Verified event consumed. Entering recipient flow.' : `Event rejected: ${result.outcome}.`)
+    setMessage(result.outcome === 'accepted' ? `Verified event consumed (${result.policyOutcome}). Entering recipient flow.` : `Event rejected: ${result.outcome} / ${result.policyOutcome}.`)
   }
 
   return (
@@ -150,7 +155,8 @@ export function HardwareTriggerPage() {
       <header className="sim-header"><div><p className="sim-kicker">Event pipeline</p><h1>Trigger and inspect</h1></div><SimulatorNav /></header>
       <FeedbackStrip />
       <div className="sim-trigger-controls">
-        <label>Event type<select value={eventType} onChange={(event) => setEventType(event.target.value as HardwareEventType)}>{hardwareEventTypes.map((type) => <option key={type}>{type}</option>)}</select></label>
+        <label>Trigger source<select value={source} onChange={(event) => setSource(event.target.value as TriggerSource)}>{triggerSources.map((item) => <option key={item}>{item}</option>)}</select></label>
+        <label>Trigger reason<select value={triggerReason} onChange={(event) => setTriggerReason(event.target.value as TriggerReason)}>{triggerReasons.map((reason) => <option key={reason}>{reason}</option>)}</select></label>
         <label>Device ID<input value={deviceId} onChange={(event) => setDeviceId(event.target.value)} /></label>
         <label>Recipient ID<input value={recipientId} onChange={(event) => setRecipientId(event.target.value)} /></label>
         <button className="button button--primary" onClick={trigger}>Trigger event</button>
@@ -159,10 +165,10 @@ export function HardwareTriggerPage() {
       <ol className="event-timeline" aria-label="Event lifecycle">
         {transitions.length === 0 && <li><strong>No events yet</strong><span>Produced, verification, and consumption stages appear here.</span></li>}
         {transitions.map((transition, index) => (
-          <li key={`${transition.event.eventId}-${transition.stage}-${index}`}>
+          <li key={`${transition.event.id}-${transition.stage}-${index}`}>
             <strong>{transition.stage}</strong>
-            <span>{transition.event.eventType} / {transition.event.verificationStatus}{transition.reason ? ` / ${transition.reason}` : ''}</span>
-            <code>{transition.event.eventId}</code>
+            <span>{transition.triggerSource} / {transition.event.source} / {transition.verificationStatus}{transition.reason ? ` / ${transition.reason}` : ''}</span>
+            <code>{transition.event.id}</code>
           </li>
         ))}
       </ol>

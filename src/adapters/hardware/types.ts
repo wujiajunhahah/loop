@@ -1,25 +1,16 @@
-export const hardwareEventTypes = [
+import type { EntryEvent, EntryEventType } from '../../domain'
+
+export const triggerSources = [
   'touch',
   'tap',
   'gesture',
   'nfc',
   'ble',
-  'simulated',
+  'software',
 ] as const
 
-export type HardwareEventType = (typeof hardwareEventTypes)[number]
+export type TriggerSource = (typeof triggerSources)[number]
 export type VerificationStatus = 'pending' | 'verified' | 'rejected'
-
-export interface HardwareEvent {
-  eventId: string
-  deviceId: string
-  deviceType: string
-  recipientId: string
-  eventType: HardwareEventType
-  occurredAt: string
-  verificationStatus: VerificationStatus
-  payload: Readonly<Record<string, unknown>>
-}
 
 export interface VerificationProof {
   identityId: string
@@ -45,38 +36,46 @@ export interface HardwareFeedbackState {
 
 export interface HardwareAvailability {
   available: boolean
-  fallback: 'software_simulator'
+  fallback: 'software'
   reason?: string
 }
 
-export type HardwareEventStage =
-  | 'produced'
-  | 'verified'
-  | 'rejected'
-  | 'consumed'
+export type EntryEventStage = 'produced' | 'verified' | 'rejected' | 'consumed'
+export type EntryEventRejectionReason =
+  | 'duplicate_event'
+  | 'invalid_identity'
+  | 'unbound_device'
+  | 'unavailable_hardware'
 
-export interface HardwareEventTransition {
-  event: HardwareEvent
-  stage: HardwareEventStage
-  reason?: 'duplicate_event' | 'invalid_identity' | 'unbound_device'
+export interface EntryEventTransition {
+  event: EntryEvent
+  triggerSource: TriggerSource
+  verificationStatus: VerificationStatus
+  stage: EntryEventStage
+  reason?: EntryEventRejectionReason
 }
 
-export interface TriggerHardwareEventInput {
+export interface TriggerEntryEventInput {
   eventId?: string
   deviceId: string
-  eventType: HardwareEventType
+  source: TriggerSource
+  type?: EntryEventType
   recipientId: string
+  relationshipId?: string
   occurredAt?: string
   payload?: Readonly<Record<string, unknown>>
   allowFallback?: boolean
 }
 
-export interface HardwareTriggerResult {
-  event: HardwareEvent
+export interface EntryTriggerResult {
+  event: EntryEvent
+  verificationStatus: VerificationStatus
   outcome:
     | 'accepted'
     | 'duplicate'
     | 'invalid_identity'
     | 'unbound_device'
+    | 'unavailable_hardware'
+  triggerSource: TriggerSource
   fallbackUsed: boolean
 }

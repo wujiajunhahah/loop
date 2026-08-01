@@ -21,3 +21,47 @@ The recipient UI loads content through `RelationshipAgent.enter`, backed by the
 relationship context repository and policy evaluator. UI convenience data may
 describe the demo, but it does not bypass relationship, recipient, owner-review,
 or recipient-session checks.
+
+## V2 Decisions
+
+### V2-001 Software-first, hardware-neutral MVP
+
+The P0 software loop is Context capture → relationship-scoped Agent → recipient
+choice → InteractionArtifact. A ring, NFC tag, BLE button, desktop object, or
+software simulator may provide the physical entry; none is a P0 software
+dependency.
+
+### V2-002 Source-backed bounded generation
+
+Generation is allowed only when the recorder explicitly enables it. Every
+generated result must carry source Context IDs, an AI-generated label, a
+generation mode, sensitivity, and a trigger reason. The Agent may not invent
+new facts, major decisions, or unreviewed intent.
+
+### V2-003 Pull-only default
+
+The recipient must actively enter the experience. Scheduled or contextual
+suggestions are P1 and require explicit opt-in. Random or strong emotional
+pushes are not part of the MVP.
+
+### V2-004 InteractionArtifact is P0
+
+The software Demo must produce one collectible postcard / letter / memory-card
+artifact from a completed interaction. Shared plans are optional P1 content and
+must not gate the core Demo.
+
+### V2-005 One owner per mutable boundary
+
+`TASK-009` owns the public domain and shared service contracts; `TASK-010` to
+`TASK-014` own their feature directories; `TASK-015` is the only integration
+owner for `src/app`, `src/data`, and cross-feature reconciliation.
+
+### V2-006 Shared Demo container and documented integration conflict
+
+TASK-015 adds `OfflineDemoService` as the single in-memory boundary for the V2
+capture, Agent runtime, and InteractionArtifact flow. The Recipient feature's
+previous hard-coded fixture is retained as its standalone test default, while
+the App Shell injects the shared V2 container. The Recipient dependency seam
+and the simulator's missing relationship ID were changed only to resolve the
+cross-feature conflicts explicitly called out in the TASK-010, TASK-013, and
+TASK-014 handoff reports.

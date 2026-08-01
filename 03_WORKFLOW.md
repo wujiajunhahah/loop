@@ -1,28 +1,35 @@
-# Loop 多窗口协同工作流
+# Loop 多窗口协同工作流（V2）
 
-## 角色分工
+## 当前分工
 
 ### Codex 桌面版
 
-- 总览项目；
-- 维护状态；
-- 拆分任务；
-- 审查架构；
-- 判断合并；
-- 发现重复劳动；
-- 默认不承担主要编码。
+负责：
+
+- 总览；
+- 状态维护；
+- 产品与架构审查；
+- 任务拆解；
+- 冲突检测；
+- 集成判断；
+- Demo readiness。
+
+默认不负责大规模业务实现。
 
 ### OpenCode
 
-- 领取具体任务；
-- 实现、测试、提交；
-- 写 session report；
-- 不擅自改变全局架构；
-- 多窗口并行但避免编辑同一文件。
+负责：
+
+- 领取任务；
+- 实现；
+- 测试；
+- 提交；
+- 写 Session Report；
+- 提出 Decision Request。
 
 ---
 
-## 推荐初始化结构
+## 项目结构
 
 ```text
 Loop/
@@ -30,6 +37,7 @@ Loop/
   01_PROMPT_CODEX_DESKTOP.md
   02_PROMPT_OPENCODE.md
   03_WORKFLOW.md
+  04_SOFTWARE_UPDATE_2026-08-01.md
   .loop/
     STATUS.md
     DECISIONS.md
@@ -44,67 +52,86 @@ Loop/
 
 ## 推荐第一批任务
 
-### TASK-001 Repository Bootstrap
+### TASK-001 Domain Model V2
 
-- 初始化项目结构；
-- 初始化 Git；
-- 配置 `.gitignore`；
-- 建立 `.env.example`；
-- 建立基础运行脚本。
+- 定义 subject / buyer / recorder / recipient；
+- 定义 relationship；
+- 定义 ContextItem；
+- 定义 OriginalAsset 与 DerivedContent；
+- 定义策略和来源字段。
 
-### TASK-002 Context Schema
+### TASK-002 Guided Capture
 
-- 定义 Context 数据结构；
-- 区分公共、关系专属、私密内容；
-- 定义 AI 使用策略；
-- 提供示例数据。
+- 关系选择；
+- 关系化问题；
+- 文本和音频输入；
+- AI 标签建议；
+- 人工审核。
 
-### TASK-003 Capture Flow Prototype
+### TASK-003 Context Editor
 
-- 实现记录者端最小录入流程；
-- 支持文本和语音文件；
-- 选择 recipient；
-- 补充 meaning 和 trigger policy。
+- 查看原文；
+- 修改对象；
+- 修改权重；
+- 设置 AI 权限；
+- 删除错误推断。
 
-### TASK-004 Relationship Agent Prototype
+### TASK-004 Agent Runtime
 
-- 按 recipient 检索 Context；
-- 返回真实内容来源；
-- 生成轻量编排；
-- 禁止跨对象内容。
+- recipient-scoped retrieval；
+- source_replay；
+- source_composition；
+- 有权限的 persona_inference；
+- 输出 provenance。
 
-### TASK-005 Hardware Simulator
+### TASK-005 Recipient Experience
 
-- 模拟戒指 touch / mark / confirm / dismiss；
-- 通过事件触发 App；
-- 提供真实硬件未来接入接口。
+- 用户主动进入；
+- 呈现原始 / AI 内容；
+- AI 标记；
+- 接受 / 跳过 / 收藏；
+- 不主动打扰。
 
-### TASK-006 Recipient Experience
+### TASK-006 Postcard Artifact
 
-- 接收者主动进入；
-- 展示一段真实记忆；
-- 显示来源与 AI 标记；
-- 接受、跳过或继续共同计划。
+- 将一次互动生成明信片；
+- 绑定来源；
+- 可收藏；
+- 可回应；
+- 可作为 Demo 视觉结果。
 
-### TASK-007 Demo Integration
+### TASK-007 Hardware Simulator
 
-- 打通端到端；
-- 准备固定 Demo 数据；
-- 加入离线 fallback；
-- 输出运行说明和答辩脚本。
+- mark；
+- touch；
+- open；
+- confirm；
+- dismiss；
+- 与 App 事件连接。
+
+### TASK-008 Demo Integration
+
+- 固定母女案例；
+- 下雨天 Context；
+- 原始语音；
+- 有边界 AI 串联；
+- 生成远行明信片；
+- API fallback；
+- 演示脚本。
 
 ---
 
-## 重要提醒
-
-多个 OpenCode 窗口同时使用同一目录时，最大的风险不是代码能力，而是：
-
-- 重复实现；
-- 文件覆盖；
-- 接口漂移；
-- 无法判断谁的版本是最新；
-- 所有人都在做“全局优化”，却没人完成 Demo。
-
-因此：
+## 并行原则
 
 > 一个窗口，一个任务，一个分支，一份报告。
+
+最大的风险不是开发速度不够，而是：
+
+- 多窗口修改同一文件；
+- 接口不一致；
+- 旧产品假设没有清理；
+- 所有人都开发 Agent，却没人做完整 Demo；
+- 生成内容无法追溯；
+- 硬件拖住软件。
+
+任何任务都应优先服务端到端演示。

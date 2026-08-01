@@ -29,11 +29,21 @@ describe('hardware simulator pages', () => {
     expect(screen.getByLabelText('Device type')).toHaveValue('keepsake-token')
   })
 
-  it('offers every standard event type in the trigger lab', () => {
+  it('offers every trigger source and explicit trigger reason', () => {
     render(<HardwareTriggerPage />)
 
-    const options = screen.getAllByRole('option').map((option) => option.textContent)
-    expect(options).toEqual(['touch', 'tap', 'gesture', 'nfc', 'ble', 'simulated'])
+    const sourceOptions = screen
+      .getAllByLabelText('Trigger source')[0]
+      .querySelectorAll('option')
+    expect([...sourceOptions].map((option) => option.textContent)).toEqual([
+      'touch',
+      'tap',
+      'gesture',
+      'nfc',
+      'ble',
+      'software',
+    ])
+    expect(screen.getByLabelText('Trigger reason')).toHaveValue('user_opened')
     expect(screen.getByRole('list', { name: 'Event lifecycle' })).toBeInTheDocument()
   })
 })

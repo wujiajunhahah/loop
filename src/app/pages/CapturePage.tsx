@@ -1,9 +1,10 @@
 import { ButtonLink, PageHeader, StatusPanel } from '../../shared/ui'
 import { CaptureFlow } from '../../features/capture/CaptureFlow'
+import { offlineDemoService } from '../../data/offlineDemo'
 
 export function CapturePage() {
   const route = window.location.hash.slice(1) || '/capture'
-  if (route !== '/capture') return <CaptureFlow route={route} />
+  if (route !== '/capture') return <CaptureFlow route={route} service={offlineDemoService} />
 
   return (
     <>

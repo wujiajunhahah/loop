@@ -1,18 +1,16 @@
+import type { EntryEvent } from '../../domain'
 import type {
   DeviceBinding,
+  EntryEventTransition,
+  EntryTriggerResult,
   HardwareAvailability,
-  HardwareEvent,
-  HardwareEventTransition,
   HardwareFeedbackState,
-  HardwareTriggerResult,
-  TriggerHardwareEventInput,
+  TriggerEntryEventInput,
   VerificationProof,
 } from './types'
 
-export type HardwareEventListener = (event: HardwareEvent) => void
-export type HardwareLifecycleListener = (
-  transition: HardwareEventTransition,
-) => void
+export type EntryEventListener = (event: EntryEvent) => void
+export type EntryLifecycleListener = (transition: EntryEventTransition) => void
 export type HardwareStateListener = () => void
 
 export interface HardwareBridge {
@@ -20,8 +18,8 @@ export interface HardwareBridge {
   getAvailability(): HardwareAvailability
   getBindings(): readonly DeviceBinding[]
   getFeedback(): HardwareFeedbackState
-  subscribe(listener: HardwareEventListener): () => void
-  subscribeLifecycle(listener: HardwareLifecycleListener): () => void
+  subscribe(listener: EntryEventListener): () => void
+  subscribeLifecycle(listener: EntryLifecycleListener): () => void
   subscribeState(listener: HardwareStateListener): () => void
   bindDevice(input: {
     deviceId: string
@@ -33,7 +31,7 @@ export interface HardwareBridge {
     ownerProof: VerificationProof
     recipientProof: VerificationProof
   }): Promise<DeviceBinding>
-  trigger(input: TriggerHardwareEventInput): Promise<HardwareTriggerResult>
-  consume(eventId: string): Promise<HardwareEvent>
+  trigger(input: TriggerEntryEventInput): Promise<EntryTriggerResult>
+  consume(eventId: string): Promise<EntryEvent>
   setFeedback(state: Partial<HardwareFeedbackState>): Promise<void>
 }

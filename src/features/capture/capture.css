@@ -1,0 +1,166 @@
+.capture-actor-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  margin-top: 18px;
+  overflow: hidden;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.capture-actor {
+  min-width: 0;
+  padding: 14px;
+  background: var(--surface);
+}
+
+.capture-actor span,
+.range-label span,
+.field-note {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.capture-actor strong {
+  display: block;
+  margin-top: 5px;
+  overflow-wrap: anywhere;
+}
+
+.capture-fields-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 18px;
+}
+
+.scenario-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px 18px;
+  margin-top: 12px;
+}
+
+.scenario-options label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14px;
+}
+
+.range-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.range-label output {
+  color: var(--green);
+  font-weight: 750;
+}
+
+.field input[type='range'] {
+  padding-inline: 0;
+  accent-color: var(--green);
+}
+
+.emotion-source {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 10px;
+}
+
+.emotion-source label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14px;
+}
+
+.review-context {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 22px;
+  padding-block: 18px;
+  border-block: 1px solid var(--line);
+}
+
+.review-context dt {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.review-context dd {
+  margin: 5px 0 0;
+  font-weight: 750;
+}
+
+.suggestion-list {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.suggestion-card {
+  padding: 20px;
+  background: #f1f8f3;
+  border: 1px solid #aac9bd;
+  border-radius: 6px;
+}
+
+.suggestion-card--resolved {
+  background: var(--surface);
+  border-color: var(--line);
+}
+
+.suggestion-card__heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.suggestion-card__heading h3 {
+  margin: 4px 0 0;
+  font-size: 18px;
+}
+
+.suggestion-status {
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.suggestion-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.suggestion-actions button {
+  padding: 8px 11px;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.suggestion-actions button:hover,
+.suggestion-actions button:focus-visible {
+  border-color: var(--green);
+}
+
+@media (max-width: 720px) {
+  .capture-actor-grid,
+  .capture-fields-grid,
+  .review-context {
+    grid-template-columns: 1fr;
+  }
+}

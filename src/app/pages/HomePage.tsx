@@ -3,17 +3,17 @@ import { ButtonLink, PageHeader, StatusPanel } from '../../shared/ui'
 const entries = [
   {
     title: 'Recorder',
-    body: 'Prepare a real memory, its recipient, meaning, and permission boundary.',
+    body: 'Record a real Context, choose its recipient, and review the source boundary.',
     to: '/capture',
   },
   {
     title: 'Recipient',
-    body: 'Enter by choice and decide whether to accept, postpone, skip, or close.',
+    body: 'Enter by choice, inspect provenance, and keep the resulting postcard.',
     to: '/recipient',
   },
   {
     title: 'Hardware simulator',
-    body: 'Exercise the hardware-neutral bridge without a connected device.',
+    body: 'Optionally exercise the hardware-neutral bridge and software fallback.',
     to: '/hardware',
   },
 ]
@@ -24,7 +24,7 @@ export function HomePage() {
       <PageHeader
         eyebrow="Loop offline demo"
         title="让真实的关系，继续抵达。"
-        description="记录者留下真实内容并设定边界，接收者主动打开，Relationship Agent 只在授权范围内整理，戒指把这次进入变成可验证的实体入口。"
+        description="记录者留下真实 Context 并设定边界，接收者主动打开，Relationship Agent 只在授权范围内整理，明信片记录这次有来源的互动。"
       />
 
       <div className="entry-grid">
@@ -41,7 +41,7 @@ export function HomePage() {
       </div>
 
       <StatusPanel title="Offline demo foundation" state="ready">
-        可在无网络、无 API、无真实硬件时完成“记录、托付、触发、验证、呈现、继续计划、留下回应”的完整 Demo。
+        主流程可在无网络、无 API、无设备时完成“录入 Context、关系 Agent、接收者主动进入、来源追溯、远行明信片、离线 fallback”。硬件模拟器是可替换的旁路入口。
       </StatusPanel>
     </>
   )

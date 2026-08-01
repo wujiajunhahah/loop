@@ -1,18 +1,21 @@
+import { createEntryEvent, type EntryEvent, type EntryEventSource } from '../../domain'
 import type {
+  EntryEventListener,
+  EntryLifecycleListener,
   HardwareBridge,
-  HardwareEventListener,
-  HardwareLifecycleListener,
   HardwareStateListener,
 } from './HardwareBridge'
 import type {
   DeviceBinding,
+  EntryEventRejectionReason,
+  EntryEventTransition,
+  EntryTriggerResult,
   HardwareAvailability,
-  HardwareEvent,
-  HardwareEventTransition,
   HardwareFeedbackState,
-  HardwareTriggerResult,
-  TriggerHardwareEventInput,
+  TriggerEntryEventInput,
+  TriggerSource,
   VerificationProof,
+  VerificationStatus,
 } from './types'
 
 const initialFeedback: HardwareFeedbackState = {
@@ -28,15 +31,26 @@ interface MockHardwareBridgeOptions {
   createId?: () => string
 }
 
+interface StoredEvent {
+  event: EntryEvent
+  triggerSource: TriggerSource
+  verificationStatus: VerificationStatus
+}
+
+function toEntryEventSource(source: TriggerSource): EntryEventSource {
+  if (source === 'nfc' || source === 'ble' || source === 'software') return source
+  return 'device'
+}
+
 export class MockHardwareBridge implements HardwareBridge {
   readonly bridgeId = 'mock-hardware-bridge'
   private availability: HardwareAvailability
   private readonly bindings = new Map<string, DeviceBinding>()
   private feedback = initialFeedback
-  private readonly processedEvents = new Map<string, HardwareEvent>()
+  private readonly processedEvents = new Map<string, StoredEvent>()
   private readonly consumedEvents = new Set<string>()
-  private readonly eventListeners = new Set<HardwareEventListener>()
-  private readonly lifecycleListeners = new Set<HardwareLifecycleListener>()
+  private readonly eventListeners = new Set<EntryEventListener>()
+  private readonly lifecycleListeners = new Set<EntryLifecycleListener>()
   private readonly stateListeners = new Set<HardwareStateListener>()
   private readonly verificationValue: string
   private readonly now: () => string
@@ -45,7 +59,7 @@ export class MockHardwareBridge implements HardwareBridge {
   constructor(options: MockHardwareBridgeOptions = {}) {
     this.availability = {
       available: options.available ?? true,
-      fallback: 'software_simulator',
+      fallback: 'software',
       reason: options.available === false ? 'Physical hardware unavailable' : undefined,
     }
     this.verificationValue = options.verificationValue ?? 'LOOP-DEMO'
@@ -65,12 +79,12 @@ export class MockHardwareBridge implements HardwareBridge {
     return this.feedback
   }
 
-  subscribe(listener: HardwareEventListener): () => void {
+  subscribe(listener: EntryEventListener): () => void {
     this.eventListeners.add(listener)
     return () => this.eventListeners.delete(listener)
   }
 
-  subscribeLifecycle(listener: HardwareLifecycleListener): () => void {
+  subscribeLifecycle(listener: EntryLifecycleListener): () => void {
     this.lifecycleListeners.add(listener)
     return () => this.lifecycleListeners.delete(listener)
   }
@@ -128,66 +142,81 @@ export class MockHardwareBridge implements HardwareBridge {
     return entrusted
   }
 
-  async trigger(
-    input: TriggerHardwareEventInput,
-  ): Promise<HardwareTriggerResult> {
+  async trigger(input: TriggerEntryEventInput): Promise<EntryTriggerResult> {
     const eventId = input.eventId ?? this.createId()
     const duplicate = this.processedEvents.get(eventId)
     if (duplicate) {
-      const event = { ...duplicate, verificationStatus: 'rejected' as const }
-      this.publishLifecycle({ event, stage: 'rejected', reason: 'duplicate_event' })
+      this.publishLifecycle({
+        ...duplicate,
+        stage: 'rejected',
+        verificationStatus: 'rejected',
+        reason: 'duplicate_event',
+      })
       await this.rejectFeedback()
-      return { event, outcome: 'duplicate', fallbackUsed: false }
+      return {
+        ...duplicate,
+        verificationStatus: 'rejected',
+        outcome: 'duplicate',
+        fallbackUsed: false,
+      }
+    }
+
+    const needsHardware = input.source !== 'software'
+    const fallbackUsed = needsHardware && !this.availability.available && input.allowFallback !== false
+    const triggerSource = fallbackUsed ? 'software' : input.source
+    const event = createEntryEvent({
+      id: eventId,
+      source: toEntryEventSource(triggerSource),
+      type: input.type ?? 'open',
+      occurredAt: input.occurredAt ?? this.now(),
+      recipientId: input.recipientId,
+      relationshipId: input.relationshipId,
+      payload: fallbackUsed
+        ? { ...input.payload, originalSource: input.source, fallback: true }
+        : input.payload,
+    })
+    const pending: StoredEvent = {
+      event,
+      triggerSource,
+      verificationStatus: 'pending',
+    }
+    this.processedEvents.set(eventId, pending)
+    this.publishLifecycle({ ...pending, stage: 'produced' })
+    await this.setFeedback({ confirmation: 'pending' })
+
+    if (needsHardware && !this.availability.available && !fallbackUsed) {
+      return this.reject(pending, 'unavailable_hardware')
     }
 
     const binding = this.bindings.get(input.deviceId)
-    const fallbackUsed = !this.availability.available && input.allowFallback !== false
-    const event: HardwareEvent = {
-      eventId,
-      deviceId: input.deviceId,
-      deviceType: binding?.deviceType ?? 'unknown',
-      recipientId: input.recipientId,
-      eventType: fallbackUsed ? 'simulated' : input.eventType,
-      occurredAt: input.occurredAt ?? this.now(),
-      verificationStatus: 'pending',
-      payload: fallbackUsed
-        ? { ...input.payload, originalEventType: input.eventType, fallback: true }
-        : (input.payload ?? {}),
-    }
-    this.processedEvents.set(eventId, event)
-    this.publishLifecycle({ event, stage: 'produced' })
-    await this.setFeedback({ confirmation: 'pending' })
-
-    if (!binding?.recipientId) {
-      return this.reject(event, 'unbound_device')
-    }
+    if (!binding?.recipientId) return this.reject(pending, 'unbound_device')
     if (binding.recipientId !== input.recipientId) {
-      return this.reject(event, 'invalid_identity')
+      return this.reject(pending, 'invalid_identity')
     }
 
-    const verified = { ...event, verificationStatus: 'verified' as const }
+    const verified: StoredEvent = { ...pending, verificationStatus: 'verified' }
     this.processedEvents.set(eventId, verified)
-    this.publishLifecycle({ event: verified, stage: 'verified' })
-    this.eventListeners.forEach((listener) => listener(verified))
+    this.publishLifecycle({ ...verified, stage: 'verified' })
+    this.eventListeners.forEach((listener) => listener(event))
     await this.setFeedback({
       led: 'active',
       vibration: 'acknowledge',
       confirmation: 'confirmed',
     })
-    return { event: verified, outcome: 'accepted', fallbackUsed }
+    return { ...verified, outcome: 'accepted', fallbackUsed }
   }
 
-  async consume(eventId: string): Promise<HardwareEvent> {
-    const event = this.processedEvents.get(eventId)
-    if (!event || event.verificationStatus !== 'verified') {
-      throw new Error('Only verified hardware events can be consumed')
+  async consume(eventId: string): Promise<EntryEvent> {
+    const stored = this.processedEvents.get(eventId)
+    if (!stored || stored.verificationStatus !== 'verified') {
+      throw new Error('Only verified entry events can be consumed')
     }
     if (this.consumedEvents.has(eventId)) {
-      throw new Error('Hardware event has already been consumed')
+      throw new Error('Entry event has already been consumed')
     }
     this.consumedEvents.add(eventId)
-    this.publishLifecycle({ event, stage: 'consumed' })
-    return event
+    this.publishLifecycle({ ...stored, stage: 'consumed' })
+    return stored.event
   }
 
   async setFeedback(state: Partial<HardwareFeedbackState>): Promise<void> {
@@ -198,7 +227,7 @@ export class MockHardwareBridge implements HardwareBridge {
   setAvailable(available: boolean, reason?: string): void {
     this.availability = {
       available,
-      fallback: 'software_simulator',
+      fallback: 'software',
       reason: available ? undefined : (reason ?? 'Physical hardware unavailable'),
     }
     this.stateListeners.forEach((listener) => listener())
@@ -211,17 +240,17 @@ export class MockHardwareBridge implements HardwareBridge {
   }
 
   private async reject(
-    event: HardwareEvent,
-    reason: 'invalid_identity' | 'unbound_device',
-  ): Promise<HardwareTriggerResult> {
-    const rejected = { ...event, verificationStatus: 'rejected' as const }
-    this.processedEvents.set(event.eventId, rejected)
-    this.publishLifecycle({ event: rejected, stage: 'rejected', reason })
+    stored: StoredEvent,
+    reason: Exclude<EntryEventRejectionReason, 'duplicate_event'>,
+  ): Promise<EntryTriggerResult> {
+    const rejected: StoredEvent = { ...stored, verificationStatus: 'rejected' }
+    this.processedEvents.set(stored.event.id, rejected)
+    this.publishLifecycle({ ...rejected, stage: 'rejected', reason })
     await this.rejectFeedback()
     return {
-      event: rejected,
+      ...rejected,
       outcome: reason,
-      fallbackUsed: event.eventType === 'simulated',
+      fallbackUsed: stored.triggerSource === 'software' && stored.event.payload.fallback === true,
     }
   }
 
@@ -233,7 +262,7 @@ export class MockHardwareBridge implements HardwareBridge {
     })
   }
 
-  private publishLifecycle(transition: HardwareEventTransition): void {
+  private publishLifecycle(transition: EntryEventTransition): void {
     this.lifecycleListeners.forEach((listener) => listener(transition))
   }
 }

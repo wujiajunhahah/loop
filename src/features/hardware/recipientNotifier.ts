@@ -1,17 +1,14 @@
-import type { HardwareEvent } from '../../adapters/hardware'
+import type { EntryEvent } from '../../domain'
 
-export const HARDWARE_RECIPIENT_EVENT = 'loop:hardware-recipient-entry'
+export const RECIPIENT_ENTRY_EVENT = 'loop:recipient-entry'
 
 export interface RecipientFlowNotifier {
-  enterRecipientFlow(event: HardwareEvent): void
+  enterRecipientFlow(event: EntryEvent): void
 }
 
 export class BrowserRecipientFlowNotifier implements RecipientFlowNotifier {
-  enterRecipientFlow(event: HardwareEvent): void {
-    if (event.verificationStatus !== 'verified') return
-    window.dispatchEvent(
-      new CustomEvent(HARDWARE_RECIPIENT_EVENT, { detail: event }),
-    )
+  enterRecipientFlow(event: EntryEvent): void {
+    window.dispatchEvent(new CustomEvent(RECIPIENT_ENTRY_EVENT, { detail: event }))
     window.location.hash = '/recipient'
   }
 }
