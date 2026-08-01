@@ -2,9 +2,9 @@
 
 ## Current phase
 
-Software MVP V2 coordination prepared. The coordinator is not implementing
-business functionality in this round. The next authorized implementation node
-is `TASK-009`.
+Integrated Software MVP V2 is in controlled quality iteration. The P0 offline
+Demo loop is implemented and current work is limited to evidence-backed
+stability, recovery, accessibility, and Demo clarity improvements.
 
 ## Single source of truth
 
@@ -28,17 +28,17 @@ write claims / reports in this canonical root.
 
 ## Baseline evidence
 
-- `main` and `origin/main` point to `ecf6ffc` (`docs: expand project readme`).
-- The integrated product code is based on `d099a3a` and the feature commits
-  beneath it.
-- `main` has uncommitted product-context documents only:
-  `00_PROJECT_CONTEXT.md`, `01_PROMPT_CODEX_DESKTOP.md`,
-  `02_PROMPT_OPENCODE.md`, `03_WORKFLOW.md`, and untracked
-  `04_SOFTWARE_UPDATE_2026-08-01.md`.
-- `feat/agent`, `feat/capture`, `feat/hardware`, and `feat/recipient` worktrees
-  are clean and all point to `dc3fd8c`.
-- Verification on `main`: 11 test files / 45 tests passed, typecheck passed,
-  production build passed.
+- `origin/main` points to `4df8023` (`docs: polish hackathon demo readme`).
+- Current branch: `agent/loop-v2-integration`.
+- Current HEAD and `origin/agent/loop-v2-integration` point to `fc6394f`
+  (`fix: recover capture relationship loading`).
+- The current working tree is clean.
+- Verification on the current integrated branch: 15 test files / 84 tests
+  passed, typecheck passed, production build passed, and `git diff --check`
+  passed.
+- `npm test -- --run` can occasionally spend longer starting parallel Vitest
+  workers in this environment; verbose and single-worker runs have passed, and
+  the latest full run completed normally.
 
 ## V2 migration finding
 
@@ -81,14 +81,10 @@ that the current demo is broken.
 
 ## Active task policy
 
-- Start with `TASK-009` only. No other OpenCode window starts before its gate
-  passes.
-- After the `TASK-009` gate passes, start exactly four parallel tasks:
-  `TASK-010`, `TASK-011`, `TASK-012`, and `TASK-014`.
-- Do not start `TASK-013` until all four parallel tasks have completed and
-  reported, even if its direct dependencies finish earlier.
-- Do not start `TASK-015` until `TASK-013` has completed and reported.
-- `TASK-015` is the only task allowed to reconcile cross-feature integration.
-- Every OpenCode window must create one claim and one report.
+- The historical TASK-009 through TASK-015 integration gates are complete and
+  remain as audit records.
+- The current quality iteration may change only the files allowed by its task
+  prompt, one focused issue at a time, with tests and a report entry for each
+  completed batch.
 - No task may change another task's owned files without a Decision Request and
   an explicit queue update.
