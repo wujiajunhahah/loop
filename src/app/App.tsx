@@ -7,6 +7,9 @@ import { RecipientPage } from './pages/RecipientPage'
 const pages = {
   '/': HomePage,
   '/capture': CapturePage,
+  '/capture/new': CapturePage,
+  '/capture/review': CapturePage,
+  '/capture/success': CapturePage,
   '/recipient': RecipientPage,
   '/hardware': HardwarePage,
 } as const
@@ -31,7 +34,9 @@ function NavigationLink({ route, label }: { route: string; label: string }) {
 
 export function App() {
   const route = useSyncExternalStore(subscribeToHash, getRoute)
-  const Page = pages[route as keyof typeof pages] ?? HomePage
+  const Page = route.startsWith('/recipient/')
+    ? RecipientPage
+    : pages[route as keyof typeof pages] ?? HomePage
 
   return (
     <div className="app-shell">
