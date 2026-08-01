@@ -30,8 +30,9 @@ write claims / reports in this canonical root.
 
 - `origin/main` points to `4df8023` (`docs: polish hackathon demo readme`).
 - Current branch: `agent/loop-v2-integration`.
-- Current HEAD and `origin/agent/loop-v2-integration` point to `2f42ff2`
-  (`fix: guard hardware simulator async actions`).
+- The last verified pushed product commit on `origin/agent/loop-v2-integration`
+  is `2f42ff2` (`fix: guard hardware simulator async actions`). Local commits
+  after it contain only the status and overnight report updates described below.
 - The current working tree is clean.
 - Verification on the current integrated branch: 15 test files / 85 tests
   passed, typecheck passed, production build passed, and `git diff --check`
