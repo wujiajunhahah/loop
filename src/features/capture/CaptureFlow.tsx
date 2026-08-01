@@ -84,6 +84,9 @@ export function CaptureFlow({
   const [errors, setErrors] = useState<string[]>([])
   const [savedId, setSavedId] = useState('')
   const [saving, setSaving] = useState(false)
+  const [loadingRelationships, setLoadingRelationships] = useState(true)
+  const [relationshipLoadError, setRelationshipLoadError] = useState('')
+  const [relationshipLoadAttempt, setRelationshipLoadAttempt] = useState(0)
   const [contextId] = useState(() => newId('context'))
   const [assetId] = useState(() => newId('asset'))
 
@@ -93,22 +96,31 @@ export function CaptureFlow({
 
   useEffect(() => {
     let active = true
-    service.listRelationships().then((items) => {
-      if (!active) return
-      setRelationships(items)
-      const first = items[0]
-      if (first) {
-        setDraft((current) => ({
-          ...current,
-          relationshipId: current.relationshipId || first.relationship.id,
-          recorderId: current.recorderId || first.recorders[0]?.id || '',
-        }))
-      }
-    })
+    setLoadingRelationships(true)
+    setRelationshipLoadError('')
+    void service.listRelationships()
+      .then((items) => {
+        if (!active) return
+        setRelationships(items)
+        const first = items[0]
+        if (first) {
+          setDraft((current) => ({
+            ...current,
+            relationshipId: current.relationshipId || first.relationship.id,
+            recorderId: current.recorderId || first.recorders[0]?.id || '',
+          }))
+        }
+      })
+      .catch((error: unknown) => {
+        if (active) setRelationshipLoadError(error instanceof Error ? error.message : '关系目录加载失败，请重试。')
+      })
+      .finally(() => {
+        if (active) setLoadingRelationships(false)
+      })
     return () => {
       active = false
     }
-  }, [service])
+  }, [relationshipLoadAttempt, service])
 
   const setField = <K extends keyof CaptureDraft>(field: K, value: CaptureDraft[K]) => {
     setDraft((current) => ({ ...current, [field]: value }))
@@ -404,6 +416,18 @@ export function CaptureFlow({
         </div>
       </div>
     )
+  }
+
+  if (loadingRelationships) {
+    return <section className="capture-success"><p className="eyebrow">Guided Context editor</p><h1>正在准备关系入口。</h1><p className="page-header__description" role="status">正在加载可用的接收者关系。</p></section>
+  }
+
+  if (relationshipLoadError) {
+    return <section className="capture-success"><p className="eyebrow">Guided Context editor · recovery</p><h1>关系入口暂时不可用。</h1><p className="page-header__description">没有载入接收者关系，因此不会创建或保存 Context。</p><div className="form-errors" role="alert">{relationshipLoadError}</div><button className="button button--primary" type="button" onClick={() => setRelationshipLoadAttempt((attempt) => attempt + 1)}>重试加载关系</button></section>
+  }
+
+  if (relationships.length === 0) {
+    return <section className="capture-success"><p className="eyebrow">Guided Context editor</p><h1>暂无可用关系。</h1><p className="page-header__description">先建立一个经过授权的接收者关系，再开始记录 Context。</p></section>
   }
 
   return (

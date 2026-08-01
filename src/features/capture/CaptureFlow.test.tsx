@@ -184,4 +184,21 @@ describe('CaptureFlow', () => {
     await waitFor(() => expect(window.location.hash).toBe('#/capture/new'))
     expect(save).not.toHaveBeenCalled()
   })
+
+  it('recovers when the relationship directory fails to load', async () => {
+    const listRelationships = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('Relationship directory unavailable'))
+      .mockResolvedValueOnce(directory)
+    const service: GuidedCapturePort = {
+      listRelationships,
+      saveReviewedCapture: vi.fn(async (input) => input.context),
+    }
+    render(<CaptureFlow route="/capture/new" service={service} />)
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Relationship directory unavailable')
+    fireEvent.click(screen.getByRole('button', { name: '重试加载关系' }))
+    await screen.findByRole('option', { name: 'Recipient Two · Second relationship' })
+    expect(listRelationships).toHaveBeenCalledTimes(2)
+  })
 })
