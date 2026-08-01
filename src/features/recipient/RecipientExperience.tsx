@@ -24,6 +24,17 @@ function go(path: string) {
   window.location.hash = path
 }
 
+function getInlineOriginal(uri: string) {
+  if (!uri.startsWith('data:text/plain')) return undefined
+  const separator = uri.indexOf(',')
+  if (separator < 0) return undefined
+  try {
+    return decodeURIComponent(uri.slice(separator + 1))
+  } catch {
+    return undefined
+  }
+}
+
 function Provenance({ result }: { result: RecipientAgentResult }) {
   return (
     <dl className="source-details">
@@ -38,6 +49,7 @@ function Provenance({ result }: { result: RecipientAgentResult }) {
 
 export function RecipientExperience({ data = standaloneRecipientData }: { data?: RecipientExperienceData }) {
   const snapshot = data.getSnapshot()
+  const inlineOriginal = getInlineOriginal(snapshot.asset.uri)
   const [path, setPath] = useState<RecipientPath>(() => getPath(snapshot.context.id))
   const [session, setSession] = useState<RecipientSession>(() => data.createSession())
   const [interaction, setInteraction] = useState<Interaction>()
@@ -110,7 +122,7 @@ export function RecipientExperience({ data = standaloneRecipientData }: { data?:
 
   if (path === 'memory') {
     if (loading || !presentation) return <section className="recipient-shell"><p className="eyebrow">Recipient request · source-backed</p><h1>正在准备留给你的内容。</h1><p className="recipient-lead">只整理已授权来源，不会替 Mei 生成新的事实、决定或自由对话。</p></section>
-    return <section className="recipient-shell"><p className="eyebrow">Source-backed interaction</p><h1>{snapshot.context.topic}</h1><p className="recipient-lead">来源、生成模式和 AI 状态都可以在下方检查。</p><div className="provenance-grid"><article><span className="tag tag--original">Original source</span><h2>{snapshot.asset.modality === 'audio' ? '真实留下的声音' : '真实留下的原始内容'}</h2><p>原始素材保持不变。你准备好后，再主动查看或播放。</p><button className="button button--secondary" onClick={() => void playOriginal()} disabled={playing}>{playing ? '正在播放原声' : snapshot.asset.modality === 'audio' ? '播放原声' : '查看原始内容'} <span aria-hidden="true">▶</span></button><Provenance result={presentation.original} /></article>{presentation.derived && <article><span className="tag tag--organized">AI-generated</span><h2>{presentation.derived.content}</h2><p>这是基于已授权 Context 的整理内容，不是 {snapshot.recipient.subjectName} 的原话。</p><Provenance result={presentation.derived} /></article>}</div><div className="recipient-actions"><button className="button button--primary" onClick={() => void accept()}>接受并保存明信片 <span aria-hidden="true">→</span></button><button className="button button--secondary" onClick={() => choose('postpone', '/')}>稍后查看</button><button className="text-button" onClick={() => choose('skip', '/')}>跳过</button><button className="text-button" onClick={() => choose('close', '/')}>关闭</button></div></section>
+    return <section className="recipient-shell"><p className="eyebrow">Source-backed interaction</p><h1>{snapshot.context.topic}</h1><p className="recipient-lead">来源、生成模式和 AI 状态都可以在下方检查。</p><div className="provenance-grid"><article><span className="tag tag--original">Original source</span><h2>{snapshot.asset.modality === 'audio' ? '真实留下的声音' : '真实留下的原始内容'}</h2><p>原始素材保持不变。你准备好后，再主动查看或播放。</p>{inlineOriginal && <blockquote className="original-content">{inlineOriginal}</blockquote>}<button className="button button--secondary" onClick={() => void playOriginal()} disabled={playing}>{playing ? '正在播放原声' : snapshot.asset.modality === 'audio' ? '播放原声' : '查看原始内容'} <span aria-hidden="true">▶</span></button><Provenance result={presentation.original} /></article>{presentation.derived && <article><span className="tag tag--organized">AI-generated</span><h2>{presentation.derived.content}</h2><p>这是基于已授权 Context 的整理内容，不是 {snapshot.recipient.subjectName} 的原话。</p><Provenance result={presentation.derived} /></article>}</div><div className="recipient-actions"><button className="button button--primary" onClick={() => void accept()}>接受并保存明信片 <span aria-hidden="true">→</span></button><button className="button button--secondary" onClick={() => choose('postpone', '/')}>稍后查看</button><button className="text-button" onClick={() => choose('skip', '/')}>跳过</button><button className="text-button" onClick={() => choose('close', '/')}>关闭</button></div></section>
   }
 
   return <section className="recipient-shell"><p className="eyebrow">InteractionArtifact · postcard</p><h1>这张远行明信片已经为你留存。</h1><p className="recipient-lead">它只记录这次接收者主动进入的结果，不会自动回写为 {snapshot.recipient.subjectName} 的内容。</p>{artifact && <div className="completion-grid"><div className="completion-number">01</div><div><span className="tag tag--organized">{artifact.generationLabel}</span><h2>{artifact.generatedSummary}</h2><p>Artifact ID · {artifact.id}<br />来源 Context ID · {artifact.sourceContextIds.join(', ')}</p></div></div>}<form className="response-form" onSubmit={(event) => void saveResponse(event)}><label htmlFor="recipient-response">留下一个接收者回应</label><textarea id="recipient-response" value={response} onChange={(event) => setResponse(event.target.value)} placeholder="今天想记下什么？" rows={4} /><button className="button button--primary" type="submit">保存回应 <span aria-hidden="true">↗</span></button>{savedResponse && <p className="form-note" role="status">已保存为 recipient-authored response。</p>}</form><button className="text-button" onClick={() => { setSession(data.createSession()); setInteraction(undefined); setPresentation(undefined); setArtifact(undefined); setSavedResponse(false); go('/recipient') }}>回到入口</button></section>

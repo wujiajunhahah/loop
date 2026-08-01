@@ -39,6 +39,7 @@ describe('offline V2 Demo integration', () => {
     fireEvent.click(screen.getByRole('button', { name: /主动进入/ }))
     fireEvent.click(await screen.findByRole('button', { name: /是我的，打开看看/ }))
     await screen.findByText('Rainy day walk')
+    expect(screen.getByText('雨天一起回家的真实记录。')).toBeInTheDocument()
     expect(screen.getAllByText(/来源 Context ID/)).toHaveLength(2)
     expect(screen.getByText('AI-generated')).toBeInTheDocument()
 
