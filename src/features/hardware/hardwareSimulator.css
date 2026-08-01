@@ -1,0 +1,191 @@
+.hardware-simulator {
+  color: var(--ink);
+}
+
+.sim-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 32px;
+  align-items: flex-end;
+  margin-bottom: 28px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--line);
+}
+
+.sim-header h1 {
+  margin-bottom: 12px;
+  font-size: 52px;
+}
+
+.sim-header p:not(.sim-kicker) {
+  max-width: 620px;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.sim-kicker,
+.sim-number {
+  margin-bottom: 10px;
+  color: var(--coral);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.sim-nav {
+  display: flex;
+  gap: 18px;
+}
+
+.sim-nav a {
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.feedback-strip {
+  min-height: 46px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: center;
+  margin-bottom: 36px;
+  background: var(--ink);
+  color: var(--surface);
+  font-size: 12px;
+}
+
+.feedback-strip span {
+  padding: 10px 14px;
+  border-right: 1px solid #49504b;
+}
+
+.sim-dashboard {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-block: 1px solid var(--line);
+}
+
+.sim-dashboard article {
+  min-height: 250px;
+  padding: 28px;
+}
+
+.sim-dashboard article + article {
+  border-left: 1px solid var(--line);
+}
+
+.sim-dashboard p {
+  max-width: 410px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.sim-dashboard .button {
+  margin-top: 28px;
+}
+
+.sim-form-grid,
+.sim-trigger-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.sim-trigger-controls {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  align-items: end;
+}
+
+.sim-form-grid label,
+.sim-trigger-controls label {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.sim-form-grid input,
+.sim-trigger-controls input,
+.sim-trigger-controls select {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+}
+
+.sim-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+button.button {
+  cursor: pointer;
+}
+
+.sim-notice {
+  margin-top: 24px;
+  padding: 16px 18px;
+  border-left: 3px solid var(--green);
+  background: var(--surface);
+  color: var(--muted);
+}
+
+.event-timeline {
+  margin: 28px 0 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--line);
+}
+
+.event-timeline li {
+  display: grid;
+  grid-template-columns: 100px minmax(0, 1fr) minmax(180px, auto);
+  gap: 20px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.event-timeline span,
+.event-timeline code {
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 720px) {
+  .sim-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .sim-header h1 {
+    font-size: 42px;
+  }
+
+  .feedback-strip,
+  .sim-dashboard,
+  .sim-form-grid,
+  .sim-trigger-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .feedback-strip span,
+  .sim-dashboard article + article {
+    border: 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .event-timeline li {
+    grid-template-columns: 90px 1fr;
+  }
+
+  .event-timeline code {
+    grid-column: 1 / -1;
+  }
+}
