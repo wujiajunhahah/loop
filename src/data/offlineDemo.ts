@@ -9,6 +9,7 @@ import type {
   Interaction,
   OriginalAsset,
   RecipientSession,
+  RecipientPresentContext,
   Relationship,
   TriggerPolicy,
   V2Relationship,
@@ -21,6 +22,10 @@ import type {
   ReviewedContextCapture,
 } from '../features/capture/captureTypes'
 import type { RecipientExperienceData, RecipientExperienceSnapshot } from '../features/recipient/session'
+import {
+  OfflineJourneyOrchestrator,
+  type EchoMapJourneyData,
+} from '../features/journey/services'
 
 const demoRelationship: V2Relationship = {
   contractVersion: 2,
@@ -55,7 +60,7 @@ const rainyDayContext: ContextItem = {
   originalAssetId: 'asset-rainy-day',
   derivedContentIds: ['derived-rainy-day'],
   topic: 'The rainy walk home',
-  meaning: 'Mei remembers sharing one umbrella with Lin after school.',
+  meaning: 'Mei 记得 Lin 从小常忘记带伞，并叮嘱她淋湿后先把头发吹干，别着凉。',
   importanceWeight: 0.8,
   sensitivityLevel: 'low',
   visibility: 'relationship_specific',
@@ -68,7 +73,7 @@ const rainyDayAsset: OriginalAsset = {
   id: 'asset-rainy-day',
   contextId: rainyDayContext.id,
   modality: 'text',
-  uri: `data:text/plain;charset=utf-8,${encodeURIComponent('那天下雨，我们共撑一把伞慢慢走回家。')}`,
+  uri: `data:text/plain;charset=utf-8,${encodeURIComponent('你从小就总忘带伞。以后遇到下雨，淋湿了回去先把头发吹干，别着凉。')}`,
   capturedAt: rainyDayContext.createdAt,
 }
 
@@ -92,7 +97,7 @@ const rainyDayTriggerPolicy: TriggerPolicy = {
   optedIn: false,
 }
 
-export class OfflineDemoService implements GuidedCapturePort, AgentRuntimeRepository, RecipientExperienceData {
+export class OfflineDemoService implements GuidedCapturePort, AgentRuntimeRepository, RecipientExperienceData, EchoMapJourneyData {
   private readonly contexts = new Map<string, ContextItem>()
   private readonly assets = new Map<string, OriginalAsset>()
   private readonly derived = new Map<string, DerivedContent>()
@@ -101,8 +106,9 @@ export class OfflineDemoService implements GuidedCapturePort, AgentRuntimeReposi
   private artifactService = new InteractionArtifactService()
   private currentContextId = rainyDayContext.id
   private runtime = this.createRuntime()
+  private journey!: OfflineJourneyOrchestrator
 
-  constructor() {
+  constructor(private readonly now: () => string = () => new Date().toISOString()) {
     this.reset()
   }
 
@@ -119,6 +125,45 @@ export class OfflineDemoService implements GuidedCapturePort, AgentRuntimeReposi
     this.currentContextId = rainyDayContext.id
     this.artifactService = new InteractionArtifactService()
     this.runtime = this.createRuntime()
+    this.journey = new OfflineJourneyOrchestrator({
+      getSourceSnapshot: () => {
+        return {
+          relationship: structuredClone(demoRelationship),
+          context: structuredClone(rainyDayContext),
+          asset: structuredClone(rainyDayAsset),
+          generationPolicy: structuredClone(rainyDayPolicy),
+          triggerPolicy: structuredClone(rainyDayTriggerPolicy),
+        }
+      },
+      runAgent: (source, request) =>
+        new RecipientScopedAgentRuntime(
+          {
+            getRelationship: async (id) =>
+              id === source.relationship.id ? source.relationship : undefined,
+            getContext: async (id) =>
+              id === source.context.id ? source.context : undefined,
+            getOriginalAsset: async (id) =>
+              id === source.asset.id ? source.asset : undefined,
+            getGenerationPolicy: async (relationshipId) =>
+              relationshipId === source.relationship.id
+                ? source.generationPolicy
+                : undefined,
+            getTriggerPolicy: async (relationshipId) =>
+              relationshipId === source.relationship.id
+                ? source.triggerPolicy
+                : undefined,
+          },
+          new DeterministicAgentGenerationAdapter(),
+          new DeterministicOwnerReviewAdapter({
+            approved: true,
+            reviewedByUserId: source.relationship.ownerId,
+            reviewedAt: '2026-08-02T12:00:00.000Z',
+          }),
+          this.now,
+        ).run(request),
+      artifacts: this.artifactService,
+      now: this.now,
+    })
   }
 
   async listRelationships() {
@@ -204,17 +249,33 @@ export class OfflineDemoService implements GuidedCapturePort, AgentRuntimeReposi
       recipientId: demoRelationship.recipientId,
       initiatedByRecipient: true,
       status: 'active',
-      startedAt: new Date().toISOString(),
+      startedAt: this.now(),
     }
   }
 
-  createInteraction(session: RecipientSession): Interaction {
+  createInteraction(
+    session: RecipientSession,
+    presentInput?: Pick<RecipientPresentContext, 'modality' | 'content'>,
+  ): Interaction {
     return {
       id: `interaction:${session.id}`,
       relationshipId: session.relationshipId,
       recipientId: session.recipientId,
       initiatedByRecipient: session.initiatedByRecipient,
       startedAt: session.startedAt,
+      ...(presentInput
+        ? {
+            presentContext: {
+              id: `present-context:${session.id}`,
+              recipientId: session.recipientId,
+              modality: presentInput.modality,
+              content: presentInput.content.trim(),
+              createdAt: this.now(),
+              authorRole: 'recipient' as const,
+              eligibleAsRecorderContext: false as const,
+            },
+          }
+        : {}),
     }
   }
 
@@ -241,7 +302,7 @@ export class OfflineDemoService implements GuidedCapturePort, AgentRuntimeReposi
     const { relationship, context, asset, generationPolicy, recipient } = this.getSnapshot()
     const completedInteraction: Interaction = {
       ...interaction,
-      completedAt: new Date().toISOString(),
+      completedAt: this.now(),
       output: {
         outputType: output.outputMode === 'source_replay' ? 'original' : 'composition',
         content: output.content,
@@ -285,6 +346,50 @@ export class OfflineDemoService implements GuidedCapturePort, AgentRuntimeReposi
     return this.triggerPolicies.get(relationshipId)
   }
 
+  getJourneySnapshot() {
+    return this.journey.getJourneySnapshot()
+  }
+
+  startJourney(...args: Parameters<EchoMapJourneyData['startJourney']>) {
+    return this.journey.startJourney(...args)
+  }
+
+  selectJourneyIntensity(...args: Parameters<EchoMapJourneyData['selectJourneyIntensity']>) {
+    return this.journey.selectJourneyIntensity(...args)
+  }
+
+  inspectJourneyProposal(...args: Parameters<EchoMapJourneyData['inspectJourneyProposal']>) {
+    return this.journey.inspectJourneyProposal(...args)
+  }
+
+  acceptJourneyAction(...args: Parameters<EchoMapJourneyData['acceptJourneyAction']>) {
+    return this.journey.acceptJourneyAction(...args)
+  }
+
+  completeJourneyAction(...args: Parameters<EchoMapJourneyData['completeJourneyAction']>) {
+    return this.journey.completeJourneyAction(...args)
+  }
+
+  loadJourneyMemory(...args: Parameters<EchoMapJourneyData['loadJourneyMemory']>) {
+    return this.journey.loadJourneyMemory(...args)
+  }
+
+  saveJourneyResponse(...args: Parameters<EchoMapJourneyData['saveJourneyResponse']>) {
+    return this.journey.saveJourneyResponse(...args)
+  }
+
+  createJourneyPostcard(...args: Parameters<EchoMapJourneyData['createJourneyPostcard']>) {
+    return this.journey.createJourneyPostcard(...args)
+  }
+
+  lightJourneyNode(...args: Parameters<EchoMapJourneyData['lightJourneyNode']>) {
+    return this.journey.lightJourneyNode(...args)
+  }
+
+  exitJourney(...args: Parameters<EchoMapJourneyData['exitJourney']>) {
+    return this.journey.exitJourney(...args)
+  }
+
   private createRuntime() {
     return new RecipientScopedAgentRuntime(
       this,
@@ -294,6 +399,7 @@ export class OfflineDemoService implements GuidedCapturePort, AgentRuntimeReposi
         reviewedByUserId: demoRelationship.ownerId,
         reviewedAt: '2026-08-02T12:00:00.000Z',
       }),
+      this.now,
     )
   }
 }

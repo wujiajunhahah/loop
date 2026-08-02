@@ -62,6 +62,7 @@ export class InteractionArtifactService {
     }
 
     const contexts = this.validateSources(input, provenance)
+    this.validatePresentContext(input)
     const recipientResponse = this.validateRecipientResponse(input)
     const originalQuoteAssetId = provenance.sourceAssetIds.find((assetId) =>
       contexts.some((context) => context.originalAssetId === assetId),
@@ -81,6 +82,9 @@ export class InteractionArtifactService {
       sourceContextIds: artifactProvenance.sourceContextIds,
       generatedSummary: interaction.output.content,
       ...(originalQuoteAssetId ? { originalQuoteAssetId } : {}),
+      ...(interaction.presentContext
+        ? { presentContext: Object.freeze({ ...interaction.presentContext }) }
+        : {}),
       createdAt: interaction.completedAt,
       ...(recipientResponse ? { recipientResponse: recipientResponse.content } : {}),
       saved: true,
@@ -197,5 +201,21 @@ export class InteractionArtifactService {
       )
     }
     return response
+  }
+
+  private validatePresentContext(input: CreateInteractionArtifactInput): void {
+    const presentContext = input.interaction.presentContext
+    if (!presentContext) return
+    if (
+      presentContext.recipientId !== input.interaction.recipientId ||
+      presentContext.authorRole !== 'recipient' ||
+      presentContext.eligibleAsRecorderContext !== false ||
+      !presentContext.content.trim()
+    ) {
+      throw new ArtifactError(
+        'RECIPIENT_CONTEXT_AUTHOR_INVALID',
+        'Present context must be non-empty and authored by the interaction recipient.',
+      )
+    }
   }
 }

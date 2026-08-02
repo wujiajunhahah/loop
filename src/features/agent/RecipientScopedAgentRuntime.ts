@@ -68,6 +68,7 @@ export class RecipientScopedAgentRuntime implements RecipientScopedAgentPort {
       generationPolicy,
     )
     this.requireAllowedTopics(request.topic, sources, generationPolicy, mode)
+    this.requireValidPresentContext(request, relationship)
 
     if (request.mode === 'source_replay') {
       return this.replay(request, relationship, sources, triggerReason)
@@ -80,6 +81,7 @@ export class RecipientScopedAgentRuntime implements RecipientScopedAgentPort {
       mode,
       topic: request.topic,
       sources,
+      presentContext: request.interaction.presentContext,
     })
     if (
       !draft.content.trim() ||
@@ -186,6 +188,25 @@ export class RecipientScopedAgentRuntime implements RecipientScopedAgentPort {
       throw new AgentError(
         'RECIPIENT_ENTRY_REQUIRED',
         'An active recipient-initiated entry is required.',
+      )
+    }
+  }
+
+  private requireValidPresentContext(
+    request: RecipientAgentRequest,
+    relationship: V2Relationship,
+  ): void {
+    const presentContext = request.interaction.presentContext
+    if (!presentContext) return
+    if (
+      presentContext.recipientId !== relationship.recipientId ||
+      presentContext.authorRole !== 'recipient' ||
+      presentContext.eligibleAsRecorderContext !== false ||
+      !presentContext.content.trim()
+    ) {
+      throw new AgentError(
+        'INTERACTION_SCOPE_MISMATCH',
+        'Present context must be non-empty and authored by the active recipient.',
       )
     }
   }

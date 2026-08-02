@@ -6,6 +6,7 @@ import type {
   Interaction,
   OriginalAsset,
   Provenance,
+  RecipientPresentContext,
   Relationship,
   SensitivityLevel,
   TriggerPolicy,
@@ -68,6 +69,7 @@ export interface AgentGenerationAdapter {
     mode: Exclude<GenerationMode, 'source_replay'>
     topic: string
     sources: readonly ContextItem[]
+    presentContext?: RecipientPresentContext
   }): Promise<GeneratedDraft>
 }
 

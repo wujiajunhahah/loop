@@ -205,6 +205,28 @@ describe('recipient-scoped Agent V2 output modes', () => {
     })
   })
 
+  it('connects recipient-authored present context without treating it as source provenance', async () => {
+    const result = await runtime().run(request({
+      mode: 'source_composition',
+      interaction: {
+        ...interaction,
+        presentContext: {
+          id: 'present-a',
+          recipientId: relationship.recipientId,
+          modality: 'text',
+          content: 'I made the recipe today.',
+          createdAt: now,
+          authorRole: 'recipient',
+          eligibleAsRecorderContext: false,
+        },
+      },
+    }))
+
+    expect(result.content).toContain('I made the recipe today.')
+    expect(result.provenance.sourceContextIds).toEqual(['context-a'])
+    expect(result.provenance.sourceContextIds).not.toContain('present-a')
+  })
+
   it('returns explicitly authorized bounded inference with confidence and sensitivity', async () => {
     const result = await runtime({
       contexts: [context({ sensitivityLevel: 'medium' })],

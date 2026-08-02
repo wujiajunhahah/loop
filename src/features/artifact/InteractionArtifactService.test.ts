@@ -222,6 +222,35 @@ describe('InteractionArtifactService', () => {
     )
   })
 
+  it('keeps present context attributed to the recipient and outside recorder Context', async () => {
+    const service = new InteractionArtifactService()
+    const presentContext = {
+      id: 'present-a',
+      recipientId: 'recipient-a',
+      modality: 'text' as const,
+      content: 'I rode the train today.',
+      createdAt: '2026-08-02T09:00:00.000Z',
+      authorRole: 'recipient' as const,
+      eligibleAsRecorderContext: false as const,
+    }
+    const artifact = await service.create(createInput({
+      interaction: interaction({ presentContext }),
+    }))
+
+    expect(artifact.presentContext).toEqual(presentContext)
+    expect(artifact.sourceContextIds).toEqual(['context-a'])
+    expect(artifact.sourceContextIds).not.toContain('present-a')
+
+    await expectArtifactError(
+      service.create(createInput({
+        interaction: interaction({
+          presentContext: { ...presentContext, recipientId: 'recipient-b' },
+        }),
+      })),
+      'RECIPIENT_CONTEXT_AUTHOR_INVALID',
+    )
+  })
+
   it('supports all artifact types and labels original replay without inventing text', async () => {
     const originalInteraction = interaction({
       output: {

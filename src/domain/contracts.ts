@@ -105,6 +105,16 @@ export type TriggerReason =
   | 'location_context'
   | 'plan_progress'
 
+export interface RecipientPresentContext {
+  id: EntityId
+  recipientId: EntityId
+  modality: Extract<ContextModality, 'text' | 'image'>
+  content: string
+  createdAt: string
+  authorRole: 'recipient'
+  eligibleAsRecorderContext: false
+}
+
 export interface TriggerPolicy {
   relationshipId: EntityId
   mode: TriggerMode
@@ -130,6 +140,7 @@ export interface Interaction {
   recipientId: EntityId
   initiatedByRecipient: boolean
   startedAt: string
+  presentContext?: RecipientPresentContext
   completedAt?: string
   output?: InteractionOutput
 }
@@ -143,6 +154,7 @@ export interface InteractionArtifact {
   sourceContextIds: readonly EntityId[]
   generatedSummary?: string
   originalQuoteAssetId?: EntityId
+  presentContext?: RecipientPresentContext
   createdAt: string
   recipientResponse?: string
   saved: boolean

@@ -37,22 +37,28 @@ describe('offline V2 Demo integration', () => {
     window.location.hash = '#/recipient'
     await screen.findByRole('button', { name: /主动进入/ })
     fireEvent.click(screen.getByRole('button', { name: /主动进入/ }))
-    fireEvent.click(await screen.findByRole('button', { name: /是我的，打开看看/ }))
-    await screen.findByText('Rainy day walk')
+    fireEvent.click(await screen.findByRole('button', { name: /是留给我的，继续/ }))
+    fireEvent.change(await screen.findByLabelText('今天发生了什么？'), {
+      target: { value: '今天下雨，我又忘记带伞了。' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: /让过去的记忆回应现在/ }))
+    await screen.findByText('一份给今天的回应。')
     expect(screen.getByText('雨天一起回家的真实记录。')).toBeInTheDocument()
     expect(screen.getAllByText(/来源 Context ID/)).toHaveLength(2)
-    expect(screen.getByText('AI-generated')).toBeInTheDocument()
+    expect(screen.getByText(/这让 W·HERE 找到一段经过本人确认的记忆/)).toHaveTextContent('今天下雨，我又忘记带伞了。')
 
-    fireEvent.click(screen.getByRole('button', { name: /接受并保存明信片/ }))
-    await screen.findByText('这张远行明信片已经为你留存。')
+    fireEvent.click(screen.getByRole('button', { name: /收藏这封远方回信/ }))
+    await screen.findByText('今天与过去，都被好好放在这里。')
     expect(screen.getByText(/Artifact ID · artifact:interaction:session-demo/)).toBeInTheDocument()
 
-    fireEvent.change(screen.getByLabelText('留下一个接收者回应'), {
+    fireEvent.change(screen.getByLabelText('为今天再留一句话'), {
       target: { value: '我也记得那场雨。' },
     })
-    fireEvent.click(screen.getByRole('button', { name: /保存回应/ }))
-    await screen.findByText('已保存为 recipient-authored response。')
+    fireEvent.click(screen.getByRole('button', { name: /保存我的话/ }))
+    await screen.findByText('已独立保存为接收者内容，不会成为记录者生前事实。')
     expect(offlineDemoService.getSnapshot().context.topic).toBe('Rainy day walk')
+    expect(offlineDemoService.getSnapshot().context.meaning).toBe('这是一段可以原样保留的母女记忆。')
+    expect(offlineDemoService.getSnapshot().context.meaning).not.toContain('我又忘记带伞')
   })
 
   it('keeps unavailable hardware optional through the software fallback', async () => {

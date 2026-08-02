@@ -2,18 +2,18 @@ import { ButtonLink, PageHeader, StatusPanel } from '../../shared/ui'
 
 const entries = [
   {
-    title: 'Recorder',
-    body: 'Record a real Context, choose its recipient, and review the source boundary.',
+    title: '留下记忆',
+    body: '通过关系化引导，留下真实内容，并确认它可以如何被使用。',
     to: '/capture',
   },
   {
-    title: 'Recipient',
-    body: 'Enter by choice, inspect provenance, and keep the resulting postcard.',
+    title: '收到回应',
+    body: '主动说出今天发生的事，让一段有来源的过去回应此刻。',
     to: '/recipient',
   },
   {
-    title: 'Hardware simulator',
-    body: 'Optionally exercise the hardware-neutral bridge and software fallback.',
+    title: '信物入口',
+    body: '用可选的实体信物进入体验；没有硬件也能完成全部流程。',
     to: '/hardware',
   },
 ]
@@ -22,9 +22,9 @@ export function HomePage() {
   return (
     <>
       <PageHeader
-        eyebrow="Loop offline demo"
-        title="让真实的关系，继续抵达。"
-        description="记录者留下真实 Context 并设定边界，接收者主动打开，Relationship Agent 只在授权范围内整理，明信片记录这次有来源的互动。"
+        eyebrow="我在 W·HERE · We are here"
+        title="过去的记忆，回应现在的生活。"
+        description="在生前留下真实的声音、经历与关系边界；当亲友主动靠近时，让经过确认的记忆给出克制、有来源的回应。"
       />
 
       <div className="entry-grid">
@@ -34,14 +34,14 @@ export function HomePage() {
             <h2>{entry.title}</h2>
             <p>{entry.body}</p>
             <ButtonLink to={entry.to} tone="secondary">
-              Open
+              进入
             </ButtonLink>
           </article>
         ))}
       </div>
 
-      <StatusPanel title="Offline demo foundation" state="ready">
-        主流程可在无网络、无 API、无设备时完成“录入 Context、关系 Agent、接收者主动进入、来源追溯、远行明信片、离线 fallback”。硬件模拟器是可替换的旁路入口。
+      <StatusPanel title="真实高于拟真" state="ready">
+        AI 不扮演离世者，也不自由编造。每次回应都保留原始来源、授权边界与 AI 标记，并由接收者决定何时开始和结束。
       </StatusPanel>
     </>
   )

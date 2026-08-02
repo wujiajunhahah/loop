@@ -29,8 +29,9 @@ function getRoute() {
 
 function NavigationLink({ route, label }: { route: string; label: string }) {
   const currentRoute = useSyncExternalStore(subscribeToHash, getRoute)
+  const active = currentRoute === route || currentRoute.startsWith(`${route}/`)
   return (
-    <a className={currentRoute === route ? 'active' : undefined} href={`#${route}`}>
+    <a className={active ? 'active' : undefined} href={`#${route}`}>
       {label}
     </a>
   )
@@ -46,18 +47,18 @@ export function App() {
     <div className="app-shell">
       <nav className="topbar" aria-label="Primary navigation">
         <a className="brand" href="#/">
-          Loop<span aria-hidden="true">.</span>
+          <span className="brand__cn">我在</span> W<span aria-hidden="true">·</span>HERE
         </a>
         <div className="topbar__links">
-          <NavigationLink route="/capture" label="Recorder" />
-          <NavigationLink route="/recipient" label="Recipient" />
-          <NavigationLink route="/hardware" label="Hardware" />
+          <NavigationLink route="/capture" label="留下记忆" />
+          <NavigationLink route="/recipient" label="收到回应" />
+          <NavigationLink route="/hardware" label="信物入口" />
         </div>
       </nav>
       <main>
         <Page />
       </main>
-      <footer>Loop MVP / offline mock mode / recipient remains in control</footer>
+      <footer>W·HERE MVP · 一份会回应的记忆 · 接收者始终拥有主动权</footer>
     </div>
   )
 }

@@ -5,6 +5,7 @@ import type {
   Interaction,
   OriginalAsset,
   RecipientChoice,
+  RecipientPresentContext,
   RecipientSession,
   TriggerPolicy,
   V2Relationship,
@@ -30,7 +31,10 @@ export interface RecipientExperienceSnapshot {
 export interface RecipientExperienceData {
   getSnapshot(): RecipientExperienceSnapshot
   createSession(): RecipientSession
-  createInteraction(session: RecipientSession): Interaction
+  createInteraction(
+    session: RecipientSession,
+    presentInput?: Pick<RecipientPresentContext, 'modality' | 'content'>,
+  ): Interaction
   loadPresentation(interaction: Interaction): Promise<{
     original: RecipientAgentResult
     derived?: RecipientAgentResult
@@ -129,13 +133,29 @@ export function chooseRecipientAction(
   return applyRecipientChoice(session, choice)
 }
 
-export function createRecipientInteraction(session: RecipientSession): Interaction {
+export function createRecipientInteraction(
+  session: RecipientSession,
+  presentInput?: Pick<RecipientPresentContext, 'modality' | 'content'>,
+): Interaction {
   return {
     id: `interaction:${session.id}`,
     relationshipId: demoRelationship.id,
     recipientId: demoRecipient.id,
     initiatedByRecipient: session.initiatedByRecipient,
     startedAt: session.startedAt,
+    ...(presentInput
+      ? {
+          presentContext: {
+            id: `present-context:${session.id}`,
+            recipientId: session.recipientId,
+            modality: presentInput.modality,
+            content: presentInput.content.trim(),
+            createdAt: session.startedAt,
+            authorRole: 'recipient' as const,
+            eligibleAsRecorderContext: false as const,
+          },
+        }
+      : {}),
   }
 }
 
