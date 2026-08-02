@@ -30,9 +30,8 @@ write claims / reports in this canonical root.
 
 - `origin/main` points to `4df8023` (`docs: polish hackathon demo readme`).
 - Current branch: `agent/loop-v2-integration`.
-- The last verified pushed product commit on `origin/agent/loop-v2-integration`
-  is `2f42ff2` (`fix: guard hardware simulator async actions`). Local commits
-  after it contain only the status and overnight report updates described below.
+- The last verified pushed commit on `origin/agent/loop-v2-integration` is
+  `8f2724b` (`docs: add final browser smoke evidence`).
 - The current working tree is clean.
 - Verification on the current integrated branch: 15 test files / 85 tests
   passed, typecheck passed, production build passed, and `git diff --check`
@@ -40,6 +39,21 @@ write claims / reports in this canonical root.
 - `npm test -- --run` can occasionally spend longer starting parallel Vitest
   workers in this environment; verbose and single-worker runs have passed, and
   the latest full run completed normally.
+
+## Latest handoff
+
+- The current branch is `agent/loop-v2-integration`; do not switch branches
+  automatically when resuming.
+- The latest verified result is 15 test files / 85 tests passed, typecheck,
+  production build, and `git diff --check` passed.
+- The recipient, capture, and hardware async recovery fixes are complete. The
+  integrated Demo remains software-first, pull-only, source-backed, and hardware
+  optional.
+- GitHub access works through the Windows system proxy `127.0.0.1:7890`. Git
+  does not inherit it automatically; for a push, set temporary `HTTP_PROXY` and
+  `HTTPS_PROXY` variables in the command process only.
+- The next useful action is a现场 rehearsal or a new evidence-backed P1 issue;
+  do not add persistence or new product scope without a concrete Demo need.
 
 ## V2 migration finding
 

@@ -91,3 +91,13 @@
 - 浏览器证据：本机 Edge headless 渲染 `#/recipient` 成功，DOM 包含 `pull_only`、`The rainy walk home` 和“主动进入”入口。
 - 限定说明：没有进行截图级响应式布局验收；此前环境缺少可用浏览器，本次只完成无头路由/首屏 smoke check。
 - push 结果：最终本地文档提交仍未推送；最近一次 push 两次网络失败已记录在 Round 8，未继续重试。
+
+## Handoff · 03:35
+
+- 时间：2026-08-02 03:35
+- 当前分支：`agent/loop-v2-integration`。
+- 当前远端：`origin/agent/loop-v2-integration` 已同步到 `8f2724b`；`origin/main` 保持 `4df8023`。
+- 已完成：Recipient、Capture、Hardware simulator 的异步失败恢复和重复点击保护；状态文档已刷新；Edge headless 已验证首页和 `#/recipient` HTTP 200 与首屏 DOM。
+- 最新验证：15 test files / 85 tests passed；typecheck、build、`git diff --check` passed。
+- 网络说明：GitHub 访问需要临时使用 Windows 系统代理 `http://127.0.0.1:7890`，不要写入全局 Git 配置或仓库文件。
+- 下次建议：保持当前分支，先读取本文件和 `.loop/STATUS.md`；优先做现场演示排练，只有发现可复现问题才继续改代码。
