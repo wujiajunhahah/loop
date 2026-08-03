@@ -4,15 +4,17 @@
 
 ## 当前结论
 
-这里不是多个互相独立的软件版本。当前只有一个可运行应用：**W·HERE Offline Software MVP V2**。除此之外，仓库还保存了展位设计 V2-V8、45 秒宣传视频工程、产品文档和工程协作记录。
+这里不是多个互相独立的仓库或软件副本。当前有一个可运行应用：**W·HERE Offline Software MVP V2**，其中包含两个并行产品体验：**Echo Map** 和 **Memory Room**。除此之外，仓库还保存了展位设计 V2-V8、45 秒宣传视频工程、产品文档和工程协作记录。
 
 当前可交付物：
 
 | 交付物 | 当前版本或位置 | 状态 |
 | --- | --- | --- |
 | Web 应用 | 根目录 React/Vite 项目 | 可运行、可构建 |
-| 产品功能测试 | `src/**/*.test.ts(x)` | 19 个文件 / 199 项 |
-| 浏览器 Judge Path | `tests/e2e/judge-demo.spec.ts` | desktop/mobile 共 6 项 |
+| Echo Map 产品 | `#/recipient/echo-map` | 节点式 Agent 记忆旅程 |
+| Memory Room 产品 | `#/game` | 五章节叙事记忆游戏 |
+| 产品功能测试 | `src/**/*.test.ts(x)` | 20 个文件 / 201 项 |
+| 浏览器 Judge Path | `tests/e2e/*.spec.ts` | desktop/mobile 共 8 项 |
 | 展位立牌 | `booth/loop-booth-banner-v8.*` | V8 为唯一当前打印版 |
 | 产品宣传片 | `videos/where-launch/renders/where-launch-demo.mp4` | 45 秒 16:9 Demo |
 | 现场演示脚本 | `docs/DEMO_RUNBOOK.md` | 可直接照稿演示 |
@@ -46,6 +48,15 @@ Loop/
 
 ## 已实现功能
 
+### 两条产品线
+
+| 产品 | 结构 | 当前作用 |
+| --- | --- | --- |
+| Echo Map | 强度、提议、行动、记忆、回应、postcard、点亮节点 | 验证来源、授权、状态转换和完成完整性 |
+| Memory Room | 看见、说、寻找、去做、你在 | 验证无分数、可离开、把关系记忆带回现实生活的叙事体验 |
+
+完整对比见 `docs/PRODUCT_LINES.md`。
+
 ### 1. 记录者留下记忆
 
 - 为指定关系录入文字、模拟语音或图片说明。
@@ -77,7 +88,16 @@ Loop/
 
 作用：把同一套来源、授权和退出权包装成更有仪式感的可玩体验。
 
-### 4. 信物与硬件模拟器
+### 4. Memory Room / 记忆旅程
+
+- 以五章节连续流程运行：看见、说、寻找、去做、你在。
+- 区分 Mei 原始来源、W·HERE 建议和 Lin 今天写下的内容。
+- 可以跳过文字、返回上一章、寻找多条线索并随时离开。
+- 没有分数、连续签到、亲密度、答错惩罚或强制通关。
+
+作用：证明 W·HERE 不只是回应工具，也可以成为有边界的叙事记忆游戏。
+
+### 5. 信物与硬件模拟器
 
 - 模拟 owner 绑定、recipient 托付、凭证验证和触发事件。
 - 支持 touch、tap、gesture、NFC、BLE 与软件来源合约。
@@ -86,7 +106,7 @@ Loop/
 
 作用：证明实体戒指、NFC 或桌面物件可以成为入口，但核心产品不依赖硬件。
 
-### 5. 安全与来源边界
+### 6. 安全与来源边界
 
 - 只允许 entrusted relationship 内的 recipient 访问。
 - 拒绝 private、跨关系或无来源 Context。
@@ -141,6 +161,7 @@ Loop/
 | 运行软件 | `README.md` |
 | 第一次完整操作 | `docs/USER_GUIDE.md` |
 | 两分钟比赛演示 | `docs/DEMO_RUNBOOK.md` |
+| 区分两个产品 | `docs/PRODUCT_LINES.md` |
 | 查看全部文档 | `docs/README.md` |
 | 找当前展位文件 | `booth/README.md` |
 | 找宣传视频 | `videos/README.md` |

@@ -3,6 +3,7 @@ import { CapturePage } from './pages/CapturePage'
 import { HardwarePage } from './pages/HardwarePage'
 import { HomePage } from './pages/HomePage'
 import { RecipientPage } from './pages/RecipientPage'
+import { GamePage } from './pages/GamePage'
 import { HardwareBindPage, HardwareSimulatorPage, HardwareTriggerPage, hardwareSimulatorRoutes } from '../features/hardware/HardwareSimulatorPage'
 import { clearEchoMapEntryAuthorization } from '../features/recipient/RecipientExperience'
 
@@ -13,6 +14,7 @@ const pages = {
   '/capture/review': CapturePage,
   '/capture/success': CapturePage,
   '/recipient': RecipientPage,
+  '/game': GamePage,
   '/hardware': HardwarePage,
   [hardwareSimulatorRoutes.overview]: HardwareSimulatorPage,
   [hardwareSimulatorRoutes.bind]: HardwareBindPage,
@@ -50,9 +52,11 @@ export function App() {
       ? '留下记忆'
       : route.startsWith('/recipient')
         ? '收到回应'
-        : route.startsWith('/hardware')
-          ? '信物入口'
-          : '一份会回应的记忆'
+        : route.startsWith('/game')
+          ? '记忆旅程'
+          : route.startsWith('/hardware')
+            ? '信物入口'
+            : '一份会回应的记忆'
     document.title = `${section} | 我在 W·HERE`
     if (!route.startsWith('/recipient/echo-map')) clearEchoMapEntryAuthorization()
     if (!route.startsWith('/recipient/echo-map')) mainRef.current?.focus({ preventScroll: true })
@@ -67,6 +71,7 @@ export function App() {
         <div className="topbar__links">
           <NavigationLink route="/capture" label="留下记忆" />
           <NavigationLink route="/recipient" label="收到回应" />
+          <NavigationLink route="/game" label="记忆旅程" />
           <NavigationLink route="/hardware" label="信物入口" />
         </div>
       </nav>

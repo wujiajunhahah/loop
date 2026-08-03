@@ -4,6 +4,7 @@
 - Owner: `opencode`
 - Scope: first playable five-chapter memory game
 - Workspace: current dirty workspace explicitly authorized by user
-- Status: active
+- Status: completed
 - Allowed source files: task file list
 - Started: 2026-08-03
+- Completed: 2026-08-03

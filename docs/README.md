@@ -7,6 +7,7 @@
 | [`../PROJECT_MAP.md`](../PROJECT_MAP.md) | 仓库结构、当前交付物、版本和功能总览 |
 | [`USER_GUIDE.md`](USER_GUIDE.md) | 从安装到完成产品闭环的逐步教程 |
 | [`DEMO_RUNBOOK.md`](DEMO_RUNBOOK.md) | 两分钟演示脚本、Go/No-Go、恢复和评委问答 |
+| [`PRODUCT_LINES.md`](PRODUCT_LINES.md) | Echo Map 与 Memory Room 两条产品线的区别 |
 
 ## 产品与工程边界
 

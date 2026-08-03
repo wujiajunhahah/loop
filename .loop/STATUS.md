@@ -13,9 +13,10 @@ resume without relying on chat history.
 
 ## Current phase
 
-Integrated Software MVP V2 is in controlled quality iteration. The P0 offline
-Demo loop is implemented and current work is limited to evidence-backed
-stability, recovery, accessibility, and Demo clarity improvements.
+Integrated Software MVP V2 now contains two product experiences on one shared
+source-backed platform: Echo Map and the five-chapter Memory Room. The P0
+offline Demo loop is implemented; further work remains evidence-backed and
+bounded by relationship, provenance, recipient-control and offline constraints.
 
 ## Single source of truth
 
@@ -45,8 +46,9 @@ write claims / reports in this canonical root.
   (`feat: evolve demo into W·HERE memory response`).
 - The working tree contains uncommitted W·HERE UI, Echo Map, browser-test,
   documentation, booth, video and project-tooling changes.
-- Current verification: 19 test files / 199 tests, typecheck, production build,
-  `git diff --check`, and 6 desktop/mobile Playwright tests passed.
+- Current verification: 20 test files / 201 tests passed in the standard suite
+  and with one Vitest worker, typecheck, production build, `git diff --check`,
+  and 8 desktop/mobile Playwright tests passed.
 - `npm test -- --run` can occasionally spend longer starting parallel Vitest
   workers in this environment; verbose and single-worker runs have passed, and
   the latest full run completed normally.
@@ -84,8 +86,12 @@ write claims / reports in this canonical root.
 - `TASK-020-echo-map-demo-integration.md` is complete and accepted. The first
   Echo Map playable is discoverable after recipient identity confirmation and
   integrated through postcard and lit node.
-- Final verification: 19 test files / 199 tests, typecheck, production build,
-  `git diff --check`, and desktop/narrow browser smoke passed.
+- `TASK-023-memory-game-first-playable.md` is complete. Memory Room is
+  discoverable at `#/game` and implements 看见 → 说 → 寻找 → 去做 → 你在 without
+  score, failure penalty, fake completion or source/author conflation.
+- Final verification: 20 test files / 201 tests in standard and single-worker
+  runs, typecheck, production build, `git diff --check`, and 8 desktop/mobile
+  Playwright tests passed.
 - No implementation task is currently active. Further game nodes, persistence,
   sensors, routes, hardware, Memory Garden, or multiplayer require a new
   evidence-backed task and explicit scope decision.

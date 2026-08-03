@@ -9,8 +9,8 @@ W·HERE 是一个软件优先的关系化数字记忆原型：记录者为重要
 ![React](https://img.shields.io/badge/React-19-202522?style=flat-square&logo=react&logoColor=61DAFB)
 ![TypeScript](https://img.shields.io/badge/TypeScript-7-202522?style=flat-square&logo=typescript&logoColor=3178C6)
 ![Vite](https://img.shields.io/badge/Vite-8-202522?style=flat-square&logo=vite&logoColor=FFD62E)
-![Vitest](https://img.shields.io/badge/tests-199%20passed-1f6753?style=flat-square)
-![Playwright](https://img.shields.io/badge/browser%20checks-6%20passed-2e7d5b?style=flat-square)
+![Vitest](https://img.shields.io/badge/tests-201%20passed-1f6753?style=flat-square)
+![Playwright](https://img.shields.io/badge/browser%20checks-8%20passed-2e7d5b?style=flat-square)
 ![Offline](https://img.shields.io/badge/demo-offline-d7674c?style=flat-square)
 
 ## 先看什么
@@ -21,6 +21,7 @@ W·HERE 是一个软件优先的关系化数字记忆原型：记录者为重要
 | 第一次运行和操作 | [傻瓜式使用教程](docs/USER_GUIDE.md) |
 | 2 分钟黑客松演示 | [Demo Runbook](docs/DEMO_RUNBOOK.md) |
 | 产品和工程边界 | [产品理念](05_PRODUCT_CONCEPT_W_HERE.md) |
+| 区分两个产品 | [双产品说明](docs/PRODUCT_LINES.md) |
 | 全部文档索引 | [docs/README.md](docs/README.md) |
 | 当前展位设计 | [booth/README.md](booth/README.md) |
 | 当前宣传片工程 | [videos/README.md](videos/README.md) |
@@ -33,15 +34,27 @@ W·HERE 是一个软件优先的关系化数字记忆原型：记录者为重要
 | --- | --- |
 | Web 应用 | 根目录 React + TypeScript + Vite 应用 |
 | 核心闭环 | 记录者采集 -> 所有者审核 -> 接收者主动进入 -> 有来源回应 -> 远方回信 |
-| Echo Map | 一条可退出、可跳过、可查看来源并点亮节点的记忆旅程 |
+| 产品一 | Echo Map：节点式、状态机驱动的 Agent 记忆旅程 |
+| 产品二 | Memory Room：看见、说、寻找、去做、你在的五章节记忆游戏 |
 | 硬件 | 绑定、托付、触发和 software fallback 模拟器 |
-| 测试 | 19 个 Vitest 文件 / 199 项测试 |
-| 浏览器验收 | Playwright desktop/mobile 共 6 项 |
+| 测试 | 20 个 Vitest 文件 / 201 项测试 |
+| 浏览器验收 | Playwright desktop/mobile 共 8 项 |
 | 生产构建 | 已通过 |
 | 网络和后端 | 无网络、无数据库、无 API Key |
 | AI | 本地确定性生成适配器，不是真实云端大模型 |
 
-## 产品闭环
+## 双产品结构
+
+当前仓库包含一个 W·HERE 底层平台和两条并行产品线：
+
+| 产品 | 入口 | 交互模型 | 用途 |
+| --- | --- | --- | --- |
+| **Echo Map** | `#/recipient/echo-map` | 强度、提议、行动、记忆、postcard、节点状态机 | 验证 Agent 旅程的来源、授权、退出权和完成完整性 |
+| **Memory Room** | `#/game` | 看见、说、寻找、去做、你在五章节 | 验证无分数、可离开、能把记忆带回生活的叙事游戏 |
+
+它们不是两个代码副本，也不是同一个产品的换皮页面。两个产品共用 Context、关系授权、来源、Agent 和 artifact 基础设施，但具有不同的状态模型、视觉语言和演示目标。详细比较见 [双产品说明](docs/PRODUCT_LINES.md)。
+
+## 共享产品闭环
 
 ```text
 记录者留下真实内容
@@ -81,6 +94,16 @@ Agent 从授权 Context 找到有来源的有限回应
 - 查看提议，接受 W·HERE 提供的中性行动并主动确认完成。
 - 打开原始记忆、查看来源、留下回应、生成 postcard、点亮节点。
 - 支持 Skip、Stop、Reject、Hide、重试和离开后的授权撤销。
+
+### Memory Room / 记忆旅程
+
+- 在独立 `#/game` 路由运行五章节连续体验。
+- “看见”浏览 Mei 主动留下的分层记忆。
+- “说”允许 Lin 写下今天，也允许跳过。
+- “寻找”通过声音、物品和路线探索来源线索，没有答错惩罚。
+- “去做”提供明确标记为 W·HERE 建议的现实行动，不伪装成 Mei 的要求。
+- “你在”展示 Lin 今天写下的新章节；没有填写时不会生成替代内容。
+- 没有分数、签到、亲密度、失败惩罚或强制通关。
 
 ### 信物模拟器
 
@@ -156,6 +179,7 @@ http://localhost:5173/#/
 | `#/recipient/memory/:id` | 查看真实来源与 AI 回应 |
 | `#/recipient/complete` | 收藏远方回信和接收者内容 |
 | `#/recipient/echo-map` | Echo Map Journey |
+| `#/game` | Memory Room 五章节记忆游戏 |
 | `#/hardware-simulator` | 可选硬件模拟器 |
 
 ## 仓库结构
@@ -166,6 +190,7 @@ src/                    Web 应用源码
   data/                 离线 Demo 的共享内存集成边界
   domain/               Context、关系、策略、互动和 artifact 合约
   features/             capture、agent、artifact、recipient、journey、hardware
+                        game（Memory Room）
   adapters/             确定性 Agent、播放和硬件模拟适配器
 tests/e2e/              Playwright 真实浏览器验收
 docs/                   使用、演示、隐私、资产和工程文档
@@ -182,6 +207,7 @@ videos/                 独立 HyperFrames 宣传视频工程
 ## 版本说明
 
 - 软件不是多个文件夹版本，主要通过 Git 提交演进：初始 MVP -> Capture/Agent/Recipient/Hardware -> V2 provenance -> W·HERE -> Echo Map。
+- Echo Map 和 Memory Room 是同一 W·HERE 平台上的两条产品线，不是历史版本覆盖关系。
 - `booth/` 里的 V2-V7 是设计历史，**V8 是唯一当前交付版**，打印前只看 [booth/README.md](booth/README.md)。
 - `videos/where-launch/` 是独立宣传片工程，当前 MP4 位于 `videos/where-launch/renders/where-launch-demo.mp4`。
 - 依赖、测试配置和当前工作状态以根目录配置、[PROJECT_MAP.md](PROJECT_MAP.md) 与 [.loop/STATUS.md](.loop/STATUS.md) 为准。
@@ -218,6 +244,7 @@ npx playwright install chromium
 
 - [项目地图](PROJECT_MAP.md)：整个仓库的总览和版本解释。
 - [文档索引](docs/README.md)：按使用、产品边界和开发流程查找文档。
+- [双产品说明](docs/PRODUCT_LINES.md)：Echo Map 与 Memory Room 的定位、流程和区别。
 - [傻瓜式使用教程](docs/USER_GUIDE.md)：从安装到完整闭环。
 - [Demo Runbook](docs/DEMO_RUNBOOK.md)：比赛现场操作和恢复路径。
 - [产品理念](05_PRODUCT_CONCEPT_W_HERE.md)：品牌、定位和叙事边界。

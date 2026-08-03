@@ -32,6 +32,7 @@ export function HomePage() {
           <div className="home-hero__actions">
             <ButtonLink to="/recipient">打开留给我的记忆 <span aria-hidden="true">→</span></ButtonLink>
             <ButtonLink to="/capture" tone="secondary">开始留下记忆</ButtonLink>
+            <ButtonLink to="/game" tone="secondary">进入记忆旅程</ButtonLink>
           </div>
           <p className="home-hero__note"><span aria-hidden="true" /> 由你进入 · 来源可查 · 随时离开</p>
         </div>

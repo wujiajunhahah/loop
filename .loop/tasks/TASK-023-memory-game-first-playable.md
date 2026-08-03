@@ -14,6 +14,7 @@ must treat the recorded person as a source of memory, never as an always-on NPC.
 - `src/features/game/MemoryGame.tsx`
 - `src/features/game/memory-game.css`
 - `src/features/game/MemoryGame.test.tsx`
+- `tests/e2e/memory-game-smoke.spec.ts`
 - `.loop/claims/TASK-023--<session-id>.md`
 - `.loop/reports/TASK-023-memory-game-first-playable.md`
 
