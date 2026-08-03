@@ -22,6 +22,7 @@ W·HERE 是一个软件优先的关系化数字记忆原型：记录者为重要
 | 2 分钟黑客松演示 | [Demo Runbook](docs/DEMO_RUNBOOK.md) |
 | 产品和工程边界 | [产品理念](05_PRODUCT_CONCEPT_W_HERE.md) |
 | 区分两个产品 | [双产品说明](docs/PRODUCT_LINES.md) |
+| 交给原生 ChatGPT | [ChatGPT 交接文档](docs/CHATGPT_NATIVE_HANDOFF.md) |
 | 全部文档索引 | [docs/README.md](docs/README.md) |
 | 当前展位设计 | [booth/README.md](booth/README.md) |
 | 当前宣传片工程 | [videos/README.md](videos/README.md) |
@@ -245,6 +246,7 @@ npx playwright install chromium
 - [项目地图](PROJECT_MAP.md)：整个仓库的总览和版本解释。
 - [文档索引](docs/README.md)：按使用、产品边界和开发流程查找文档。
 - [双产品说明](docs/PRODUCT_LINES.md)：Echo Map 与 Memory Room 的定位、流程和区别。
+- [ChatGPT 原生交接](docs/CHATGPT_NATIVE_HANDOFF.md)：把方案、图片和功能任务交给网页端 ChatGPT 的上下文包。
 - [傻瓜式使用教程](docs/USER_GUIDE.md)：从安装到完整闭环。
 - [Demo Runbook](docs/DEMO_RUNBOOK.md)：比赛现场操作和恢复路径。
 - [产品理念](05_PRODUCT_CONCEPT_W_HERE.md)：品牌、定位和叙事边界。

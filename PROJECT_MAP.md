@@ -162,6 +162,7 @@ Loop/
 | 第一次完整操作 | `docs/USER_GUIDE.md` |
 | 两分钟比赛演示 | `docs/DEMO_RUNBOOK.md` |
 | 区分两个产品 | `docs/PRODUCT_LINES.md` |
+| 交给原生 ChatGPT | `docs/CHATGPT_NATIVE_HANDOFF.md` |
 | 查看全部文档 | `docs/README.md` |
 | 找当前展位文件 | `booth/README.md` |
 | 找宣传视频 | `videos/README.md` |

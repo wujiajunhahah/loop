@@ -8,6 +8,7 @@
 | [`USER_GUIDE.md`](USER_GUIDE.md) | 从安装到完成产品闭环的逐步教程 |
 | [`DEMO_RUNBOOK.md`](DEMO_RUNBOOK.md) | 两分钟演示脚本、Go/No-Go、恢复和评委问答 |
 | [`PRODUCT_LINES.md`](PRODUCT_LINES.md) | Echo Map 与 Memory Room 两条产品线的区别 |
+| [`CHATGPT_NATIVE_HANDOFF.md`](CHATGPT_NATIVE_HANDOFF.md) | 交给原生 ChatGPT 的产品、视觉和执行上下文 |
 
 ## 产品与工程边界
 
