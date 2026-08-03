@@ -3,6 +3,7 @@ import { CapturePage } from './pages/CapturePage'
 import { HardwarePage } from './pages/HardwarePage'
 import { HomePage } from './pages/HomePage'
 import { RecipientPage } from './pages/RecipientPage'
+import { DeviceCenterPage } from '../features/devices/DeviceCenterPage'
 import { HardwareBindPage, HardwareSimulatorPage, HardwareTriggerPage, hardwareSimulatorRoutes } from '../features/hardware/HardwareSimulatorPage'
 
 const pages = {
@@ -12,6 +13,7 @@ const pages = {
   '/capture/review': CapturePage,
   '/capture/success': CapturePage,
   '/recipient': RecipientPage,
+  '/devices': DeviceCenterPage,
   '/hardware': HardwarePage,
   [hardwareSimulatorRoutes.overview]: HardwareSimulatorPage,
   [hardwareSimulatorRoutes.bind]: HardwareBindPage,
@@ -29,8 +31,13 @@ function getRoute() {
 
 function NavigationLink({ route, label }: { route: string; label: string }) {
   const currentRoute = useSyncExternalStore(subscribeToHash, getRoute)
+  const isCurrent = currentRoute === route || currentRoute.startsWith(`${route}/`)
   return (
-    <a className={currentRoute === route ? 'active' : undefined} href={`#${route}`}>
+    <a
+      aria-current={isCurrent ? 'page' : undefined}
+      className={isCurrent ? 'active' : undefined}
+      href={`#${route}`}
+    >
       {label}
     </a>
   )
@@ -40,7 +47,9 @@ export function App() {
   const route = useSyncExternalStore(subscribeToHash, getRoute)
   const Page = route.startsWith('/recipient/')
     ? RecipientPage
-    : pages[route as keyof typeof pages] ?? HomePage
+    : route.startsWith('/devices/')
+      ? DeviceCenterPage
+      : pages[route as keyof typeof pages] ?? HomePage
 
   return (
     <div className="app-shell">
@@ -51,7 +60,7 @@ export function App() {
         <div className="topbar__links">
           <NavigationLink route="/capture" label="Recorder" />
           <NavigationLink route="/recipient" label="Recipient" />
-          <NavigationLink route="/hardware" label="Hardware" />
+          <NavigationLink route="/devices" label="Devices" />
         </div>
       </nav>
       <main>
