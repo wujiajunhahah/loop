@@ -1,0 +1,3 @@
+{"id":"image_001","type":"image","path":"assets/home.png","source":"existing","description":"home","width":1920,"height":1080,"provenance":{"provider":"local","adopted":true}}
+{"id":"image_002","type":"image","path":"assets/recipient-entry.png","source":"existing","description":"recipient entry","width":1920,"height":1080,"provenance":{"provider":"local","adopted":true}}
+{"id":"image_003","type":"image","path":"assets/recipient-share.png","source":"existing","description":"recipient share","width":1920,"height":1080,"provenance":{"provider":"local","adopted":true}}

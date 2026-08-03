@@ -1,0 +1,44 @@
+<template>
+  <style>
+    #root { position: relative; width: 1920px; height: 1080px; overflow: hidden; container-type: size; font-family: sans-serif; color: #172421; }
+    #root * { box-sizing: border-box; }
+    .f02-ground { position: absolute; inset: 0; background: #f9fbfa; }
+    .f02-top { position: absolute; top: 58px; left: 72px; right: 72px; display: flex; justify-content: space-between; padding-bottom: 20px; border-bottom: 2px solid #224652; color: #224652; font: 500 22px/1 monospace; letter-spacing: .12em; }
+    .f02-viewport { position: absolute; top: 126px; left: 72px; width: 1375px; height: 735px; overflow: hidden; border: 2px solid #224652; background: #edf1ef; }
+    .f02-zoom-outer, .f02-zoom-inner { position: absolute; inset: 0; transform-origin: 50% 50%; will-change: transform; }
+    .f02-shot { width: 100%; height: 100%; object-fit: cover; object-position: center top; display: block; }
+    .f02-rail { position: absolute; top: 126px; right: 72px; width: 330px; height: 735px; padding: 44px 34px; color: #f9fbfa; background: #224652; }
+    .f02-rail h2 { margin: 0 0 38px; font-size: 52px; line-height: 1.05; font-weight: 500; }
+    .f02-chip { padding: 17px 0; border-top: 2px solid #397487; color: #c4dee6; font: 500 22px/1.2 monospace; }
+    .f02-value { position: absolute; left: 106px; bottom: 94px; width: 1110px; font-size: 54px; line-height: 1.2; font-weight: 500; color: #224652; }
+    .f02-value span { color: #c7553f; }
+    .f02-route { position: absolute; left: 1220px; bottom: 119px; width: 545px; height: 2px; background: #c7553f; transform-origin: left center; }
+  </style>
+  <div data-hf-id="hf-wxky" id="root" data-composition-id="02-product-promise" data-start="0" data-duration="8.5" data-width="1920" data-height="1080">
+    <div data-hf-id="hf-jv7p" class="clip f02-ground" data-start="0" data-duration="8.5" data-track-index="0"></div>
+    <div data-hf-id="hf-guu6" class="clip f02-top" data-start="0" data-duration="8.5" data-track-index="1"><span data-hf-id="hf-qn32">W·HERE / PRODUCT PROMISE</span><span data-hf-id="hf-ui0s">02 / 06</span></div>
+    <div data-hf-id="hf-isnk" class="clip f02-viewport" data-start="0" data-duration="8.5" data-track-index="2">
+      <div data-hf-id="hf-ujob" id="f02-zoom-outer" class="f02-zoom-outer" data-layout-allow-overflow=""><div data-hf-id="hf-eg3a" id="f02-zoom-inner" class="f02-zoom-inner"><img data-hf-id="hf-qntu" class="f02-shot" src="assets/home.png" alt="W·HERE homepage"></div></div>
+    </div>
+    <aside data-hf-id="hf-siq9" id="f02-rail" class="clip f02-rail" data-start="0" data-duration="8.5" data-track-index="3">
+      <h2 data-hf-id="hf-ozze">一份会回应的记忆</h2>
+      <div data-hf-id="hf-ccv2" id="f02-c1" class="f02-chip">01 / 真实保存</div><div data-hf-id="hf-3x8m" id="f02-c2" class="f02-chip">02 / 关系编排</div><div data-hf-id="hf-7ekd" id="f02-c3" class="f02-chip">03 / 有限回应</div>
+    </aside>
+    <div data-hf-id="hf-zf5x" id="f02-value" class="clip f02-value" data-start="0" data-duration="8.5" data-track-index="4">过去的记忆，<span data-hf-id="hf-bj04">回应今天。</span></div>
+    <div data-hf-id="hf-8jh6" id="f02-route" class="clip f02-route" data-start="0" data-duration="8.5" data-track-index="5"></div>
+  </div>
+  <script>
+    window.__timelines = window.__timelines || {};
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo('.f02-viewport', { y: 54, opacity: 0 }, { y: 0, opacity: 1, duration: .7, ease: 'power3.out' }, .05);
+    tl.fromTo('#f02-rail', { scale: .92, opacity: 0 }, { scale: 1, opacity: 1, duration: .65, ease: 'power3.out' }, .25);
+    tl.to('#f02-zoom-outer', { scale: 1.18, duration: 1.6, ease: 'power3.inOut' }, 1.8);
+    tl.to('#f02-zoom-inner', { x: -125, y: 55, duration: 1.6, ease: 'power3.inOut' }, 1.8);
+    tl.fromTo('#f02-c1', { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: .45, ease: 'power3.out' }, 2.35);
+    tl.fromTo('#f02-c2', { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: .45, ease: 'power3.out' }, 3.25);
+    tl.fromTo('#f02-c3', { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: .45, ease: 'power3.out' }, 4.15);
+    tl.fromTo('#f02-value', { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: .6, ease: 'power3.out' }, 5.4);
+    tl.fromTo('#f02-route', { scaleX: 0 }, { scaleX: 1, duration: .9, ease: 'power2.out' }, 5.9);
+    window.__timelines['02-product-promise'] = tl;
+  </script>
+</template>

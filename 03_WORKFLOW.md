@@ -27,6 +27,22 @@
 - 写 Session Report；
 - 提出 Decision Request。
 
+### 临时总览替代窗口
+
+当 Codex 桌面版总览窗口暂时不可用时，由当前明确指定的 OpenCode 窗口
+临时承担总览职责，直到用户明确取消或 Codex 总览窗口恢复。
+
+临时职责包括：
+
+- 读取并维护项目状态、任务队列、决策和风险；
+- 审查任务边界、依赖、冲突和集成条件；
+- 判断是否可以开始下一项任务，或是否需要 Decision Request；
+- 汇总测试、构建、人工 smoke 和现场演示证据；
+- 把所有结论写回 `.loop/` 文档，不以本窗口对话记录作为唯一依据。
+
+临时总览窗口仍必须遵守“一次一个任务、明确所有权、不得覆盖其他窗口修改”
+的协作规则。它可以做协调和审查，但不应因为临时替代总览而扩大业务实现范围。
+
 ---
 
 ## 项目结构
@@ -43,9 +59,17 @@ Loop/
     DECISIONS.md
     RISKS.md
     INTEGRATION_QUEUE.md
+    CONVENTIONS.md
+    checklists/
+    autonomous/
     tasks/
     claims/
     reports/
+  .agents/skills/
+  .opencode/agents/
+  .opencode/commands/
+  docs/
+  videos/
 ```
 
 ---
@@ -135,3 +159,41 @@ Loop/
 - 硬件拖住软件。
 
 任何任务都应优先服务端到端演示。
+
+## 质量门禁
+
+每个任务除自身验收标准外，都必须执行
+`.loop/checklists/quality-redlines.md`。该清单借鉴 AutoDev 的质量红线、
+对抗式审查和文档漂移检查，但按 Loop 的 OpenCode 协作方式落地。
+
+最小自动验证入口为：
+
+```text
+npm run verify
+git diff --check
+```
+
+`verify` 只负责测试、类型检查和生产构建；任务报告仍必须记录人工 smoke
+路径、失败恢复路径，以及未验证的浏览器、媒体、网络或硬件行为。
+
+有界自动产品/UI 迭代使用 `.loop/autonomous/README.md` 和
+`/iterate-product <TASK-ID>`。它一次只能执行一个已经审核的任务，最多两次
+实现尝试；worker 不得自行更新 canonical status、决策、风险和集成队列，也不得
+自动领取下一任务。
+
+现场提交前必须阅读 `docs/DEMO_RUNBOOK.md`、`docs/PRIVACY_SECURITY.md` 和
+`docs/ASSET_RIGHTS.md`。它们分别负责操作恢复、敏感数据边界和公开素材权利，不能
+用产品 README 的功能介绍替代。
+
+提交前应独立审查以下四类问题：
+
+- 契约：实现是否满足任务 acceptance criteria；
+- 边界：是否出现无来源生成、跨关系读取、随机推送或硬件强依赖；
+- 降级：是否把 mock、placeholder 或 offline fallback 误写成生产能力；
+- 漂移：README、STATUS、DECISIONS、RISKS、claims 和 reports 是否与实际
+  验证结果一致。
+
+项目级代码质量使用 Superpowers 精简工程包：异常先走
+`systematic-debugging`，完成声明前走 `verification-before-completion`，重大功能或
+跨模块改动在集成前走 `requesting-code-review`。这些 Skill 不替代 `.loop` 的
+task、claim、allowed files、报告或协调者决策。

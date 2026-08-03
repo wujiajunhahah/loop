@@ -5,8 +5,8 @@
   margin-top: 18px;
   overflow: hidden;
   background: var(--line);
-  border: 1px solid var(--line);
-  border-radius: 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: 3px;
 }
 
 .capture-actor {
@@ -19,7 +19,8 @@
 .range-label span,
 .field-note {
   color: var(--muted);
-  font-size: 12px;
+  font-family: var(--mono);
+  font-size: 11px;
 }
 
 .capture-actor strong {
@@ -90,7 +91,7 @@
 
 .review-context dt {
   color: var(--muted);
-  font-size: 12px;
+  font: 700 10px/1.4 var(--mono);
 }
 
 .review-context dd {
@@ -106,9 +107,9 @@
 
 .suggestion-card {
   padding: 20px;
-  background: #f1f8f3;
-  border: 1px solid #aac9bd;
-  border-radius: 6px;
+  background: #e7f0ec;
+  border: 1px solid #9ab9ae;
+  border-radius: 3px;
 }
 
 .suggestion-card--resolved {
@@ -130,7 +131,8 @@
 
 .suggestion-status {
   color: var(--green);
-  font-size: 12px;
+  font-family: var(--mono);
+  font-size: 11px;
   font-weight: 750;
 }
 
@@ -146,7 +148,7 @@
   color: var(--ink);
   background: transparent;
   border: 1px solid var(--line);
-  border-radius: 4px;
+  border-radius: 2px;
   font: inherit;
   font-size: 13px;
   cursor: pointer;

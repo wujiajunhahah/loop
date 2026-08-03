@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Lavine chibi avatar">
+  <defs><clipPath id="c"><circle cx="256" cy="256" r="244"/></clipPath></defs>
+  <g clip-path="url(#c)">
+    <circle cx="256" cy="256" r="244" fill="#ffe6e3"/>
+    <path d="M20 410c65-73 151-106 236-106s171 33 236 106v122H20Z" fill="#1f6753"/>
+    <path d="M162 346c26-27 61-40 94-40s68 13 94 40l-27 166H189Z" fill="#69d8ca"/>
+    <path d="M216 327h80v82c-23 18-57 18-80 0Z" fill="#f0b494" stroke="#242730" stroke-width="9"/>
+    <ellipse cx="256" cy="234" rx="119" ry="133" fill="#f6c5a8" stroke="#242730" stroke-width="11"/>
+    <path d="M137 221c-4-95 44-157 128-157 69 0 119 42 126 113-36-32-88-35-131-22-44 14-78 43-123 66Z" fill="#4d2834" stroke="#242730" stroke-width="11" stroke-linejoin="round"/>
+    <path d="M167 165c30-57 109-82 176-44-49 0-92 14-129 42Z" fill="#ff7780"/>
+    <path d="M149 209c-26 5-34 30-23 55 9 20 27 29 46 20M363 209c26 5 34 30 23 55-9 20-27 29-46 20" fill="#f6c5a8" stroke="#242730" stroke-width="9" stroke-linecap="round"/>
+    <ellipse cx="211" cy="238" rx="18" ry="23" fill="#242730"/><ellipse cx="301" cy="238" rx="18" ry="23" fill="#242730"/>
+    <circle cx="217" cy="231" r="6" fill="#fff"/><circle cx="307" cy="231" r="6" fill="#fff"/>
+    <path d="M224 291c20 18 44 18 64 0" fill="none" stroke="#242730" stroke-width="9" stroke-linecap="round"/>
+    <path d="M184 204c20-12 39-12 55-2M273 202c18-10 37-9 55 2" fill="none" stroke="#242730" stroke-width="9" stroke-linecap="round"/>
+    <circle cx="177" cy="273" r="12" fill="#ed8f8c" opacity="0.55"/><circle cx="335" cy="273" r="12" fill="#ed8f8c" opacity="0.55"/>
+    <path d="M190 366l66 48 66-48" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <circle cx="256" cy="256" r="244" fill="none" stroke="#ff7f83" stroke-width="12"/>
+</svg>

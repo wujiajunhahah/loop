@@ -122,6 +122,10 @@ export function CaptureFlow({
     }
   }, [relationshipLoadAttempt, service])
 
+  useEffect(() => {
+    if (errors.length > 0) document.getElementById('capture-error-summary')?.focus()
+  }, [errors])
+
   const setField = <K extends keyof CaptureDraft>(field: K, value: CaptureDraft[K]) => {
     setDraft((current) => ({ ...current, [field]: value }))
     setErrors([])
@@ -289,21 +293,21 @@ export function CaptureFlow({
     if (!savedId) {
       return (
         <section className="capture-success">
-          <p className="eyebrow">Context result · restart required</p>
+          <p className="eyebrow">保存结果 · 需要重新开始</p>
           <h1>没有可恢复的保存结果。</h1>
           <p className="page-header__description">离线 Demo 刷新后不会伪造已保存状态。请重新录入并完成所有者审核。</p>
-          <a className="button button--primary" href="#/capture/new">重新录入 Context</a>
+          <a className="button button--primary" href="#/capture/new">重新录入记忆</a>
         </section>
       )
     }
     return (
       <section className="capture-success">
-        <p className="eyebrow">Context saved</p>
-        <h1>This moment has a place.</h1>
+        <p className="eyebrow">记忆已保存</p>
+        <h1>这一刻，有了安放的地方。</h1>
         <p className="page-header__description">
           原始素材与已审核的派生内容已分别保存，并限定给 {selected?.recipient.displayName ?? '选定的接收者'}。
         </p>
-        <p className="capture-meta">Context ID: {savedId || 'saved locally'}</p>
+        <p className="capture-meta">Context ID · {savedId || '已保存到本地'}</p>
         <div className="capture-actions">
           <a className="button button--primary" href="#/capture/new">继续记录</a>
           <a className="button button--secondary" href="#/">返回首页</a>
@@ -317,10 +321,10 @@ export function CaptureFlow({
     if (draftErrors.length) {
       return (
         <section className="capture-success">
-          <p className="eyebrow">Owner review · restart required</p>
+          <p className="eyebrow">所有者审核 · 需要重新开始</p>
           <h1>记录草稿需要重新开始。</h1>
           <p className="page-header__description">页面刷新后，未保存草稿不会被恢复或当作已审核内容。请返回编辑器重新填写。</p>
-          <a className="button button--primary" href="#/capture/new">返回 Context 编辑器</a>
+          <a className="button button--primary" href="#/capture/new">返回记忆编辑器</a>
         </section>
       )
     }
@@ -328,8 +332,8 @@ export function CaptureFlow({
       <div className="capture-page">
         <header className="page-header">
           <div>
-            <p className="eyebrow">Step 2 / Owner review</p>
-            <h1>Review every layer.</h1>
+            <p className="eyebrow">第 2 步 · 所有者审核</p>
+            <h1>逐层确认，再保存。</h1>
             <p className="page-header__description">原始素材不会被 AI 内容覆盖。只有明确批准或编辑后的建议会保存。</p>
           </div>
           <span className="step-count">02 / 02</span>
@@ -337,21 +341,21 @@ export function CaptureFlow({
 
         {selected && (
           <dl className="review-context">
-            <div><dt>Subject</dt><dd>{selected.subject.displayName}</dd></div>
-            <div><dt>Recorder / editor</dt><dd>{selected.recorders.find(({ id }) => id === draft.recorderId)?.displayName}</dd></div>
-            <div><dt>Recipient</dt><dd>{selected.recipient.displayName} · {selected.relationship.label}</dd></div>
+            <div><dt>记忆主体</dt><dd>{selected.subject.displayName}</dd></div>
+            <div><dt>记录与编辑</dt><dd>{selected.recorders.find(({ id }) => id === draft.recorderId)?.displayName}</dd></div>
+            <div><dt>接收者</dt><dd>{selected.recipient.displayName} · {displayRelationshipLabel(selected.relationship.label)}</dd></div>
           </dl>
         )}
 
         <div className="review-grid">
           <section className="review-panel">
-            <div className="panel-heading"><span>Original material</span><strong>始终保留</strong></div>
+            <div className="panel-heading"><span>原始素材</span><strong>始终保留</strong></div>
             <h2>{draft.topic || '未填写主题'}</h2>
             <p>{draft.originalText || '没有可审核的原始内容。'}</p>
             <p className="capture-meta">{inputModeLabel(draft.inputMode)} · 为什么重要：{draft.meaning || '未填写'}</p>
           </section>
           <section className="review-panel">
-            <div className="panel-heading"><span>Context weights</span><strong>由所有者设定</strong></div>
+            <div className="panel-heading"><span>内容权重</span><strong>由所有者设定</strong></div>
             <p>使用场景：{draft.scenarios.join('、') || '未选择'}</p>
             <p>重要性权重：{draft.importanceWeight} / 5</p>
             <p>情绪权重：{draft.emotionLabel ? `${draft.emotionLabel} ${draft.emotionIntensity}%` : '未设置'}</p>
@@ -365,7 +369,7 @@ export function CaptureFlow({
         </div>
 
         <section aria-labelledby="ai-review-heading">
-          <p className="eyebrow">Derived AI content</p>
+          <p className="eyebrow">AI 派生内容 · 逐条审核</p>
           <h2 id="ai-review-heading">逐条决定，不默认接受。</h2>
           {suggestions.length === 0 ? (
             <p className="form-note">未请求 AI 整理；本次只保存原始素材。</p>
@@ -401,7 +405,7 @@ export function CaptureFlow({
         </section>
 
         <section className="policy-panel">
-          <p className="eyebrow">Usage boundary</p>
+          <p className="eyebrow">使用边界</p>
           <h2>来源必需，AI 必须标记。</h2>
           <p>禁止新增事实、代做重大决定和高风险输出。接收者主动打开时才可呈现。</p>
           <label className="check-row">
@@ -419,23 +423,23 @@ export function CaptureFlow({
   }
 
   if (loadingRelationships) {
-    return <section className="capture-success"><p className="eyebrow">Guided Context editor</p><h1>正在准备关系入口。</h1><p className="page-header__description" role="status">正在加载可用的接收者关系。</p></section>
+    return <section className="capture-success" aria-busy="true"><p className="eyebrow">关系记忆编辑器</p><h1>正在准备关系入口。</h1><p className="page-header__description" role="status">正在加载可用的接收者关系。</p></section>
   }
 
   if (relationshipLoadError) {
-    return <section className="capture-success"><p className="eyebrow">Guided Context editor · recovery</p><h1>关系入口暂时不可用。</h1><p className="page-header__description">没有载入接收者关系，因此不会创建或保存 Context。</p><div className="form-errors" role="alert">{relationshipLoadError}</div><button className="button button--primary" type="button" onClick={() => setRelationshipLoadAttempt((attempt) => attempt + 1)}>重试加载关系</button></section>
+    return <section className="capture-success"><p className="eyebrow">关系记忆编辑器 · 恢复</p><h1>关系入口暂时不可用。</h1><p className="page-header__description">没有载入接收者关系，因此不会创建或保存 Context。</p><div className="form-errors" role="alert">{relationshipLoadError}</div><button className="button button--primary" type="button" onClick={() => setRelationshipLoadAttempt((attempt) => attempt + 1)}>重试加载关系</button></section>
   }
 
   if (relationships.length === 0) {
-    return <section className="capture-success"><p className="eyebrow">Guided Context editor</p><h1>暂无可用关系。</h1><p className="page-header__description">先建立一个经过授权的接收者关系，再开始记录 Context。</p></section>
+    return <section className="capture-success"><p className="eyebrow">关系记忆编辑器</p><h1>暂无可用关系。</h1><p className="page-header__description">当前 Demo 尚未建立可记录的接收者关系。</p><a className="button button--secondary" href="#/capture">返回记录入口</a></section>
   }
 
   return (
     <div className="capture-page">
       <header className="page-header">
         <div>
-          <p className="eyebrow">Guided Context editor</p>
-          <h1>Leave something true.</h1>
+          <p className="eyebrow">关系记忆编辑器</p>
+          <h1>留下一件真实的小事。</h1>
           <p className="page-header__description">选择具体关系，记录原始素材、重要原因与未来使用场景。</p>
         </div>
         <span className="step-count">01 / 02</span>
@@ -447,15 +451,15 @@ export function CaptureFlow({
             <span>关系 / 接收者</span>
             <select aria-label="关系 / 接收者" value={draft.relationshipId} onChange={(event) => selectRelationship(event.target.value)}>
               <option value="">请选择关系</option>
-              {relationships.map(({ relationship, recipient }) => <option key={relationship.id} value={relationship.id}>{recipient.displayName} · {relationship.label}</option>)}
+              {relationships.map(({ relationship, recipient }) => <option key={relationship.id} value={relationship.id}>{recipient.displayName} · {displayRelationshipLabel(relationship.label)}</option>)}
             </select>
           </label>
           {selected && (
             <div className="capture-actor-grid">
-              <div className="capture-actor"><span>Subject</span><strong>{selected.subject.displayName}</strong></div>
-              <div className="capture-actor"><span>Recorder / editor</span><strong>{selected.recorders.map(({ displayName }) => displayName).join('、')}</strong></div>
-              <div className="capture-actor"><span>Recipient</span><strong>{selected.recipient.displayName}</strong></div>
-              <div className="capture-actor"><span>Buyer</span><strong>{selected.buyer?.displayName ?? '未指定'}</strong></div>
+              <div className="capture-actor"><span>记忆主体</span><strong>{selected.subject.displayName}</strong></div>
+              <div className="capture-actor"><span>记录与编辑</span><strong>{selected.recorders.map(({ displayName }) => displayName).join('、')}</strong></div>
+              <div className="capture-actor"><span>接收者</span><strong>{selected.recipient.displayName}</strong></div>
+              <div className="capture-actor"><span>购买者</span><strong>{selected.buyer?.displayName ?? '未指定'}</strong></div>
             </div>
           )}
           {selected && selected.recorders.length > 1 && (
@@ -526,6 +530,10 @@ function inputModeLabel(mode: InputMode) {
   return '文字'
 }
 
+function displayRelationshipLabel(label: string) {
+  return label === 'Mother and daughter' ? '母女' : label
+}
+
 function ErrorList({ errors }: { errors: string[] }) {
-  return <div className="form-errors" role="alert"><strong>保存前还需要处理：</strong><ul>{errors.map((error) => <li key={error}>{error}</li>)}</ul></div>
+  return <div id="capture-error-summary" className="form-errors" role="alert" tabIndex={-1}><strong>保存前还需要处理：</strong><ul>{errors.map((error) => <li key={error}>{error}</li>)}</ul></div>
 }

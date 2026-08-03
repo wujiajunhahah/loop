@@ -1,0 +1,204 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="750mm" height="2000mm" viewBox="0 0 750 2000" role="img" aria-labelledby="title desc">
+  <title id="title">Loop booth banner for Physical AI Hackathon 2026</title>
+  <desc id="desc">A print-ready roll-up banner introducing Loop, a source-backed relationship agent.</desc>
+  <defs>
+    <linearGradient id="eventLine" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ff7f83"/>
+      <stop offset="0.52" stop-color="#f0c4c3"/>
+      <stop offset="1" stop-color="#64e0d7"/>
+    </linearGradient>
+    <radialGradient id="orbBase" cx="48%" cy="35%" r="70%">
+      <stop offset="0" stop-color="#f9f4ef"/>
+      <stop offset="0.22" stop-color="#ff8d9b"/>
+      <stop offset="0.48" stop-color="#6ee5df"/>
+      <stop offset="0.72" stop-color="#94b9d4"/>
+      <stop offset="1" stop-color="#0a1830"/>
+    </radialGradient>
+    <linearGradient id="orbRibbon" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f5f2ec" stop-opacity="0.95"/>
+      <stop offset="0.32" stop-color="#ff7185" stop-opacity="0.92"/>
+      <stop offset="0.58" stop-color="#6fe2d8" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#1d4265" stop-opacity="0.2"/>
+    </linearGradient>
+    <filter id="orbGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="20"/>
+    </filter>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000b1c" flood-opacity="0.24"/>
+    </filter>
+    <style>
+      text { font-family: Bahnschrift, Arial, "Microsoft YaHei", "PingFang SC", sans-serif; letter-spacing: 0; }
+      .serif { font-family: Georgia, "Times New Roman", "Microsoft YaHei", serif; }
+      .white { fill: #fffefa; }
+      .muted { fill: #aab5c5; }
+      .coral { fill: #ff8388; }
+      .mint { fill: #6ce0d6; }
+      .smallcaps { font-size: 12px; font-weight: 700; }
+      .body { font-size: 17px; }
+    </style>
+  </defs>
+
+  <rect width="750" height="2000" fill="#031127"/>
+  <rect x="0" y="0" width="750" height="16" fill="url(#eventLine)"/>
+
+  <!-- Event identity -->
+  <g transform="translate(56 62)">
+    <text class="white" x="0" y="0" font-size="27" font-weight="800">Physical AI</text>
+    <text class="white" x="0" y="33" font-size="27" font-weight="800">Hackathon 2026</text>
+    <text x="378" y="23" font-size="21" font-weight="500" fill="url(#eventLine)">Bring AI To Life.</text>
+    <circle cx="618" cy="8" r="29" fill="none" stroke="#fffefa" stroke-width="6"/>
+    <circle cx="618" cy="8" r="12" fill="#fffefa"/>
+    <rect x="614" y="1" width="4" height="14" rx="2" fill="#031127"/>
+    <rect x="622" y="1" width="4" height="14" rx="2" fill="#031127"/>
+  </g>
+  <rect x="56" y="132" width="638" height="3" fill="url(#eventLine)"/>
+
+  <!-- Main proposition -->
+  <g transform="translate(56 235)">
+    <text class="serif white" x="0" y="0" font-size="122" font-weight="700">Loop<tspan fill="#ff8388">.</tspan></text>
+    <text class="white" x="3" y="66" font-size="35" font-weight="700">Leave something true.</text>
+    <text class="muted" x="3" y="111" font-size="19">Real memories. A chosen person. A moment they control.</text>
+    <text class="white" x="3" y="149" font-size="18">把真实的声音与故事，留给一个具体的人，在对方准备好时抵达。</text>
+  </g>
+
+  <!-- One-sentence product definition -->
+  <g transform="translate(56 445)">
+    <rect width="638" height="162" rx="6" fill="#fffefa"/>
+    <rect x="0" y="0" width="8" height="162" fill="#ff8388"/>
+    <text x="31" y="34" font-size="12" font-weight="800" fill="#1f6753">LOOP IN ONE SENTENCE</text>
+    <circle cx="38" cy="69" r="6" fill="#ff8388"/>
+    <text class="serif" x="57" y="77" font-size="18" font-weight="700" fill="#17201c">REAL MEMORY</text>
+    <circle cx="238" cy="69" r="6" fill="#f2c9c4"/>
+    <text class="serif" x="257" y="77" font-size="18" font-weight="700" fill="#17201c">CHOSEN PERSON</text>
+    <circle cx="460" cy="69" r="6" fill="#6ce0d6"/>
+    <text class="serif" x="470" y="77" font-size="18" font-weight="700" fill="#17201c">THEIR MOMENT</text>
+    <path d="M39 112H553" stroke="#d9d8d0" stroke-width="2"/>
+    <path d="M525 103l18 9-18 9" fill="none" stroke="#1f6753" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="584" cy="112" r="22" fill="#dcebe5"/>
+    <circle cx="584" cy="112" r="7" fill="#1f6753"/>
+    <text x="31" y="145" font-size="17" font-weight="800" fill="#1f6753">A moment they control. · 在对方准备好时抵达</text>
+  </g>
+
+  <!-- Four-step loop -->
+  <g transform="translate(56 654)">
+    <text class="smallcaps coral" x="0" y="0">ONE TRACEABLE JOURNEY</text>
+    <text class="white" x="0" y="34" font-size="25" font-weight="700">Four actions. One relationship.</text>
+
+    <path d="M72 126 C168 56 260 56 319 126 S472 196 566 126" fill="none" stroke="#233650" stroke-width="5"/>
+    <path d="M72 126 C168 56 260 56 319 126 S472 196 566 126" fill="none" stroke="url(#eventLine)" stroke-width="3" stroke-dasharray="7 10"/>
+
+    <!-- Record -->
+    <g transform="translate(0 91)">
+      <circle cx="72" cy="35" r="35" fill="#ff8388"/>
+      <path d="M53 36h7l4-12 8 24 8-31 8 29 5-10h9" fill="none" stroke="#031127" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      <text class="white" x="19" y="101" font-size="17" font-weight="800">01 RECORD</text>
+      <text class="muted" x="7" y="127" font-size="14">真实声音与故事</text>
+    </g>
+
+    <!-- Entrust -->
+    <g transform="translate(165 91)">
+      <circle cx="72" cy="35" r="35" fill="#fffefa"/>
+      <rect x="57" y="32" width="30" height="23" rx="4" fill="none" stroke="#1f6753" stroke-width="4"/>
+      <path d="M62 32v-8a10 10 0 0 1 20 0v8" fill="none" stroke="#1f6753" stroke-width="4"/>
+      <circle cx="72" cy="43" r="3" fill="#1f6753"/>
+      <text class="white" x="13" y="101" font-size="17" font-weight="800">02 ENTRUST</text>
+      <text class="muted" x="5" y="127" font-size="14">对象 · 权限 · 边界</text>
+    </g>
+
+    <!-- Open -->
+    <g transform="translate(330 91)">
+      <circle cx="72" cy="35" r="35" fill="#6ce0d6"/>
+      <path d="M53 36c12-17 26-17 38 0-12 17-26 17-38 0Z" fill="none" stroke="#031127" stroke-width="4"/>
+      <circle cx="72" cy="36" r="7" fill="#031127"/>
+      <text class="white" x="24" y="101" font-size="17" font-weight="800">03 OPEN</text>
+      <text class="muted" x="9" y="127" font-size="14">接收者主动进入</text>
+    </g>
+
+    <!-- Keep -->
+    <g transform="translate(494 91)">
+      <circle cx="72" cy="35" r="35" fill="#f2c9c4"/>
+      <rect x="51" y="20" width="42" height="30" rx="2" fill="none" stroke="#031127" stroke-width="4"/>
+      <path d="m52 22 20 15 20-15" fill="none" stroke="#031127" stroke-width="4"/>
+      <path d="M80 49v12l-8-5-8 5V49" fill="#ff8388" stroke="#031127" stroke-width="3"/>
+      <text class="white" x="25" y="101" font-size="17" font-weight="800">04 KEEP</text>
+      <text class="muted" x="5" y="127" font-size="14">收藏远行明信片</text>
+    </g>
+  </g>
+
+  <!-- Demo story -->
+  <g transform="translate(56 930)">
+    <rect width="638" height="396" rx="8" fill="#0b1c34" stroke="#263b58" stroke-width="2" filter="url(#softShadow)"/>
+    <text class="smallcaps mint" x="30" y="40">LIVE DEMO · MEI → LIN · MOTHER &amp; DAUGHTER</text>
+    <text class="serif white" x="30" y="90" font-size="31" font-weight="700">The first family recipe</text>
+    <text class="muted" x="30" y="120" font-size="16">A mother leaves her daughter the story behind tomato and eggs.</text>
+
+    <g transform="translate(30 153)">
+      <rect width="274" height="166" rx="5" fill="#fffefa"/>
+      <rect x="18" y="17" width="112" height="27" rx="3" fill="#f6ddd5"/>
+      <text x="29" y="36" font-size="12" font-weight="800" fill="#8a4939">ORIGINAL SOURCE</text>
+      <text class="serif" x="18" y="75" font-size="20" font-weight="700" fill="#202522">Her real voice</text>
+      <text class="serif" x="18" y="99" font-size="20" font-weight="700" fill="#202522">stays intact.</text>
+      <path d="M18 124h15l7-13 9 28 11-38 10 34 9-18 8 7h22" fill="none" stroke="#d7674c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="18" y="153" font-size="11" fill="#626a64">CTX-001 · source remains inspectable</text>
+    </g>
+
+    <g transform="translate(334 153)">
+      <rect width="274" height="166" rx="5" fill="#f0f8f4"/>
+      <rect x="18" y="17" width="110" height="27" rx="3" fill="#dcebe5"/>
+      <text x="30" y="36" font-size="12" font-weight="800" fill="#1f6753">AI-ORGANIZED</text>
+      <text class="serif" x="18" y="75" font-size="20" font-weight="700" fill="#202522">Clearly labeled.</text>
+      <text class="serif" x="18" y="99" font-size="20" font-weight="700" fill="#202522">Never invented.</text>
+      <text x="18" y="127" font-size="13" fill="#626a64">Owner-reviewed · source-backed</text>
+      <text x="18" y="151" font-size="13" fill="#626a64">PULL_ONLY · recipient opens</text>
+    </g>
+
+    <g transform="translate(30 352)">
+      <circle cx="8" cy="-2" r="6" fill="#6ce0d6"/>
+      <text class="white" x="24" y="4" font-size="15" font-weight="700">Original preserved</text>
+      <circle cx="218" cy="-2" r="6" fill="#ff8388"/>
+      <text class="white" x="234" y="4" font-size="15" font-weight="700">Consent required</text>
+      <circle cx="422" cy="-2" r="6" fill="#f2c9c4"/>
+      <text class="white" x="438" y="4" font-size="15" font-weight="700">Recipient in control</text>
+    </g>
+  </g>
+
+  <!-- Three proof points -->
+  <g transform="translate(56 1388)">
+    <text class="smallcaps coral" x="0" y="0">WHAT LOOP PROVES</text>
+    <g transform="translate(0 34)">
+      <text class="serif white" x="0" y="31" font-size="27" font-weight="700">REAL</text>
+      <text class="coral" x="0" y="55" font-size="12" font-weight="800">MEMORY</text>
+      <text class="muted" x="0" y="80" font-size="13">Original never overwritten.</text>
+    </g>
+    <path d="M205 34V125" stroke="#263b58"/>
+    <g transform="translate(225 34)">
+      <text class="serif white" x="0" y="31" font-size="27" font-weight="700">BOUND</text>
+      <text class="mint" x="0" y="55" font-size="12" font-weight="800">AI</text>
+      <text class="muted" x="0" y="80" font-size="13">Source and consent required.</text>
+    </g>
+    <path d="M430 34V125" stroke="#263b58"/>
+    <g transform="translate(450 34)">
+      <text class="serif white" x="0" y="31" font-size="27" font-weight="700">YOUR</text>
+      <text fill="#f2c9c4" x="0" y="55" font-size="12" font-weight="800">CHOICE</text>
+      <text class="muted" x="0" y="80" font-size="13">Recipient decides when.</text>
+    </g>
+    <text class="white" x="0" y="151" font-size="17" font-weight="700">真实可追溯，边界由人决定。</text>
+    <rect x="0" y="174" width="638" height="1" fill="#263b58"/>
+    <text class="white" x="0" y="216" font-size="18" font-weight="700">Try the 2-minute experience at our booth.</text>
+    <text class="muted" x="0" y="245" font-size="15">Record → review boundaries → open as recipient → keep a postcard</text>
+  </g>
+
+  <!-- Event-inspired lower orb -->
+  <ellipse cx="385" cy="1902" rx="420" ry="230" fill="#16304d" opacity="0.72" filter="url(#orbGlow)"/>
+  <path d="M-74 2050 C18 1790 155 1668 370 1721 C517 1757 637 1697 814 1815 L814 2050Z" fill="url(#orbBase)"/>
+  <path d="M-40 1988 C97 1810 215 1792 344 1837 C471 1881 602 1732 790 1838" fill="none" stroke="url(#orbRibbon)" stroke-width="63" opacity="0.82"/>
+  <path d="M-25 2030 C139 1885 260 1892 390 1921 C526 1951 635 1826 784 1888" fill="none" stroke="#fffefa" stroke-width="16" opacity="0.62"/>
+  <path d="M-40 1998 C116 1814 235 1832 365 1860 C511 1892 621 1762 790 1843" fill="none" stroke="#ff7f83" stroke-width="13" opacity="0.82"/>
+  <path d="M-18 2045 C129 1920 274 1921 420 1944 C557 1966 669 1871 782 1911" fill="none" stroke="#5be0d8" stroke-width="19" opacity="0.78"/>
+
+  <g transform="translate(56 1928)">
+    <text class="white" x="0" y="0" font-size="30" font-weight="800">LOOP</text>
+    <text class="white" x="0" y="27" font-size="13">PHYSICAL AI HACKATHON 2026</text>
+    <text class="white" x="638" y="12" text-anchor="end" font-size="14" font-weight="700">Bring AI To Life.</text>
+  </g>
+</svg>

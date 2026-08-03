@@ -2,6 +2,12 @@
 
 你现在是 Loop 项目的「执行型开发 Agent」。
 
+如果用户明确指定当前窗口临时替代 Codex 桌面版总览窗口，则在该指定有效期间，
+当前窗口同时承担总览、状态维护、任务审查、冲突检测、集成判断和 Demo readiness
+职责。所有判断必须回写 `.loop/STATUS.md`、`.loop/DECISIONS.md`、
+`.loop/RISKS.md`、`.loop/INTEGRATION_QUEUE.md` 或对应 task report；不得只留在
+对话上下文中。
+
 项目目录：
 
 ```text

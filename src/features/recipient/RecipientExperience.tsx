@@ -12,6 +12,20 @@ import {
 
 type RecipientPath = 'entry' | 'verify' | 'share' | 'memory' | 'complete'
 
+let echoMapEntryAuthorized = false
+
+export function authorizeEchoMapEntry() {
+  echoMapEntryAuthorized = true
+}
+
+export function clearEchoMapEntryAuthorization() {
+  echoMapEntryAuthorized = false
+}
+
+export function isEchoMapEntryAuthorized() {
+  return echoMapEntryAuthorized
+}
+
 function getPath(contextId: string): RecipientPath {
   const path = window.location.hash.slice(1).split('?')[0]
   if (path === '/recipient/verify') return 'verify'
@@ -50,6 +64,8 @@ function Provenance({ result }: { result: RecipientAgentResult }) {
 
 export function RecipientExperience({ data = standaloneRecipientData }: { data?: RecipientExperienceData }) {
   const snapshot = data.getSnapshot()
+  const relationshipLabel = snapshot.recipient.relationshipLabel === 'Mother and daughter' ? '母女' : snapshot.recipient.relationshipLabel
+  const contextTopic = snapshot.context.id === 'context-rainy-day' ? '那次雨中回家' : snapshot.context.topic
   const inlineOriginal = getInlineOriginal(snapshot.asset.uri)
   const [path, setPath] = useState<RecipientPath>(() => getPath(snapshot.context.id))
   const [session, setSession] = useState<RecipientSession>(() => data.createSession())
@@ -89,7 +105,7 @@ export function RecipientExperience({ data = standaloneRecipientData }: { data?:
         if (!cancelled) setLoading(false)
       })
     return () => { cancelled = true }
-  }, [data, interaction, path, presentation, presentationError])
+  }, [data, interaction, path, presentationError])
 
   const choose = (choice: RecipientChoice, next?: string) => {
     setSession((current) => chooseRecipientAction(current, choice))
@@ -166,11 +182,11 @@ export function RecipientExperience({ data = standaloneRecipientData }: { data?:
   }
 
   if (path === 'entry') {
-    return <section className="recipient-shell"><p className="eyebrow">W·HERE · pull_only</p><h1>你想说话的时候，记忆仍在这里。</h1><p className="recipient-lead">这里保存着 {snapshot.recipient.subjectName} 留给你的一段真实记录。它不会主动播放，也不会在你没有进入前出现。</p><div className="recipient-entry"><div><p className="micro-label">留给 · {snapshot.recipient.name} · {snapshot.recipient.relationshipLabel}</p><h2>{snapshot.context.topic}</h2><p>由你决定是否确认身份、分享此刻、查看来源和继续。</p></div><button className="button button--primary" onClick={() => go('/recipient/verify')}>主动进入 <span aria-hidden="true">→</span></button></div><button className="text-button" onClick={() => choose('close', '/')}>暂时离开</button></section>
+    return <section className="recipient-shell"><p className="eyebrow">W·HERE · 仅主动进入</p><h1>你想说话的时候，记忆仍在这里。</h1><p className="recipient-lead">这里保存着 {snapshot.recipient.subjectName} 留给你的一段真实记录。它不会主动播放，也不会在你没有进入前出现。</p><div className="recipient-entry"><div><p className="micro-label">留给 · {snapshot.recipient.name} · {relationshipLabel}</p><h2>{contextTopic}</h2><p>由你决定是否确认身份、分享此刻、查看来源和继续。</p></div><button className="button button--primary" onClick={() => go('/recipient/verify')}>主动进入 <span aria-hidden="true">→</span></button></div><button className="text-button" onClick={() => choose('close', '/')}>暂时离开</button></section>
   }
 
   if (path === 'verify') {
-    return <section className="recipient-shell"><p className="eyebrow">身份确认 · 由你发起</p><h1>这是留给你的吗？</h1><p className="recipient-lead">它来自 {snapshot.recipient.subjectName}，关系标记为“{snapshot.recipient.relationshipLabel}”。确认后才会开始这次互动。</p><div className="choice-list"><button className="choice choice--strong" onClick={() => go('/recipient/share')}><span>是留给我的，继续</span><span aria-hidden="true">→</span></button><button className="choice" onClick={() => choose('postpone', '/')}><span>现在不看，稍后再说</span><span aria-hidden="true">↓</span></button><button className="choice" onClick={() => choose('skip', '/')}><span>跳过这次</span><span aria-hidden="true">×</span></button></div><button className="text-button" onClick={() => choose('close', '/')}>关闭</button></section>
+    return <section className="recipient-shell"><p className="eyebrow">身份确认 · 由你发起</p><h1>这是留给你的吗？</h1><p className="recipient-lead">它来自 {snapshot.recipient.subjectName}，关系标记为“{relationshipLabel}”。确认后才会开始这次互动。</p><div className="choice-list"><button className="choice choice--strong" onClick={() => { authorizeEchoMapEntry(); go('/recipient/echo-map') }}><span>进入 Echo Map 旅程</span><span aria-hidden="true">→</span></button><button className="choice" onClick={() => go('/recipient/share')}><span>继续到今天的回应</span><span aria-hidden="true">→</span></button><button className="choice" onClick={() => choose('postpone', '/')}><span>现在不看，稍后再说</span><span aria-hidden="true">↓</span></button><button className="choice" onClick={() => choose('skip', '/')}><span>跳过这次</span><span aria-hidden="true">×</span></button></div><button className="text-button" onClick={() => choose('close', '/')}>关闭</button></section>
   }
 
   if (path === 'share') {
@@ -178,13 +194,13 @@ export function RecipientExperience({ data = standaloneRecipientData }: { data?:
   }
 
   if (path === 'memory') {
-    if (!interaction) return <section className="recipient-shell"><p className="eyebrow">Recipient request · restart required</p><h1>这次查看需要重新确认。</h1><p className="recipient-lead">页面刷新后不会恢复接收者授权状态。请从入口重新主动进入，系统不会绕过身份确认。</p><button className="button button--primary" onClick={restart}>回到接收者入口</button></section>
-    if (presentationError) return <section className="recipient-shell"><p className="eyebrow">Recipient request · recovery</p><h1>内容暂时无法打开。</h1><p className="recipient-lead">Agent 没有返回可验证内容，当前互动仍未完成。</p><div className="form-errors" role="alert">{presentationError}</div><button className="button button--primary" onClick={() => { setPresentationError(''); setLoading(true) }}>重试加载</button><button className="text-button" onClick={() => choose('close', '/')}>关闭</button></section>
-    if (loading || !presentation) return <section className="recipient-shell"><p className="eyebrow">Recipient request · source-backed</p><h1>正在准备留给你的内容。</h1><p className="recipient-lead">只整理已授权来源，不会替 Mei 生成新的事实、决定或自由对话。</p></section>
-    return <section className="recipient-shell"><p className="eyebrow">过去回应现在 · 有来源</p><h1>一份给今天的回应。</h1><p className="recipient-lead">先看你刚刚分享的此刻，再检查它连接了哪段真实记忆。</p>{artifactError && <div className="form-errors" role="alert">{artifactError}</div>}{playbackError && <div className="form-errors" role="alert">{playbackError}</div>}<div className="present-moment"><span className="tag tag--present">今天 · {interaction.presentContext?.modality === 'image' ? '照片描述' : '文字'}</span><p>{interaction.presentContext?.content}</p><small>recipient-authored · 不会写入 {snapshot.recipient.subjectName} 的 Context</small></div><div className="provenance-grid"><article><span className="tag tag--original">真实原始来源</span><h2>{snapshot.asset.modality === 'audio' ? '本人留下的声音' : '本人留下的话'}</h2><p>原始素材保持不变，下面内容来自 {snapshot.recipient.subjectName} 本人的记录。</p>{inlineOriginal && <blockquote className="original-content">{inlineOriginal}</blockquote>}<button className="button button--secondary" onClick={() => void playOriginal()} disabled={playing}>{playing ? '正在播放原声' : snapshot.asset.modality === 'audio' ? '播放原声' : '查看原始内容'} <span aria-hidden="true">▶</span></button><Provenance result={presentation.original} /></article>{presentation.derived && <article><span className="tag tag--organized">AI 生成 · 明确标记</span><h2>{presentation.derived.content}</h2><p>这是连接今天与授权来源的有限生成，不是 {snapshot.recipient.subjectName} 的原话，也没有新增事实。</p><Provenance result={presentation.derived} /></article>}</div><div className="recipient-actions"><button className="button button--primary" onClick={() => void accept()} disabled={savingArtifact}>{savingArtifact ? '回信保存中...' : '收藏这封远方回信'} <span aria-hidden="true">→</span></button><button className="button button--secondary" onClick={() => choose('postpone', '/')}>稍后查看</button><button className="text-button" onClick={() => choose('skip', '/')}>跳过</button><button className="text-button" onClick={() => choose('close', '/')}>关闭</button></div></section>
+    if (!interaction) return <section className="recipient-shell"><p className="eyebrow">接收者请求 · 需要重新进入</p><h1>这次查看需要重新确认。</h1><p className="recipient-lead">页面刷新后不会恢复接收者授权状态。请从入口重新主动进入，系统不会绕过身份确认。</p><button className="button button--primary" onClick={restart}>回到接收者入口</button></section>
+    if (presentationError) return <section className="recipient-shell"><p className="eyebrow">接收者请求 · 恢复</p><h1>内容暂时无法打开。</h1><p className="recipient-lead">Agent 没有返回可验证内容，当前互动仍未完成。</p><div className="form-errors" role="alert">{presentationError}</div><button className="button button--primary" onClick={() => { setPresentationError(''); setLoading(true) }}>重试加载</button><button className="text-button" onClick={() => choose('close', '/')}>关闭</button></section>
+    if (loading || !presentation) return <section className="recipient-shell" aria-busy="true"><p className="eyebrow">接收者请求 · 有来源</p><h1>正在准备留给你的内容。</h1><p className="recipient-lead" role="status">只整理已授权来源，不会替 Mei 生成新的事实、决定或自由对话。</p></section>
+    return <section className="recipient-shell"><p className="eyebrow">过去回应现在 · 有来源</p><h1>一份给今天的回应。</h1><p className="recipient-lead">先看你刚刚分享的此刻，再检查它连接了哪段真实记忆。</p>{artifactError && <div className="form-errors" role="alert">{artifactError}</div>}{playbackError && <div className="form-errors" role="alert">{playbackError}</div>}<div className="present-moment"><span className="tag tag--present">今天 · {interaction.presentContext?.modality === 'image' ? '照片描述' : '文字'}</span><p>{interaction.presentContext?.content}</p><small>由接收者写下 · 不会写入 {snapshot.recipient.subjectName} 的 Context</small></div><div className="provenance-grid"><article><span className="tag tag--original">真实原始来源</span><h2>{snapshot.asset.modality === 'audio' ? '本人留下的声音' : '本人留下的话'}</h2><p>原始素材保持不变，下面内容来自 {snapshot.recipient.subjectName} 本人的记录。</p>{inlineOriginal && <blockquote className="original-content">{inlineOriginal}</blockquote>}<button className="button button--secondary" onClick={() => void playOriginal()} disabled={playing}>{playing ? '正在播放原声' : snapshot.asset.modality === 'audio' ? '播放原声' : '查看原始内容'} <span aria-hidden="true">▶</span></button><Provenance result={presentation.original} /></article>{presentation.derived && <article><span className="tag tag--organized">AI 生成 · 明确标记</span><h2>{presentation.derived.content}</h2><p>这是连接今天与授权来源的有限生成，不是 {snapshot.recipient.subjectName} 的原话，也没有新增事实。</p><Provenance result={presentation.derived} /></article>}</div><div className="recipient-actions"><button className="button button--primary" onClick={() => void accept()} disabled={savingArtifact}>{savingArtifact ? '回信保存中...' : '收藏这封远方回信'} <span aria-hidden="true">→</span></button><button className="button button--secondary" onClick={() => choose('postpone', '/')}>稍后查看</button><button className="text-button" onClick={() => choose('skip', '/')}>跳过</button><button className="text-button" onClick={() => choose('close', '/')}>关闭</button></div></section>
   }
 
-  if (!artifact) return <section className="recipient-shell"><p className="eyebrow">InteractionArtifact · restart required</p><h1>这次明信片尚未生成。</h1><p className="recipient-lead">页面刷新后不会伪造已完成的互动。请重新主动进入并选择保存明信片。</p><button className="button button--primary" onClick={restart}>回到接收者入口</button></section>
+  if (!artifact) return <section className="recipient-shell"><p className="eyebrow">互动纪念物 · 需要重新进入</p><h1>这次明信片尚未生成。</h1><p className="recipient-lead">页面刷新后不会伪造已完成的互动。请重新主动进入并选择保存明信片。</p><button className="button button--primary" onClick={restart}>回到接收者入口</button></section>
 
-  return <section className="recipient-shell"><p className="eyebrow">远方回信 · 已收藏</p><h1>今天与过去，都被好好放在这里。</h1><p className="recipient-lead">这件纪念物只记录本次互动。你今天的内容仍属于你，不会自动回写为 {snapshot.recipient.subjectName} 的内容。</p>{artifactError && <div className="form-errors" role="alert">{artifactError}</div>}<div className="completion-grid"><div className="completion-number">01<span>/ 回信</span></div><div>{artifact.presentContext && <p className="postcard-now">今天 · {artifact.presentContext.content}</p>}<span className="tag tag--organized">{artifact.generationLabel}</span><h2>{artifact.generatedSummary}</h2><p>Artifact ID · {artifact.id}<br />真实来源 Context ID · {artifact.sourceContextIds.join(', ')}</p></div></div><form className="response-form" onSubmit={(event) => void saveResponse(event)}><label htmlFor="recipient-response">为今天再留一句话</label><textarea id="recipient-response" value={response} onChange={(event) => setResponse(event.target.value)} placeholder="今天还想记下什么？" rows={4} /><button className="button button--primary" type="submit" disabled={savingResponse}>{savingResponse ? '正在保存...' : '保存我的话'} <span aria-hidden="true">↗</span></button>{savedResponse && <p className="form-note" role="status">已独立保存为接收者内容，不会成为记录者生前事实。</p>}</form><button className="text-button" onClick={restart}>回到入口</button></section>
+  return <section className="recipient-shell"><p className="eyebrow">远方回信 · 已收藏</p><h1>今天与过去，都被好好放在这里。</h1><p className="recipient-lead">这件纪念物只记录本次互动。你今天的内容仍属于你，不会自动回写为 {snapshot.recipient.subjectName} 的内容。</p>{artifactError && <div className="form-errors" role="alert">{artifactError}</div>}<div className="completion-grid"><div className="completion-number">01<span>/ 回信</span></div><div>{artifact.presentContext && <p className="postcard-now">今天 · {artifact.presentContext.content}</p>}<span className="tag tag--organized">{artifact.generationLabel}</span><h2>{artifact.generatedSummary}</h2><p>Artifact ID · {artifact.id}<br />真实来源 Context ID · {artifact.sourceContextIds.join(', ')}</p></div></div><form className="response-form" onSubmit={(event) => void saveResponse(event)}><label htmlFor="recipient-response">为今天再留一句话</label><textarea id="recipient-response" value={response} onChange={(event) => setResponse(event.target.value)} placeholder="今天还想记下什么？" rows={4} /><button className="button button--primary" type="submit" disabled={!response.trim() || savingResponse}>{savingResponse ? '正在保存...' : '保存我的话'} <span aria-hidden="true">↗</span></button>{savedResponse && <p className="form-note" role="status">已独立保存为接收者内容，不会成为记录者生前事实。</p>}</form><button className="text-button" onClick={restart}>回到入口</button></section>
 }

@@ -1,60 +1,105 @@
-# 我在 W·HERE
+# W·HERE
 
-> **一份会回应的记忆。** 让一个人在生前留下真实内容与使用边界，让过去的记忆在亲友主动靠近时回应现在的生活。
+> 一份会回应的记忆。
+
+W·HERE 是一个软件优先的关系化数字记忆原型：记录者为重要亲友留下经过本人确认的真实内容与使用边界；未来，接收者主动靠近、分享今天的生活，系统再从已授权来源中给出克制、有来源、明确标记为 AI 的回应。
+
+它不是数字复活，也不是自由聊天的人格克隆。它验证的是一条更具体的产品闭环：**真实记忆、关系专属、来源可追溯、AI 有边界、双方有控制权。**
 
 ![React](https://img.shields.io/badge/React-19-202522?style=flat-square&logo=react&logoColor=61DAFB)
 ![TypeScript](https://img.shields.io/badge/TypeScript-7-202522?style=flat-square&logo=typescript&logoColor=3178C6)
 ![Vite](https://img.shields.io/badge/Vite-8-202522?style=flat-square&logo=vite&logoColor=FFD62E)
-![Tests](https://img.shields.io/badge/tests-195%20passed-1f6753?style=flat-square)
-![Mode](https://img.shields.io/badge/demo-offline-d7674c?style=flat-square)
+![Vitest](https://img.shields.io/badge/tests-199%20passed-1f6753?style=flat-square)
+![Playwright](https://img.shields.io/badge/browser%20checks-6%20passed-2e7d5b?style=flat-square)
+![Offline](https://img.shields.io/badge/demo-offline-d7674c?style=flat-square)
 
-**[第一次使用？点击这里打开傻瓜式中文教程](docs/USER_GUIDE.md)**
+## 先看什么
 
-[产品理念](05_PRODUCT_CONCEPT_W_HERE.md) · [主要能力](#主要能力) · [快速启动](#快速启动) · [演示路线](#演示路线) · [技术说明](#技术说明)
+| 目的 | 入口 |
+| --- | --- |
+| 不知道仓库里有什么 | [项目地图](PROJECT_MAP.md) |
+| 第一次运行和操作 | [傻瓜式使用教程](docs/USER_GUIDE.md) |
+| 2 分钟黑客松演示 | [Demo Runbook](docs/DEMO_RUNBOOK.md) |
+| 产品和工程边界 | [产品理念](05_PRODUCT_CONCEPT_W_HERE.md) |
+| 全部文档索引 | [docs/README.md](docs/README.md) |
+| 当前展位设计 | [booth/README.md](booth/README.md) |
+| 当前宣传片工程 | [videos/README.md](videos/README.md) |
 
----
+## 当前交付
 
-## 产品简介
+这是一个 **Offline Software MVP V2**，默认演示关系为 `Mei -> Lin`，母女关系，预置雨天记忆。
 
-W·HERE 是一个软件优先的“可回应数字记忆陪伴”原型。记录者为一名重要亲友留下经过本人确认的文字、声音或图片说明；未来，接收者可以主动分享今天发生的事，系统再从已授权的真实内容中生成克制、有来源、明确标记为 AI 的回应。
+| 交付物 | 当前事实 |
+| --- | --- |
+| Web 应用 | 根目录 React + TypeScript + Vite 应用 |
+| 核心闭环 | 记录者采集 -> 所有者审核 -> 接收者主动进入 -> 有来源回应 -> 远方回信 |
+| Echo Map | 一条可退出、可跳过、可查看来源并点亮节点的记忆旅程 |
+| 硬件 | 绑定、托付、触发和 software fallback 模拟器 |
+| 测试 | 19 个 Vitest 文件 / 199 项测试 |
+| 浏览器验收 | Playwright desktop/mobile 共 6 项 |
+| 生产构建 | 已通过 |
+| 网络和后端 | 无网络、无数据库、无 API Key |
+| AI | 本地确定性生成适配器，不是真实云端大模型 |
 
-它不是数字复活，也不是可以无所不答的人格克隆。这里优先保证四件事：**真实来源、关系专属、生成有边界、双方有控制权。**
-
-## 主要能力
-
-| 能力 | 当前可以做什么 | 为什么重要 |
-| --- | --- | --- |
-| 关系化记忆采集 | 为指定接收者录入文字、模拟语音或图片说明 | 留下的是“我与你之间”，不是公共人格模板 |
-| 所有者审核 | 检查原始素材，批准、编辑、移除或拒绝 AI 建议 | AI 不能替记录者决定什么代表自己 |
-| 接收者主动进入 | 只有接收者点击进入并确认身份后才加载内容 | 默认 `pull_only`，不做强情绪推送 |
-| 现在连接过去 | 接收者提交今天的文字或照片描述，Agent 从真实旧 Context 中寻找回应 | 完成“过去的记忆回应现在的生活” |
-| 来源与 AI 标记 | 同屏展示原始内容、Context ID、Asset ID、生成模式和 AI 状态 | 用户能分清本人原话与模型生成 |
-| 远方回信 | 把“今天 + 真实来源 + 有限回应”保存为纪念物 | 一次互动可以被收藏和回看 |
-| 内容隔离 | 接收者的新内容标记为 `recipient-authored` | 不会反向写成记录者生前的事实 |
-| 信物模拟入口 | 模拟绑定、托付、触发和软件 fallback | 没有戒指、NFC 或 BLE 设备也能演示完整闭环 |
-| Echo Map Journey | 以可退出、可跳过的路径体验记忆节点与明信片 | 展示更具仪式感的接收者体验，但不替代核心闭环 |
-
-## 演示路线
+## 产品闭环
 
 ```text
 记录者留下真实内容
         ↓
-本人审核 AI 建议与使用边界
+本人审核 AI 建议、关系范围和使用边界
         ↓
-接收者主动进入并分享今天
+接收者主动进入并确认身份
         ↓
-过去 Context 生成有来源的有限回应
+接收者分享今天发生的事
         ↓
-保存“今天收到的远方回信”
+Agent 从授权 Context 找到有来源的有限回应
+        ↓
+收藏一封远方回信，并独立保存接收者自己的话
 ```
 
-只想快速看到结果时，可以直接进入顶部导航的 **收到回应**。系统已经预置 Mei 留给 Lin 的雨天记忆，输入“今天下雨，我又忘记带伞了”即可体验回应与来源追踪。
+## 已实现功能
 
-需要完整比赛演示时，请按 **留下记忆 → 收到回应 → 收藏远方回信** 的顺序操作。每一步的按钮和填写示例都写在 **[完整新手教程](docs/USER_GUIDE.md)** 中。
+### 记录者流程
 
-## 快速启动
+- 为指定关系录入文字、模拟语音或图片说明。
+- 填写主题、重要原因、使用场景、敏感度和情绪权重。
+- 生成确定性的 AI 摘要建议。
+- 批准、编辑、移除或拒绝 AI 建议。
+- 将原始素材、AI 派生内容、Context 和生成策略分开保存。
 
-环境要求：Node.js 20+、npm 10+。
+### 接收者流程
+
+- 接收者必须主动进入并确认关系，不自动推送。
+- 输入今天的文字或照片描述。
+- 查看原始来源、AI 生成内容、Context ID、Asset ID 和生成模式。
+- 收藏远方回信并保存一条只属于接收者的回应。
+- 页面刷新或直接访问深层 URL 时不会伪造授权或完成状态。
+
+### Echo Map Journey
+
+- 选择 `quiet`、`glimmer` 或 `deep` 强度。
+- 查看提议，接受 W·HERE 提供的中性行动并主动确认完成。
+- 打开原始记忆、查看来源、留下回应、生成 postcard、点亮节点。
+- 支持 Skip、Stop、Reject、Hide、重试和离开后的授权撤销。
+
+### 信物模拟器
+
+- 模拟 owner 绑定、recipient 托付、身份凭证和硬件事件。
+- 支持 touch、tap、gesture、NFC、BLE 和软件入口合约。
+- 拒绝错误身份、重复事件和不允许的触发原因。
+- 设备不可用时可以使用 software fallback，不阻断核心软件 Demo。
+
+### 来源和安全边界
+
+- 只允许 entrusted relationship 内的接收者访问。
+- 拒绝 private、跨关系、无来源或超出 policy 的内容。
+- 拒绝新增重要事实、重大决定、未审核意图和高风险输出。
+- 所有 AI 内容明确标记，并保留来源 Context/Asset 追踪。
+- 接收者的新内容使用 `recipient-authored` 标记，不会反写成记录者的过去。
+
+## 30 秒快速体验
+
+要求 Node.js 20+ 和 npm 10+：
 
 ```bash
 git clone https://github.com/lavine888/HKhackthon-loop.git
@@ -63,81 +108,125 @@ npm install
 npm run dev
 ```
 
-浏览器打开：**http://localhost:5173/#/**
+打开终端显示的本地地址，通常是：
 
-本项目不需要后端、数据库、API Key 或真实硬件。所有 Demo 数据保存在浏览器内存中，刷新页面会恢复预置状态。
+```text
+http://localhost:5173/#/
+```
 
-## 产品原则
+然后按以下路径操作：
 
-- **真实高于拟真**：宁可少回答，也不编造重要记忆。
-- **回应高于复刻**：提供能承接倾诉的记忆载体，不假装一个人仍然活着。
-- **本人拥有控制权**：记录者决定留下什么、给谁看、AI 可以如何使用。
-- **接收者拥有主动权**：接收者决定何时进入、是否继续、何时退出。
-- **AI 必须可识别**：所有生成内容均有标记，并能追溯到真实 Context。
-- **硬件不是前提**：软件闭环优先，实体信物只是采集、身份或仪式入口。
+```text
+收到回应
+→ 主动进入
+→ 继续到今天的回应
+→ 使用雨天 Demo 内容
+→ 让过去的记忆回应现在
+→ 收藏这封远方回信
+```
 
-## 当前状态
+## 2 分钟 Echo Map 演示
 
-| 项目 | 状态 |
-| --- | --- |
-| 产品形态 | Offline Software MVP V2 |
-| 默认关系 | Mei → Lin，母女关系 |
-| 核心触发 | `pull_only` / `user_opened` |
-| 网络依赖 | 无 |
-| 后端与数据库 | 暂无，使用内存状态 |
-| AI 实现 | 本地确定性生成适配器 |
-| 自动化验证 | 19 个测试文件 / 195 项测试通过 |
-| Production build | 通过 |
+```text
+收到回应
+→ 主动进入
+→ 进入 Echo Map 旅程
+→ 选择 glimmer
+→ 查看来源与中性行动
+→ 采用中立动作
+→ 我已经做了
+→ 打开原始内容
+→ 留下 Lin 今天的回应
+→ 保存并生成明信片
+→ 收藏明信片并点亮节点
+```
+
+直接打开 `#/recipient/echo-map` 不会绕过身份确认，必须从接收者入口主动进入。
 
 ## 页面入口
 
-| 路由 | 用途 |
+| 路由 | 功能 |
 | --- | --- |
-| `#/` | W·HERE 体验首页 |
+| `#/` | W·HERE 首页 |
 | `#/capture/new` | 关系化 Context 编辑器 |
 | `#/capture/review` | 原始素材、AI 建议与使用边界审核 |
-| `#/recipient` | 接收者主动进入 |
-| `#/recipient/verify` | 接收者身份确认 |
+| `#/recipient` | 接收者主动入口 |
+| `#/recipient/verify` | 身份确认 |
 | `#/recipient/share` | 分享今天的文字或照片描述 |
-| `#/recipient/memory/:id` | 查看当下输入、真实来源与 AI 回应 |
-| `#/recipient/complete` | 收藏远方回信并留下接收者内容 |
-| `#/recipient/echo-map` | Echo Map Journey 体验 |
+| `#/recipient/memory/:id` | 查看真实来源与 AI 回应 |
+| `#/recipient/complete` | 收藏远方回信和接收者内容 |
+| `#/recipient/echo-map` | Echo Map Journey |
 | `#/hardware-simulator` | 可选硬件模拟器 |
 
-## 技术说明
+## 仓库结构
 
 ```text
-src/app       应用壳、Hash Router、页面入口
-src/data      离线 Demo 的共享内存边界
-src/domain    Context、关系、策略、互动与纪念物合约
-src/features  capture、agent、artifact、recipient、journey、hardware
-src/adapters  确定性生成、原始播放与硬件模拟适配器
+src/                    Web 应用源码
+  app/                  应用壳、Hash Router、页面入口
+  data/                 离线 Demo 的共享内存集成边界
+  domain/               Context、关系、策略、互动和 artifact 合约
+  features/             capture、agent、artifact、recipient、journey、hardware
+  adapters/             确定性 Agent、播放和硬件模拟适配器
+tests/e2e/              Playwright 真实浏览器验收
+docs/                   使用、演示、隐私、资产和工程文档
+booth/                  展位立牌 Base/V2-V8，V8 是当前打印版
+videos/                 独立 HyperFrames 宣传视频工程
+.loop/                  任务、claim、report、决策和风险记录
+.agents/                项目级开发 Skills
+.opencode/              OpenCode agents、commands 和 Skills
+.codex/                 Codex hooks 配置
 ```
 
-`OfflineDemoService` 是软件 Demo 的单一集成边界。Capture 写入的原始素材、审核后派生内容和生成策略，会被关系 Agent 按当前接收者动态读取；接收者的 Present Context 独立保存，不会进入记录者来源链；完成互动后再由 `InteractionArtifactService` 生成远方回信。
+详细的版本判断和“哪些东西不要移动”见 [PROJECT_MAP.md](PROJECT_MAP.md)。
 
-## 质量验证
+## 版本说明
+
+- 软件不是多个文件夹版本，主要通过 Git 提交演进：初始 MVP -> Capture/Agent/Recipient/Hardware -> V2 provenance -> W·HERE -> Echo Map。
+- `booth/` 里的 V2-V7 是设计历史，**V8 是唯一当前交付版**，打印前只看 [booth/README.md](booth/README.md)。
+- `videos/where-launch/` 是独立宣传片工程，当前 MP4 位于 `videos/where-launch/renders/where-launch-demo.mp4`。
+- 依赖、测试配置和当前工作状态以根目录配置、[PROJECT_MAP.md](PROJECT_MAP.md) 与 [.loop/STATUS.md](.loop/STATUS.md) 为准。
+
+## 验证命令
 
 ```bash
-npm run verify
+npm run test          # Vitest 单元和集成测试
+npm run typecheck     # TypeScript 检查
+npm run build         # production build
+npm run verify        # test + typecheck + build
+npm run test:e2e      # Playwright desktop/mobile 验收
+npm run test:e2e:headed
 git diff --check
 ```
 
-`npm run verify` 会依次执行全部测试、TypeScript 检查和 production build。
+第一次运行浏览器验收时，如果本机没有 Playwright Chromium：
+
+```bash
+npx playwright install chromium
+```
 
 ## 当前限制
 
-- 状态仅保存在内存中，刷新后重置；尚无账号、数据库或跨设备同步。
-- 当前 AI 是确定性离线 Demo，不是实际大模型调用。
-- `LOOP-DEMO` 是模拟凭证，不是生产身份认证方案。
-- 模拟语音使用文字占位，图片输入使用照片描述，尚未接入真实媒体上传。
-- 当前核心闭环聚焦一名记录者与一名接收者，不处理完整家庭网络。
-- 本项目是产品与比赛原型，不提供医疗、法律、财务或重大人生决策建议。
+- 所有状态只存在浏览器内存中，刷新后恢复预置 Demo。
+- 没有账号、数据库、加密存储、跨设备同步、导出删除或访问审计。
+- AI 是离线确定性适配器，不是真实大模型调用。
+- `LOOP-DEMO` 是模拟凭证，不是生产身份认证。
+- 语音和图片目前是文字占位或照片描述，不接入真实媒体。
+- 当前只演示一名记录者与一名接收者，不处理完整家庭网络。
+- 生产安全边界和未解决事项见 [PRIVACY_SECURITY.md](docs/PRIVACY_SECURITY.md)。
 
-## 相关文档
+## 项目文档
 
-- **[傻瓜式使用教程](docs/USER_GUIDE.md)**：从安装到完成远方回信的逐步操作。
-- **[最新产品理念](05_PRODUCT_CONCEPT_W_HERE.md)**：品牌、定位、MVP 与产品原则。
-- [项目背景](00_PROJECT_CONTEXT.md)：工程背景与 V2 定义。
-- [.loop/DECISIONS.md](.loop/DECISIONS.md)：关键工程决策。
-- [.loop/RISKS.md](.loop/RISKS.md)：已知风险与缓解方式。
+- [项目地图](PROJECT_MAP.md)：整个仓库的总览和版本解释。
+- [文档索引](docs/README.md)：按使用、产品边界和开发流程查找文档。
+- [傻瓜式使用教程](docs/USER_GUIDE.md)：从安装到完整闭环。
+- [Demo Runbook](docs/DEMO_RUNBOOK.md)：比赛现场操作和恢复路径。
+- [产品理念](05_PRODUCT_CONCEPT_W_HERE.md)：品牌、定位和叙事边界。
+- [隐私与安全](docs/PRIVACY_SECURITY.md)：当前 Demo 与生产方案的差距。
+- [资产权利](docs/ASSET_RIGHTS.md)：头像、截图、字体和视频素材登记。
+- [AI Skills](docs/AI_SKILLS.md)：项目级开发和审查能力。
+- [视频工作流](docs/VIDEO_WORKFLOW.md)：HyperFrames 制作流程。
+- [第三方 Notices](THIRD_PARTY_NOTICES.md)：第三方工具和许可证来源。
+
+## License
+
+当前仓库未声明公开开源许可证。第三方工具和素材来源见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) 与 [ASSET_RIGHTS.md](docs/ASSET_RIGHTS.md)。

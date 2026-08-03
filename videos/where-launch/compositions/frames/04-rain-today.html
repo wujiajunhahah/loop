@@ -1,0 +1,36 @@
+<template>
+  <style>
+    #root { position: relative; width: 1920px; height: 1080px; overflow: hidden; container-type: size; font-family: sans-serif; color: #172421; }
+    #root * { box-sizing: border-box; }
+    .f04-ground { position: absolute; inset: 0; background: #224652; }
+    .f04-top { position: absolute; top: 54px; left: 72px; right: 72px; display: flex; justify-content: space-between; color: #c4dee6; font: 500 22px/1 monospace; letter-spacing: .12em; }
+    .f04-window { position: absolute; top: 115px; left: 72px; width: 1776px; height: 720px; overflow: hidden; border: 2px solid #397487; background: #edf1ef; }
+    .f04-window img { width: 100%; height: 100%; object-fit: cover; object-position: center top; display: block; opacity: .72; }
+    .f04-input { position: absolute; top: 338px; left: 420px; width: 935px; height: 210px; padding: 56px 32px; border: 3px solid #397487; border-radius: 8px; color: #172421; background: #f9fbfa; font-size: 42px; line-height: 1.35; }
+    .f04-cursor { display: inline-block; width: 10px; height: 46px; margin-left: 5px; vertical-align: -7px; background: #c7553f; }
+    .f04-boundary { position: absolute; left: 72px; bottom: 100px; width: 1776px; display: grid; grid-template-columns: 1fr 1fr; border-top: 2px solid #397487; }
+    .f04-boundary div { padding-top: 24px; color: #f9fbfa; font-size: 35px; line-height: 1.2; }
+    .f04-boundary div + div { padding-left: 48px; border-left: 2px solid #397487; color: #c4dee6; }
+    .f04-boundary small { display: block; margin-bottom: 12px; color: #c7553f; font: 500 20px/1 monospace; letter-spacing: .1em; }
+  </style>
+  <div data-hf-id="hf-7jse" id="root" data-composition-id="04-rain-today" data-start="0" data-duration="8.4" data-width="1920" data-height="1080">
+    <div data-hf-id="hf-4fza" class="clip f04-ground" data-start="0" data-duration="8.4" data-track-index="0"></div>
+    <div data-hf-id="hf-j5vd" class="clip f04-top" data-start="0" data-duration="8.4" data-track-index="1"><span data-hf-id="hf-rkpc">TODAY / PROVIDED BY LIN</span><span data-hf-id="hf-xz5e">04 / 06</span></div>
+    <div data-hf-id="hf-qpn5" class="clip f04-window" data-start="0" data-duration="8.4" data-track-index="2"><img data-hf-id="hf-x5l8" src="assets/recipient-share.png" alt="W·HERE present context form"></div>
+    <div data-hf-id="hf-zfta" class="clip f04-input" data-start="0" data-duration="8.4" data-track-index="3"><span data-hf-id="hf-2nrk" id="f04-text"></span><span data-hf-id="hf-uhbv" id="f04-cursor" class="f04-cursor"></span></div>
+    <div data-hf-id="hf-cfu5" class="clip f04-boundary" data-start="0" data-duration="8.4" data-track-index="4"><div data-hf-id="hf-dlpr" id="f04-b1"><small data-hf-id="hf-xra4">PRESENT CONTEXT</small>属于 Lin 的今天</div><div data-hf-id="hf-kjsc" id="f04-b2"><small data-hf-id="hf-ximi">BOUNDARY</small>不会写成 Mei 的经历</div></div>
+  </div>
+  <script>
+    window.__timelines = window.__timelines || {};
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo('.f04-window', { opacity: 0, scale: .97 }, { opacity: 1, scale: 1, duration: .7, ease: 'power3.out' }, .05);
+    tl.fromTo('.f04-input', { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: .6, ease: 'power3.out' }, .65);
+    const full = '今天下雨，我又忘记带伞了。'; const type = { v: 0 }; const text = document.getElementById('f04-text'); const cursor = document.getElementById('f04-cursor');
+    tl.to(type, { v: full.length, duration: 3.6, ease: 'none', onUpdate: () => { text.textContent = full.substring(0, Math.floor(type.v)); } }, 1.6);
+    const blink = { p: 0 }; tl.to(blink, { p: Math.PI * 12, duration: 5.4, ease: 'none', onUpdate: () => { cursor.style.opacity = Math.sin(blink.p) > 0 ? '1' : '0'; } }, 1.6);
+    tl.fromTo('#f04-b1', { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: .5, ease: 'power3.out' }, 5.5);
+    tl.fromTo('#f04-b2', { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: .5, ease: 'power3.out' }, 6.35);
+    tl.set('#f04-cursor', { opacity: 0 }, 7.05);
+    window.__timelines['04-rain-today'] = tl;
+  </script>
+</template>

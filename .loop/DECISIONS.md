@@ -65,3 +65,43 @@ the App Shell injects the shared V2 container. The Recipient dependency seam
 and the simulator's missing relationship ID were changed only to resolve the
 cross-feature conflicts explicitly called out in the TASK-010, TASK-013, and
 TASK-014 handoff reports.
+
+### V2-007 Agent-directed game form
+
+The reviewed `离世者Context与遗族状态感知_游戏概念发散` document describes the
+intended Agent game form, not an unrelated optional concept. The existing P0
+Context editor, relationship-scoped Agent, recipient choice, provenance, and
+InteractionArtifact are the safety and data foundation beneath that game.
+
+The recommended product structure is Echo Map as the primary interaction,
+Traveling Messenger as a neutral Agent representation, and the existing postcard
+as the output of each journey. The Agent acts as a journey director and memory
+curator; the deceased is not an NPC. Memory Garden may become later persistent
+feedback, but must not block the first playable vertical slice.
+
+User-selected intensity, source-backed invitations, and recipient feedback belong
+in the first game-design phase. Physiological inference, continuous location
+sensing, persistent progression, and multi-recipient shared worlds remain later
+phases until supported by privacy, safety, and user evidence. See
+`.loop/reports/concept-review-2026-08-02.md`.
+
+### V2-008 First playable journey contracts
+
+TASK-016 is accepted as the implementation contract for the first Echo Map
+vertical slice. The slice uses one recipient-initiated, relationship-scoped
+journey session, one deterministic rainy-day source, explicit recipient
+intensity, one optional approved recorder invitation or immutable Loop-authored
+fallback, one recipient response, one postcard, and one lit node.
+
+Recorder invitations use a journey-owned `ApprovedJourneyInvitation`; they are
+never inferred from Context meaning or the legacy `PlannedInteraction`. Original,
+AI-composed, and recipient-authored layers remain independently attributable.
+
+`InteractionArtifactService` remains unchanged. Journey state owns one stable
+Interaction ID, artifact retry/association, and an idempotent atomic node-light
+operation. Journey completion occurs only when the postcard is linked and the
+node is lit. Skip, close, stop, reject, and hide cannot produce false completion.
+
+`permanently_hide` means relationship-scoped hiding for the current in-memory
+Demo lifetime only. The UI must state this limitation directly; production
+persistence, undo, retention, and deletion semantics require a later decision.

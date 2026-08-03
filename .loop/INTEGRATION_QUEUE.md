@@ -2,9 +2,10 @@
 
 ## Queue status
 
-The previous offline MVP is already integrated. The queue below is the V2
-migration graph. `TASK-009` is the next node; no feature window should start
-before its contract is reviewed.
+The offline MVP and V2 migration through `TASK-015` are integrated. TASK-016 is
+accepted and Gate 5 has passed. The migration graph below remains as an audit
+record. TASK-020 is accepted and Gate 9 has passed. The first Echo Map playable
+is integrated; no implementation node is currently active.
 
 All coordination artifacts are read from and written to
 `D:\Codex-Workspace\Loop\.loop`, even when an OpenCode window uses a separate
@@ -12,7 +13,7 @@ Git worktree for source changes.
 
 ## Baseline verification
 
-- Tests: passed, 11 files / 45 tests.
+- Historical baseline: 15 files / 85 tests passed before the Echo Map slice.
 - Typecheck: passed.
 - Build: passed.
 - Current known interface requests remain in:
@@ -21,7 +22,8 @@ Git worktree for source changes.
 
 ## Strict execution order
 
-This is a gated sequence. Do not interpret it as “start everything now”.
+Gates 0 through 9 are complete historical records. Do not restart them. New work
+requires a separately reviewed evidence-backed task.
 
 ### Gate 0 — preparation
 
@@ -77,6 +79,79 @@ completion.
 Gate 4 requires the full test suite, typecheck, production build, manual offline
 Demo path, and final integration report.
 
+### Gate 5 — TASK-016 design only
+
+Start exactly one OpenCode window for `TASK-016`. It may inspect the codebase but
+may write only its claim and design report. It must not modify business code or
+open parallel implementation tasks.
+
+Gate 5 passes only when the temporary overview window reviews the player flow,
+state machine, Agent contract, data ownership, reuse map, UI specification,
+acceptance criteria, implementation decomposition, and unresolved decisions.
+Implementation tasks may be created only after that review.
+
+Gate 5 passed on 2026-08-02. The accepted result is
+`.loop/reports/TASK-016-agent-game-first-playable-design.md`; DR-016-01 through
+DR-016-03 are recorded in V2-008.
+
+### Gate 6 — TASK-017 journey domain only
+
+Start exactly one OpenCode window for `TASK-017`. It may implement and test the
+pure journey contracts and transition rules under its owned journey-domain files.
+It must not change orchestration, `OfflineDemoService`, recipient UI, app routing,
+shared styles, hardware, persistence, package files, or existing domain contracts.
+
+Gate 6 passes only with its claim, report, focused tests, full test suite,
+typecheck, production build, `git diff --check`, and coordinator review. No
+journey orchestration or UI task may start before Gate 6 passes.
+
+Gate 6 passed on 2026-08-02. TASK-017 verification passed with 78 focused tests,
+163 full-suite tests, typecheck, production build, and `git diff --check`.
+
+### Gate 7 — TASK-018 offline orchestration only
+
+Start exactly one OpenCode window for `TASK-018`. It may add journey services,
+journey-service tests, and the explicitly owned `OfflineDemoService` integration.
+It must not modify recipient UI, app routing, shared styles, hardware,
+persistence, package files, or existing public domain contracts.
+
+Gate 7 passes only with deterministic proposal/session/recovery tests, Agent and
+artifact integration tests, relationship-isolation tests, focused and full test
+suites, typecheck, build, `git diff --check`, report, and coordinator review.
+No Echo Map UI task may start before Gate 7 passes.
+
+Gate 7 passed on 2026-08-02. TASK-018 verification passed with 20 focused tests,
+183 full-suite tests, typecheck, build, and `git diff --check`.
+
+### Gate 8 — TASK-019 Echo Map UI
+
+Start exactly one OpenCode window for `TASK-019`. It may add journey UI and local
+styles/tests plus the narrow `RecipientPage` selection seam. It must use the
+accepted `EchoMapJourneyData` port and must not change journey domain/services,
+capture, Agent, artifact, hardware, package files, or broad app integration.
+
+Gate 8 passes with screen/exit/retry/accessibility tests, responsive browser smoke,
+full verification, `git diff --check`, report, and coordinator review.
+
+Gate 8 passed on 2026-08-02. TASK-019 verification passed with 10 focused tests,
+195 full-suite tests, typecheck, build, `git diff --check`, and responsive smoke.
+
+### Gate 9 — TASK-020 final Echo Map integration
+
+Start exactly one OpenCode window for `TASK-020`. It may add a discoverable Echo
+Map entry to the existing recipient confirmation flow, App-level integration
+tests, README Demo instructions, final browser evidence, and coordination updates.
+It must not add persistence, sensors, GPS, hardware requirements, new game nodes,
+or change accepted journey safety contracts.
+
+Gate 9 passes with the full quiet/glimmer path, provenance, recipient attribution,
+all critical exits/retries, desktop/mobile smoke, full verification,
+`git diff --check`, report, and final coordinator review.
+
+Gate 9 passed on 2026-08-02. TASK-020 verification passed with 11 integration
+tests, 198 full-suite tests at that historical checkpoint, typecheck, build, `git diff --check`, identity-entry
+smoke, and Echo Map responsive smoke.
+
 ## Workflow graph node contracts
 
 | Node | Owner | Inputs | Writes | Output / acceptance | Failure route |
@@ -89,6 +164,11 @@ Demo path, and final integration report.
 | N5 Hardware | OpenCode / `TASK-014` | accepted N1 contract | `src/features/hardware/**`, `src/adapters/hardware/**` | generic event/fallback tests, typecheck, build | TASK-014 |
 | N6 Recipient | OpenCode / `TASK-013` | N1, N3, N4 reports | `src/features/recipient/**`, local tests/styles | active entry, provenance, artifact tests, typecheck, build | TASK-013 or dependency node |
 | N7 Integration | OpenCode / `TASK-015` | all upstream reports and accepted decisions | `src/app/**`, `src/data/**`, `src/styles/**`, README, integration evidence | full tests, typecheck, build, manual Demo smoke path | route defect to owner; cross-cutting defect stays in N7 |
+| N8 Game design | OpenCode / `TASK-016` | accepted P0, V2-007, concept review, current code | TASK-016 claim and report only | implementation-ready first playable design | Decision Request or revise TASK-016 report |
+| N9 Journey domain | OpenCode / `TASK-017` | accepted TASK-016 and V2-008 | `src/features/journey/domain/**`, local tests, TASK-017 claim/report | pure contracts, validation, transitions, terminal/idempotency tests | revise TASK-017; Decision Request for contract conflict |
+| N10 Journey orchestration | OpenCode / `TASK-018` | accepted TASK-017, current Agent/artifact services, OfflineDemoService | `src/features/journey/services/**`, owned OfflineDemoService changes/tests, TASK-018 claim/report | deterministic full journey port with recovery and isolation | revise TASK-018; Decision Request for contract conflict |
+| N11 Echo Map UI | OpenCode / `TASK-019` | accepted TASK-018 data port and TASK-016 UI spec | `src/features/journey/ui/**`, local tests/styles, narrow RecipientPage seam, TASK-019 claim/report | complete responsive journey screens and exits | revise TASK-019; integration deferred |
+| N12 Echo Map integration | OpenCode / `TASK-020` | accepted TASK-019 and current W·HERE app shell | recipient entry seam, app integration tests, README, final evidence | discoverable complete Demo and reconciled status | route defect to owner; no new scope |
 
 ## Join criteria
 
@@ -102,7 +182,11 @@ The Gate 2 parallel wave may join only when each task has:
 
 N7 is the only node allowed to claim end-to-end completion.
 
-## Current integration blockers
+## Historical integration findings
+
+The findings below triggered `TASK-009` through `TASK-015` and are retained as
+audit context. Their current disposition is recorded in the task reports and
+`.loop/STATUS.md`; they are not current blockers for `TASK-016`.
 
 - The current capture flow writes a `Memory` first, then directly mutates
   `demoPolicies`, `demoPlans`, and the returned memory in
@@ -117,3 +201,8 @@ N7 is the only node allowed to claim end-to-end completion.
   still describe the ring as the primary entry, although V2 makes hardware
   post-MVP and interchangeable.
 - `.loop/STATUS.md` and this queue were missing before this audit.
+
+## Current implementation status
+
+TASK-016 through TASK-020 are accepted. The first Echo Map vertical slice is
+complete. There is no open implementation gate.

@@ -1,0 +1,44 @@
+<template>
+  <style>
+    #root { position: relative; width: 1920px; height: 1080px; overflow: hidden; container-type: size; font-family: sans-serif; color: #172421; perspective: 1800px; }
+    #root * { box-sizing: border-box; }
+    .f05-ground { position: absolute; inset: 0; background: #f9fbfa; }
+    .f05-top { position: absolute; top: 50px; left: 72px; right: 72px; display: flex; justify-content: space-between; color: #224652; font: 500 21px/1 monospace; letter-spacing: .12em; }
+    .f05-title { position: absolute; top: 105px; left: 72px; font-size: 70px; line-height: 1; font-weight: 500; color: #224652; }
+    .f05-proof { position: absolute; top: 94px; right: 72px; width: 350px; height: 125px; overflow: hidden; border: 2px solid #397487; }
+    .f05-proof img { width: 100%; height: 100%; object-fit: cover; object-position: center 21%; opacity: .58; }
+    .f05-stage { position: absolute; top: 250px; left: 72px; width: 1776px; height: 510px; display: flex; gap: 70px; transform-style: preserve-3d; }
+    .f05-card { position: relative; width: 853px; padding: 38px 42px; border: 2px solid #224652; border-radius: 8px; transform-style: preserve-3d; }
+    .f05-left { color: #f9fbfa; background: #224652; }
+    .f05-right { color: #172421; background: #c4dee6; }
+    .f05-tag { font: 500 20px/1 monospace; letter-spacing: .1em; }
+    .f05-card h2 { margin: 34px 0 14px; font-size: 54px; line-height: 1.05; font-weight: 500; }
+    .f05-card p { margin: 0; font-size: 25px; line-height: 1.45; }
+    .f05-meta { position: absolute; left: 42px; right: 42px; bottom: 34px; display: grid; gap: 0; border-top: 2px solid currentColor; }
+    .f05-row { display: grid; grid-template-columns: 190px 1fr; gap: 20px; padding: 12px 0; border-bottom: 2px solid currentColor; font: 500 18px/1.2 monospace; }
+    .f05-footer { position: absolute; left: 72px; right: 72px; bottom: 96px; display: flex; justify-content: space-between; align-items: baseline; padding-top: 24px; border-top: 2px solid #224652; }
+    .f05-footer strong { color: #c7553f; font-size: 54px; font-weight: 500; }
+    .f05-footer span { color: #224652; font: 500 21px/1 monospace; }
+  </style>
+  <div data-hf-id="hf-ueil" id="root" data-composition-id="05-provenance" data-start="0" data-duration="9.6" data-width="1920" data-height="1080">
+    <div data-hf-id="hf-1nn6" class="clip f05-ground" data-start="0" data-duration="9.6" data-track-index="0"></div>
+    <div data-hf-id="hf-bbbf" class="clip f05-top" data-start="0" data-duration="9.6" data-track-index="1"><span data-hf-id="hf-3shb">W·HERE / PROVENANCE LAYERS</span><span data-hf-id="hf-lp8f">05 / 06</span></div>
+    <div data-hf-id="hf-92i0" id="f05-title" class="clip f05-title" data-start="0" data-duration="9.6" data-track-index="2">先看来源，再看生成</div>
+    <div data-hf-id="hf-7kye" class="clip f05-proof" data-start="0" data-duration="9.6" data-track-index="3"><img data-hf-id="hf-4rnz" src="assets/recipient-share.png" alt="W·HERE continuity surface"></div>
+    <div data-hf-id="hf-ztep" class="clip f05-stage" data-start="0" data-duration="9.6" data-track-index="4">
+      <article data-hf-id="hf-78qj" id="f05-left" class="f05-card f05-left"><div data-hf-id="hf-llf8" class="f05-tag">ORIGINAL SOURCE</div><h2 data-hf-id="hf-2nht">真实原始来源</h2><p data-hf-id="hf-n37k">Mei 确认过的记录，保持原样。</p><div data-hf-id="hf-dhnf" class="f05-meta"><div data-hf-id="hf-7w5t" id="f05-r1" class="f05-row"><span data-hf-id="hf-dztx">CONTEXT ID</span><span data-hf-id="hf-osjz">context-rainy-day</span></div><div data-hf-id="hf-bu9u" id="f05-r2" class="f05-row"><span data-hf-id="hf-cjy7">CONTENT LAYER</span><span data-hf-id="hf-n5v2">original</span></div><div data-hf-id="hf-fsdv" id="f05-r3" class="f05-row"><span data-hf-id="hf-ysiv">TRIGGER</span><span data-hf-id="hf-diux">pull_only</span></div></div></article>
+      <article data-hf-id="hf-fpdj" id="f05-right" class="f05-card f05-right"><div data-hf-id="hf-egfd" class="f05-tag">AI GENERATED · LABELED</div><h2 data-hf-id="hf-uybv">有限生成整理</h2><p data-hf-id="hf-pwx9">不是 Mei 的原话，也不新增事实。</p><div data-hf-id="hf-u9cr" class="f05-meta"><div data-hf-id="hf-sawc" id="f05-r4" class="f05-row"><span data-hf-id="hf-hpmh">CONTEXT ID</span><span data-hf-id="hf-m7xr">context-rainy-day</span></div><div data-hf-id="hf-t2k5" id="f05-r5" class="f05-row"><span data-hf-id="hf-0htq">MODE</span><span data-hf-id="hf-1zih">composed_text</span></div><div data-hf-id="hf-x0o6" id="f05-r6" class="f05-row"><span data-hf-id="hf-rhtf">BOUNDARY</span><span data-hf-id="hf-a0vm">authorized only</span></div></div></article>
+    </div>
+    <div data-hf-id="hf-kbwu" id="f05-footer" class="clip f05-footer" data-start="0" data-duration="9.6" data-track-index="5" data-layout-allow-overlap=""><strong data-hf-id="hf-qfzv">真实高于拟真</strong><span data-hf-id="hf-3m26">SOURCE · AUTHORIZATION · BOUNDARY · LABEL</span></div>
+  </div>
+  <script>
+    window.__timelines = window.__timelines || {};
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo('#f05-title', { opacity: 0, y: -30 }, { opacity: 1, y: 0, duration: .65, ease: 'power3.out' }, .05);
+    tl.fromTo('#f05-left', { x: -310, rotateY: 18, opacity: 0 }, { x: 0, rotateY: 10, opacity: 1, duration: 1.05, ease: 'power3.out' }, 1.8);
+    tl.fromTo('#f05-right', { x: 310, rotateY: -18, opacity: 0 }, { x: 0, rotateY: -10, opacity: 1, duration: 1.05, ease: 'power3.out' }, 2.02);
+    ['#f05-r1','#f05-r4','#f05-r2','#f05-r5','#f05-r3','#f05-r6'].forEach((id, i) => { tl.fromTo(id, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: .34, ease: 'power3.out' }, 4.7 + i * .34); });
+    tl.fromTo('#f05-footer', { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: .55, ease: 'power3.out' }, 7.0);
+    window.__timelines['05-provenance'] = tl;
+  </script>
+</template>

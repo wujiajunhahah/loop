@@ -1,0 +1,235 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="750mm" height="2000mm" viewBox="0 0 750 2000" role="img" aria-labelledby="title desc">
+  <title id="title">W HERE booth banner for Physical AI Hackathon 2026</title>
+  <desc id="desc">A print-ready roll-up banner introducing W HERE, a responsive digital memory companion, with five team avatar placeholders.</desc>
+  <defs>
+    <linearGradient id="eventLine" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ff7f83"/>
+      <stop offset="0.52" stop-color="#f0c4c3"/>
+      <stop offset="1" stop-color="#64e0d7"/>
+    </linearGradient>
+    <radialGradient id="orbBase" cx="48%" cy="35%" r="70%">
+      <stop offset="0" stop-color="#f9f4ef"/>
+      <stop offset="0.22" stop-color="#ff8d9b"/>
+      <stop offset="0.48" stop-color="#6ee5df"/>
+      <stop offset="0.72" stop-color="#94b9d4"/>
+      <stop offset="1" stop-color="#0a1830"/>
+    </radialGradient>
+    <linearGradient id="orbRibbon" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f5f2ec" stop-opacity="0.95"/>
+      <stop offset="0.32" stop-color="#ff7185" stop-opacity="0.92"/>
+      <stop offset="0.58" stop-color="#6fe2d8" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#1d4265" stop-opacity="0.2"/>
+    </linearGradient>
+    <filter id="orbGlow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="20"/></filter>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000b1c" flood-opacity="0.24"/></filter>
+    <style>
+      text { font-family: Bahnschrift, Arial, "Microsoft YaHei", "PingFang SC", sans-serif; letter-spacing: 0; }
+      .serif { font-family: Georgia, "Times New Roman", "Microsoft YaHei", serif; }
+      .white { fill: #fffefa; }
+      .muted { fill: #aab5c5; }
+      .coral { fill: #ff8388; }
+      .mint { fill: #6ce0d6; }
+      .smallcaps { font-size: 12px; font-weight: 800; }
+    </style>
+  </defs>
+
+  <rect width="750" height="2000" fill="#031127"/>
+  <rect width="750" height="16" fill="url(#eventLine)"/>
+
+  <!-- Event identity -->
+  <g transform="translate(56 62)">
+    <text class="white" x="0" y="0" font-size="27" font-weight="800">Physical AI</text>
+    <text class="white" x="0" y="33" font-size="27" font-weight="800">Hackathon 2026</text>
+    <text x="378" y="23" font-size="21" font-weight="500" fill="url(#eventLine)">Bring AI To Life.</text>
+    <circle cx="618" cy="8" r="29" fill="none" stroke="#fffefa" stroke-width="6"/>
+    <circle cx="618" cy="8" r="12" fill="#fffefa"/>
+    <rect x="614" y="1" width="4" height="14" rx="2" fill="#031127"/>
+    <rect x="622" y="1" width="4" height="14" rx="2" fill="#031127"/>
+  </g>
+  <rect x="56" y="132" width="638" height="3" fill="url(#eventLine)"/>
+
+  <!-- New brand hero -->
+  <g transform="translate(56 202)">
+    <text class="coral" x="2" y="0" font-size="24" font-weight="800">我在</text>
+    <text class="serif white" x="0" y="112" font-size="111" font-weight="700">W<tspan fill="#ff8388">·</tspan><tspan fill="#6ce0d6">HERE</tspan></text>
+    <text class="white" x="4" y="160" font-size="30" font-weight="800">We are here.</text>
+    <text class="white" x="4" y="200" font-size="23" font-weight="700">一份会回应的记忆。</text>
+    <text class="muted" x="4" y="234" font-size="17">A responsive digital memory companion.</text>
+  </g>
+
+  <!-- WHERE / HERE brand proposition -->
+  <g transform="translate(56 482)">
+    <rect width="638" height="154" rx="6" fill="#fffefa"/>
+    <g transform="translate(28 30)">
+      <text x="0" y="0" font-size="12" font-weight="800" fill="#8a4939">WHEN YOU MISS SOMEONE</text>
+      <text class="serif" x="0" y="50" font-size="33" font-weight="700" fill="#202522">WHERE?</text>
+      <text x="0" y="80" font-size="15" fill="#626a64">你在哪里？</text>
+    </g>
+    <path d="M232 79H407" fill="none" stroke="#d9d8d0" stroke-width="3"/>
+    <path d="M390 65l20 14-20 14" fill="none" stroke="#d7674c" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="320" cy="79" r="17" fill="#f6ddd5"/>
+    <circle cx="320" cy="79" r="6" fill="#d7674c"/>
+    <g transform="translate(438 30)">
+      <text x="0" y="0" font-size="12" font-weight="800" fill="#1f6753">WHEN MEMORY RESPONDS</text>
+      <text class="serif" x="0" y="50" font-size="33" font-weight="700" fill="#202522">HERE.</text>
+      <text x="0" y="80" font-size="15" fill="#626a64">我在这里。</text>
+    </g>
+    <text x="319" y="132" text-anchor="middle" font-size="15" font-weight="800" fill="#1f6753">When you reach out, we are here.</text>
+  </g>
+
+  <!-- Three product values -->
+  <g transform="translate(56 696)">
+    <text class="smallcaps coral" x="0" y="0">WHAT W·HERE DOES</text>
+    <text class="white" x="0" y="34" font-size="25" font-weight="800">Past memories respond to life today.</text>
+    <path d="M0 79H638" stroke="#263b58" stroke-width="2"/>
+    <path d="M0 79H638" stroke="url(#eventLine)" stroke-width="2" stroke-dasharray="188 25"/>
+
+    <g transform="translate(0 68)">
+      <circle cx="25" cy="11" r="24" fill="#ff8388"/>
+      <path d="M10 12h7l4-11 7 22 7-29 8 27 6-9h8" fill="none" stroke="#031127" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      <text class="white" x="0" y="72" font-size="18" font-weight="800">真实保存</text>
+      <text class="muted" x="0" y="98" font-size="13">Preserve what was truly left.</text>
+    </g>
+    <g transform="translate(220 68)">
+      <circle cx="25" cy="11" r="24" fill="#fffefa"/>
+      <circle cx="19" cy="7" r="7" fill="none" stroke="#1f6753" stroke-width="3"/>
+      <circle cx="34" cy="17" r="7" fill="none" stroke="#1f6753" stroke-width="3"/>
+      <path d="M24 11l5 3" stroke="#1f6753" stroke-width="3"/>
+      <text class="white" x="0" y="72" font-size="18" font-weight="800">关系编排</text>
+      <text class="muted" x="0" y="98" font-size="13">Keep each relationship distinct.</text>
+    </g>
+    <g transform="translate(440 68)">
+      <circle cx="25" cy="11" r="24" fill="#6ce0d6"/>
+      <path d="M11 12c9-13 19-13 28 0-9 13-19 13-28 0Z" fill="none" stroke="#031127" stroke-width="3"/>
+      <circle cx="25" cy="12" r="5" fill="#031127"/>
+      <text class="white" x="0" y="72" font-size="18" font-weight="800">有限回应</text>
+      <text class="muted" x="0" y="98" font-size="13">Respond with source and consent.</text>
+    </g>
+  </g>
+
+  <!-- Rainy-day demo -->
+  <g transform="translate(56 924)">
+    <rect width="638" height="366" rx="8" fill="#0b1c34" stroke="#263b58" stroke-width="2" filter="url(#softShadow)"/>
+    <text class="smallcaps mint" x="28" y="38">LIVE DEMO · MOTHER → DAUGHTER · RAINY DAY</text>
+    <text class="serif white" x="28" y="83" font-size="29" font-weight="700">Past context meets the present moment.</text>
+
+    <!-- Current context -->
+    <g transform="translate(28 112)">
+      <rect width="165" height="170" rx="5" fill="#eaf5f4"/>
+      <circle cx="34" cy="34" r="19" fill="#6ce0d6"/>
+      <path d="M24 35c4-12 16-12 20 0M34 35v31M34 66l-8 10M34 66l9 10" fill="none" stroke="#173047" stroke-width="3" stroke-linecap="round"/>
+      <path d="M18 91l6 9M48 91l-6 9M76 91l6 9M106 91l-6 9M136 91l6 9" stroke="#5abbb6" stroke-width="2"/>
+      <text x="16" y="126" font-size="12" font-weight="800" fill="#1f6753">NOW CONTEXT</text>
+      <text class="serif" x="16" y="145" font-size="16" font-weight="700" fill="#202522">Forgot my</text>
+      <text class="serif" x="16" y="164" font-size="16" font-weight="700" fill="#202522">umbrella.</text>
+    </g>
+
+    <path d="M211 197H251" stroke="#ff8388" stroke-width="3"/>
+    <path d="M239 187l14 10-14 10" fill="none" stroke="#ff8388" stroke-width="3"/>
+
+    <!-- Source -->
+    <g transform="translate(253 112)">
+      <rect width="165" height="170" rx="5" fill="#fffefa"/>
+      <rect x="16" y="16" width="111" height="25" rx="3" fill="#f6ddd5"/>
+      <text x="26" y="34" font-size="11" font-weight="800" fill="#8a4939">ORIGINAL VOICE</text>
+      <path d="M18 83h13l6-17 10 35 10-49 11 44 8-23 8 10h19" fill="none" stroke="#d7674c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="16" y="127" font-size="12" font-weight="800" fill="#8a4939">SOURCE FOUND</text>
+      <text x="16" y="151" font-size="13" fill="#626a64">Rain · care · childhood</text>
+    </g>
+
+    <path d="M436 197H476" stroke="#6ce0d6" stroke-width="3"/>
+    <path d="M464 187l14 10-14 10" fill="none" stroke="#6ce0d6" stroke-width="3"/>
+
+    <!-- Response -->
+    <g transform="translate(478 112)">
+      <rect width="132" height="170" rx="5" fill="#f0f8f3"/>
+      <rect x="14" y="15" width="92" height="25" rx="3" fill="#dcebe5"/>
+      <text x="24" y="33" font-size="11" font-weight="800" fill="#1f6753">AI-LABELED</text>
+      <text class="serif" x="14" y="68" font-size="16" font-weight="700" fill="#202522">“又不带伞。</text>
+      <text class="serif" x="14" y="93" font-size="16" font-weight="700" fill="#202522">回去先把头发</text>
+      <text class="serif" x="14" y="118" font-size="16" font-weight="700" fill="#202522">吹干。”</text>
+      <text x="14" y="151" font-size="11" fill="#626a64">Source-backed reply</text>
+    </g>
+
+    <g transform="translate(28 326)">
+      <circle cx="7" cy="-2" r="6" fill="#6ce0d6"/><text class="white" x="22" y="3" font-size="14" font-weight="700">Original preserved</text>
+      <circle cx="202" cy="-2" r="6" fill="#ff8388"/><text class="white" x="217" y="3" font-size="14" font-weight="700">AI clearly marked</text>
+      <circle cx="400" cy="-2" r="6" fill="#f2c9c4"/><text class="white" x="415" y="3" font-size="14" font-weight="700">Recipient opens by choice</text>
+    </g>
+  </g>
+
+  <!-- Product principles -->
+  <g transform="translate(56 1342)">
+    <text class="smallcaps coral" x="0" y="0">DESIGN PRINCIPLES</text>
+    <g transform="translate(0 30)">
+      <text class="serif white" x="0" y="31" font-size="25" font-weight="700">TRUE</text>
+      <text class="coral" x="0" y="54" font-size="11" font-weight="800">OVER REALISTIC</text>
+      <text class="muted" x="0" y="78" font-size="12">真实高于拟真</text>
+    </g>
+    <path d="M205 31V112" stroke="#263b58"/>
+    <g transform="translate(225 30)">
+      <text class="serif white" x="0" y="31" font-size="25" font-weight="700">RESPOND</text>
+      <text class="mint" x="0" y="54" font-size="11" font-weight="800">DON'T REPLICATE</text>
+      <text class="muted" x="0" y="78" font-size="12">回应高于复刻</text>
+    </g>
+    <path d="M430 31V112" stroke="#263b58"/>
+    <g transform="translate(450 30)">
+      <text class="serif white" x="0" y="31" font-size="25" font-weight="700">CONTROL</text>
+      <text fill="#f2c9c4" x="0" y="54" font-size="11" font-weight="800">BOTH SIDES</text>
+      <text class="muted" x="0" y="78" font-size="12">双方拥有控制权</text>
+    </g>
+  </g>
+
+  <!-- Five-team-member avatar placeholders -->
+  <g transform="translate(56 1502)">
+    <text class="smallcaps mint" x="0" y="0">TEAM W·HERE · 5 BUILDERS</text>
+    <text class="muted" x="638" y="0" text-anchor="end" font-size="11">REPLACE WITH CIRCULAR ANIME PORTRAITS</text>
+
+    <g transform="translate(45 66)">
+      <circle r="43" fill="#0b1c34" stroke="#ff8388" stroke-width="3" stroke-dasharray="7 6"/>
+      <circle cy="-9" r="13" fill="#ff8388" opacity="0.75"/><path d="M-23 28c4-24 42-24 46 0" fill="#ff8388" opacity="0.75"/>
+      <text class="white" y="64" text-anchor="middle" font-size="11" font-weight="800">MEMBER 01</text>
+    </g>
+    <g transform="translate(172 66)">
+      <circle r="43" fill="#0b1c34" stroke="#f2c9c4" stroke-width="3" stroke-dasharray="7 6"/>
+      <circle cy="-9" r="13" fill="#f2c9c4" opacity="0.75"/><path d="M-23 28c4-24 42-24 46 0" fill="#f2c9c4" opacity="0.75"/>
+      <text class="white" y="64" text-anchor="middle" font-size="11" font-weight="800">MEMBER 02</text>
+    </g>
+    <g transform="translate(299 66)">
+      <circle r="43" fill="#0b1c34" stroke="#6ce0d6" stroke-width="3" stroke-dasharray="7 6"/>
+      <circle cy="-9" r="13" fill="#6ce0d6" opacity="0.75"/><path d="M-23 28c4-24 42-24 46 0" fill="#6ce0d6" opacity="0.75"/>
+      <text class="white" y="64" text-anchor="middle" font-size="11" font-weight="800">MEMBER 03</text>
+    </g>
+    <g transform="translate(426 66)">
+      <circle r="43" fill="#0b1c34" stroke="#f2c9c4" stroke-width="3" stroke-dasharray="7 6"/>
+      <circle cy="-9" r="13" fill="#f2c9c4" opacity="0.75"/><path d="M-23 28c4-24 42-24 46 0" fill="#f2c9c4" opacity="0.75"/>
+      <text class="white" y="64" text-anchor="middle" font-size="11" font-weight="800">MEMBER 04</text>
+    </g>
+    <g transform="translate(553 66)">
+      <circle r="43" fill="#0b1c34" stroke="#ff8388" stroke-width="3" stroke-dasharray="7 6"/>
+      <circle cy="-9" r="13" fill="#ff8388" opacity="0.75"/><path d="M-23 28c4-24 42-24 46 0" fill="#ff8388" opacity="0.75"/>
+      <text class="white" y="64" text-anchor="middle" font-size="11" font-weight="800">MEMBER 05</text>
+    </g>
+  </g>
+
+  <!-- CTA -->
+  <g transform="translate(56 1677)">
+    <rect width="638" height="1" fill="#263b58"/>
+    <text class="coral" x="0" y="36" font-size="13" font-weight="800">LIVE EXPERIENCE · 02 MIN</text>
+    <text class="white" x="0" y="70" font-size="22" font-weight="800">“你在吗？”  “我在。”</text>
+    <text class="muted" x="638" y="70" text-anchor="end" font-size="14">When you reach out, we are here.</text>
+  </g>
+
+  <!-- Event-inspired lower orb -->
+  <ellipse cx="385" cy="1940" rx="420" ry="210" fill="#16304d" opacity="0.72" filter="url(#orbGlow)"/>
+  <path d="M-74 2050C25 1882 170 1785 373 1817C524 1841 646 1795 814 1883V2050Z" fill="url(#orbBase)"/>
+  <path d="M-40 2010C100 1880 222 1862 352 1903C486 1946 608 1834 790 1903" fill="none" stroke="url(#orbRibbon)" stroke-width="58" opacity="0.82"/>
+  <path d="M-25 2040C145 1935 270 1934 403 1960C536 1986 651 1900 784 1940" fill="none" stroke="#fffefa" stroke-width="15" opacity="0.62"/>
+  <path d="M-35 2015C126 1878 245 1884 375 1917C515 1952 626 1853 790 1910" fill="none" stroke="#ff7f83" stroke-width="12" opacity="0.82"/>
+  <path d="M-18 2050C135 1960 285 1962 430 1980C564 1997 670 1922 782 1953" fill="none" stroke="#5be0d8" stroke-width="18" opacity="0.78"/>
+  <g transform="translate(56 1938)">
+    <text class="white" x="0" y="0" font-size="26" font-weight="800">我在 W·HERE</text>
+    <text class="white" x="0" y="24" font-size="12">WE ARE HERE.</text>
+    <text class="white" x="638" y="10" text-anchor="end" font-size="13" font-weight="700">一份会回应的记忆。</text>
+  </g>
+</svg>

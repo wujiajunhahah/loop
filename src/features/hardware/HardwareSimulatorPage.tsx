@@ -15,12 +15,48 @@ export const hardwareSimulatorRoutes = {
   trigger: '/hardware-simulator/trigger',
 } as const
 
+const sourceLabels: Record<TriggerSource, string> = {
+  touch: '触碰',
+  tap: '轻点',
+  gesture: '手势',
+  nfc: 'NFC',
+  ble: '蓝牙按钮',
+  software: '软件模拟',
+}
+
+const reasonLabels: Record<TriggerReason, string> = {
+  user_opened: '由接收者打开',
+  scheduled_date: '授权日期',
+  milestone: '重要节点',
+  weather_context: '天气情境',
+  location_context: '地点情境',
+  plan_progress: '计划进度',
+}
+
+const stateLabels: Record<string, string> = {
+  off: '关闭',
+  ready: '待命',
+  active: '活动',
+  error: '错误',
+  none: '无',
+  acknowledge: '确认',
+  attention: '提醒',
+  idle: '待命',
+  pending: '等待',
+  confirmed: '已确认',
+  rejected: '已拒绝',
+  produced: '已生成',
+  verified: '已验证',
+  consumed: '已消费',
+}
+
 function SimulatorNav() {
+  const route = window.location.hash.slice(1)
   return (
-    <nav className="sim-nav" aria-label="Hardware simulator">
-      <a href={`#${hardwareSimulatorRoutes.overview}`}>Overview</a>
-      <a href={`#${hardwareSimulatorRoutes.bind}`}>Bind</a>
-      <a href={`#${hardwareSimulatorRoutes.trigger}`}>Trigger</a>
+    <nav className="sim-nav" aria-label="信物模拟器">
+      <a aria-current={route === hardwareSimulatorRoutes.overview ? 'page' : undefined} href={`#${hardwareSimulatorRoutes.overview}`}>概览</a>
+      <a aria-current={route === hardwareSimulatorRoutes.bind ? 'page' : undefined} href={`#${hardwareSimulatorRoutes.bind}`}>绑定与托付</a>
+      <a aria-current={route === hardwareSimulatorRoutes.trigger ? 'page' : undefined} href={`#${hardwareSimulatorRoutes.trigger}`}>触发检查</a>
     </nav>
   )
 }
@@ -31,11 +67,11 @@ function FeedbackStrip() {
   const feedback = simulatorBridge.getFeedback()
   const availability = simulatorBridge.getAvailability()
   return (
-    <div className="feedback-strip" aria-label="Abstract hardware feedback">
-      <span>Bridge: {availability.available ? 'available' : 'software fallback'}</span>
-      <span>LED: {feedback.led}</span>
-      <span>Vibration: {feedback.vibration}</span>
-      <span>Confirmation: {feedback.confirmation}</span>
+    <div className="feedback-strip" aria-label="信物反馈状态">
+      <span>桥接 · {availability.available ? '实体设备可用' : '软件模拟'}</span>
+      <span>灯光 · {stateLabels[feedback.led]}</span>
+      <span>震动 · {stateLabels[feedback.vibration]}</span>
+      <span>确认 · {stateLabels[feedback.confirmation]}</span>
     </div>
   )
 }
@@ -46,9 +82,9 @@ export function HardwareSimulatorPage() {
     <section className="hardware-simulator">
       <header className="sim-header">
         <div>
-          <p className="sim-kicker">Hardware-neutral test bench</p>
-          <h1>Hardware Simulator</h1>
-          <p>Bind a device, entrust it with verification, then inspect one standard event pipeline.</p>
+          <p className="sim-kicker">信物模拟器 · 软件可独立完成</p>
+          <h1>检查一次实体入口。</h1>
+          <p>先绑定身份并完成托付，再查看一次触碰如何经过验证，进入接收者流程。</p>
         </div>
         <SimulatorNav />
       </header>
@@ -56,18 +92,18 @@ export function HardwareSimulatorPage() {
       <div className="sim-dashboard">
         <article>
           <span className="sim-number">01</span>
-          <h2>Verified binding</h2>
-          <p>No device becomes associated with an identity until its proof succeeds.</p>
-          <a className="button button--secondary" href={`#${hardwareSimulatorRoutes.bind}`}>Configure</a>
+          <h2>身份绑定与托付</h2>
+          <p>只有双方身份验证通过后，信物才会与这段关系关联。</p>
+          <a className="button button--secondary" href={`#${hardwareSimulatorRoutes.bind}`}>配置身份</a>
         </article>
         <article>
           <span className="sim-number">02</span>
-          <h2>Standard event</h2>
-          <p>All physical and software sources produce the same EntryEvent shape.</p>
-          <a className="button button--primary" href={`#${hardwareSimulatorRoutes.trigger}`}>Open trigger lab</a>
+          <h2>统一入口事件</h2>
+          <p>实体触碰与软件模拟都会形成同一种入口事件，并经过同一套策略检查。</p>
+          <a className="button button--primary" href={`#${hardwareSimulatorRoutes.trigger}`}>检查触发流程</a>
         </article>
       </div>
-      {!availability.available && <p className="sim-notice">Physical input is unavailable. Events will use the software simulator source.</p>}
+      {!availability.available && <p className="sim-notice">当前没有实体输入，后续事件将使用软件模拟来源。</p>}
     </section>
   )
 }
@@ -77,21 +113,24 @@ export function HardwareBindPage() {
   const [deviceType, setDeviceType] = useState('keepsake-token')
   const [ownerId, setOwnerId] = useState('person-mei')
   const [recipientId, setRecipientId] = useState('person-lin')
-  const [message, setMessage] = useState('Waiting for verified binding.')
+  const [message, setMessage] = useState('等待身份验证与绑定。')
+  const [hasError, setHasError] = useState(false)
   const [binding, setBinding] = useState(false)
   const [entrusting, setEntrusting] = useState(false)
 
   async function bind() {
     setBinding(true)
+    setHasError(false)
     try {
       await simulatorBridge.bindDevice({
         deviceId,
         deviceType,
         ownerProof: { identityId: ownerId, method: 'mock_code', value: 'LOOP-DEMO' },
       })
-      setMessage(`Verified binding created for ${deviceId}.`)
+      setMessage(`已验证并绑定设备 ${deviceId}。`)
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Binding failed')
+      setHasError(true)
+      setMessage(error instanceof Error ? error.message : '设备绑定失败，请重试。')
     } finally {
       setBinding(false)
     }
@@ -99,15 +138,17 @@ export function HardwareBindPage() {
 
   async function entrust() {
     setEntrusting(true)
+    setHasError(false)
     try {
       await simulatorBridge.entrustDevice({
         deviceId,
         ownerProof: { identityId: ownerId, method: 'mock_code', value: 'LOOP-DEMO' },
         recipientProof: { identityId: recipientId, method: 'mock_confirmation', value: 'LOOP-DEMO' },
       })
-      setMessage(`Entrustment verified for recipient ${recipientId}.`)
+      setMessage(`已验证并托付给接收者 ${recipientId}。`)
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Entrustment failed')
+      setHasError(true)
+      setMessage(error instanceof Error ? error.message : '托付验证失败，请重试。')
     } finally {
       setEntrusting(false)
     }
@@ -115,16 +156,16 @@ export function HardwareBindPage() {
 
   return (
     <section className="hardware-simulator">
-      <header className="sim-header"><div><p className="sim-kicker">Identity gate</p><h1>Bind and entrust</h1></div><SimulatorNav /></header>
+      <header className="sim-header"><div><p className="sim-kicker">身份入口</p><h1>绑定并托付信物。</h1></div><SimulatorNav /></header>
       <FeedbackStrip />
       <div className="sim-form-grid">
-        <label>Device ID<input value={deviceId} onChange={(event) => setDeviceId(event.target.value)} /></label>
-        <label>Device type<input value={deviceType} onChange={(event) => setDeviceType(event.target.value)} /></label>
-        <label>Owner identity<input value={ownerId} onChange={(event) => setOwnerId(event.target.value)} /></label>
-        <label>Recipient identity<input value={recipientId} onChange={(event) => setRecipientId(event.target.value)} /></label>
+        <label>设备 ID<input value={deviceId} onChange={(event) => setDeviceId(event.target.value)} /></label>
+        <label>设备类型<input value={deviceType} onChange={(event) => setDeviceType(event.target.value)} /></label>
+        <label>所有者身份<input value={ownerId} onChange={(event) => setOwnerId(event.target.value)} /></label>
+        <label>接收者身份<input value={recipientId} onChange={(event) => setRecipientId(event.target.value)} /></label>
       </div>
-      <div className="sim-actions"><button className="button button--secondary" onClick={() => void bind()} disabled={binding || entrusting}>{binding ? 'Binding...' : 'Verify and bind'}</button><button className="button button--primary" onClick={() => void entrust()} disabled={binding || entrusting}>{entrusting ? 'Entrusting...' : 'Verify and entrust'}</button></div>
-      <p className="sim-notice" role="status">{message}</p>
+      <div className="sim-actions" aria-busy={binding || entrusting}><button className="button button--secondary" onClick={() => void bind()} disabled={binding || entrusting}>{binding ? '正在绑定...' : '验证并绑定'}</button><button className="button button--primary" onClick={() => void entrust()} disabled={binding || entrusting}>{entrusting ? '正在托付...' : '验证并托付'}</button></div>
+      <p className={`sim-notice ${hasError ? 'sim-notice--error' : ''}`} role={hasError ? 'alert' : 'status'}>{message}</p>
     </section>
   )
 }
@@ -136,7 +177,8 @@ export function HardwareTriggerPage() {
   const [deviceId, setDeviceId] = useState(binding?.deviceId ?? 'loop-demo-device')
   const [recipientId, setRecipientId] = useState(binding?.recipientId ?? 'person-lin')
   const [transitions, setTransitions] = useState<EntryEventTransition[]>([])
-  const [message, setMessage] = useState('Ready to produce an event.')
+  const [message, setMessage] = useState('可以生成一次入口事件。')
+  const [hasError, setHasError] = useState(false)
   const [triggering, setTriggering] = useState(false)
 
   useEffect(
@@ -148,6 +190,7 @@ export function HardwareTriggerPage() {
 
   async function trigger() {
     setTriggering(true)
+    setHasError(false)
     try {
       const result = await simulatorController.triggerAndEnterRecipient({
         deviceId,
@@ -158,9 +201,10 @@ export function HardwareTriggerPage() {
         allowFallback: true,
         payload: { source: 'hardware-simulator' },
       })
-      setMessage(result.outcome === 'accepted' ? `Verified event consumed (${result.policyOutcome}). Entering recipient flow.` : `Event rejected: ${result.outcome} / ${result.policyOutcome}.`)
+      setMessage(result.outcome === 'accepted' ? `入口事件已验证并消费（${result.policyOutcome}），正在进入接收者流程。` : `入口事件被拒绝：${result.outcome} / ${result.policyOutcome}。`)
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Trigger failed')
+      setHasError(true)
+      setMessage(error instanceof Error ? error.message : '事件触发失败，请重试。')
     } finally {
       setTriggering(false)
     }
@@ -168,22 +212,22 @@ export function HardwareTriggerPage() {
 
   return (
     <section className="hardware-simulator">
-      <header className="sim-header"><div><p className="sim-kicker">Event pipeline</p><h1>Trigger and inspect</h1></div><SimulatorNav /></header>
+      <header className="sim-header"><div><p className="sim-kicker">入口事件链路</p><h1>触发并检查一次进入。</h1></div><SimulatorNav /></header>
       <FeedbackStrip />
       <div className="sim-trigger-controls">
-        <label>Trigger source<select value={source} onChange={(event) => setSource(event.target.value as TriggerSource)}>{triggerSources.map((item) => <option key={item}>{item}</option>)}</select></label>
-        <label>Trigger reason<select value={triggerReason} onChange={(event) => setTriggerReason(event.target.value as TriggerReason)}>{triggerReasons.map((reason) => <option key={reason}>{reason}</option>)}</select></label>
-        <label>Device ID<input value={deviceId} onChange={(event) => setDeviceId(event.target.value)} /></label>
-        <label>Recipient ID<input value={recipientId} onChange={(event) => setRecipientId(event.target.value)} /></label>
-        <button className="button button--primary" onClick={() => void trigger()} disabled={triggering}>{triggering ? 'Triggering...' : 'Trigger event'}</button>
+        <label>触发来源<select value={source} onChange={(event) => setSource(event.target.value as TriggerSource)}>{triggerSources.map((item) => <option key={item} value={item}>{sourceLabels[item]}</option>)}</select></label>
+        <label>触发原因<select value={triggerReason} onChange={(event) => setTriggerReason(event.target.value as TriggerReason)}>{triggerReasons.map((reason) => <option key={reason} value={reason}>{reasonLabels[reason]}</option>)}</select></label>
+        <label>设备 ID<input value={deviceId} onChange={(event) => setDeviceId(event.target.value)} /></label>
+        <label>接收者 ID<input value={recipientId} onChange={(event) => setRecipientId(event.target.value)} /></label>
+        <button className="button button--primary" onClick={() => void trigger()} disabled={triggering}>{triggering ? '正在触发...' : '触发入口事件'}</button>
       </div>
-      <p className="sim-notice" role="status">{message}</p>
-      <ol className="event-timeline" aria-label="Event lifecycle">
-        {transitions.length === 0 && <li><strong>No events yet</strong><span>Produced, verification, and consumption stages appear here.</span></li>}
+      <p className={`sim-notice ${hasError ? 'sim-notice--error' : ''}`} role={hasError ? 'alert' : 'status'}>{message}</p>
+      <ol className="event-timeline" aria-label="入口事件生命周期">
+        {transitions.length === 0 && <li><strong>还没有事件</strong><span>生成、验证与消费阶段会依次显示在这里。</span></li>}
         {transitions.map((transition, index) => (
           <li key={`${transition.event.id}-${transition.stage}-${index}`}>
-            <strong>{transition.stage}</strong>
-            <span>{transition.triggerSource} / {transition.event.source} / {transition.verificationStatus}{transition.reason ? ` / ${transition.reason}` : ''}</span>
+            <strong>{stateLabels[transition.stage] ?? transition.stage}</strong>
+            <span>{sourceLabels[transition.triggerSource]} / {transition.event.source} / {stateLabels[transition.verificationStatus] ?? transition.verificationStatus}{transition.reason ? ` / ${transition.reason}` : ''}</span>
             <code>{transition.event.id}</code>
           </li>
         ))}

@@ -53,3 +53,24 @@ integration.
 
 The latest product context is currently an uncommitted working-tree update.
 OpenCode must not overwrite or revert those files while implementing tasks.
+
+### V2-RISK-007 Game concept scope regression
+
+The game exploration can pull the stable P0 Demo toward routes, progression,
+tasks, sensors, and multiplayer permissions before the core relationship loop is
+validated. Mitigation: preserve the existing P0 and require one explicit P1
+hypothesis per future task.
+
+### V2-RISK-008 Bereavement-state inference
+
+HRV, heart rate, sleep, movement, and other body signals cannot establish grief,
+intent, or psychological condition. Mitigation: direct user choice has priority;
+automation may only reduce content intensity, and physiological inference remains
+P2 pending safety evidence.
+
+### V2-RISK-009 Location and action coercion
+
+Routes, GPS history, unfinished wishes, and reward systems can expose sensitive
+locations or pressure a recipient to act. Mitigation: no continuous tracking,
+no default push, no generated wishes, and every action must support skip, reject,
+delete, and permanent disable without penalty.

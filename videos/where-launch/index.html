@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, height=1080">
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js" integrity="sha384-sG0Hv1tP1lZCk9KQmrIbY/XNwi+OY84GQqhMscbnsoBFqAz8KNCil1kvfL3Hbbk2" crossorigin="anonymous"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #000;
+      }
+      #root {
+        position: relative;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: #f9fbfa;
+      }
+      .scene {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div data-hf-id="hf-i657" id="root" data-composition-id="main" data-start="0" data-duration="45" data-width="1920" data-height="1080">
+      <div data-hf-id="hf-cuim" id="el-01-where-here" class="scene" data-composition-id="01-where-here" data-composition-src="compositions/frames/01-where-here.html" data-start="0" data-duration="5.4" data-track-index="0"></div>
+
+      <div data-hf-id="hf-lq6i" id="el-02-product-promise" class="scene" data-composition-id="02-product-promise" data-composition-src="compositions/frames/02-product-promise.html" data-start="5" data-duration="8.5" data-track-index="1"></div>
+
+      <div data-hf-id="hf-6ms7" id="el-03-active-entry" class="scene" data-composition-id="03-active-entry" data-composition-src="compositions/frames/03-active-entry.html" data-start="13" data-duration="8.5" data-track-index="0"></div>
+
+      <div data-hf-id="hf-087m" id="el-04-rain-today" class="scene" data-composition-id="04-rain-today" data-composition-src="compositions/frames/04-rain-today.html" data-start="21" data-duration="8.4" data-track-index="1"></div>
+
+      <div data-hf-id="hf-ug46" id="el-05-provenance" class="scene" data-composition-id="05-provenance" data-composition-src="compositions/frames/05-provenance.html" data-start="29" data-duration="9.6" data-track-index="0"></div>
+
+      <div data-hf-id="hf-lahv" id="el-06-here-outro" class="scene" data-composition-id="06-here-outro" data-composition-src="compositions/frames/06-here-outro.html" data-start="38" data-duration="7" data-track-index="1"></div>
+
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = gsap.timeline({ paused: true });
+      // ── frame transitions (injected by transitions.mjs) ──
+      (function () { var tl = window.__timelines["main"];
+        tl.to("#el-01-where-here", { scale: 2.5, opacity: 0, filter: "blur(8px)", duration: 0.4, ease: "power3.in" }, 5);
+        tl.fromTo("#el-02-product-promise", { scale: 0.5, opacity: 0, filter: "blur(8px)" }, { scale: 1, opacity: 1, filter: "blur(0px)", duration: 0.4, ease: "power3.out" }, 5);
+        tl.to("#el-02-product-promise", { x: -1920, duration: 0.5, ease: "power3.inOut" }, 13);
+        tl.fromTo("#el-03-active-entry", { x: 1920, opacity: 1 }, { x: 0, duration: 0.5, ease: "power3.inOut" }, 13);
+        tl.to("#el-03-active-entry", { x: -1920, duration: 0.5, ease: "power3.inOut" }, 21);
+        tl.fromTo("#el-04-rain-today", { x: 1920, opacity: 1 }, { x: 0, duration: 0.5, ease: "power3.inOut" }, 21);
+        tl.to("#el-04-rain-today", { scaleX: 0, transformOrigin: "left center", duration: 0.4, ease: "power3.inOut" }, 29);
+        tl.fromTo("#el-05-provenance", { scaleX: 0, transformOrigin: "right center", opacity: 1 }, { scaleX: 1, transformOrigin: "right center", duration: 0.4, ease: "power3.inOut" }, 29);
+        tl.to("#el-05-provenance", { filter: "blur(10px)", scale: 1.03, opacity: 0, duration: 0.6, ease: "power2.inOut" }, 38);
+        tl.fromTo("#el-06-here-outro", { filter: "blur(10px)", scale: 0.97, opacity: 0 }, { filter: "blur(0px)", scale: 1, opacity: 1, duration: 0.6, ease: "power2.inOut" }, 38);
+        tl.to({}, { duration: 45 }, 0); // full-span anchor — main.duration() == composition total (Studio master duration)
+      })();
+    </script>
+  </body>
+</html>

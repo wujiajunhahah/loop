@@ -172,8 +172,8 @@ describe('CaptureFlow', () => {
   })
 
   it.each([
-    ['/capture/review', '记录草稿需要重新开始。', '返回 Context 编辑器'],
-    ['/capture/success', '没有可恢复的保存结果。', '重新录入 Context'],
+    ['/capture/review', '记录草稿需要重新开始。', '返回记忆编辑器'],
+    ['/capture/success', '没有可恢复的保存结果。', '重新录入记忆'],
   ])('does not fabricate capture state after refreshing %s', async (route, message, action) => {
     const { service, save } = createService()
     window.location.hash = route

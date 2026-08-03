@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Gaazone chibi avatar">
+  <defs><clipPath id="c"><circle cx="256" cy="256" r="244"/></clipPath></defs>
+  <g clip-path="url(#c)">
+    <circle cx="256" cy="256" r="244" fill="#dff7f4"/>
+    <path d="M18 418c65-72 147-107 238-107s173 35 238 107v114H18Z" fill="#ff7f83"/>
+    <path d="M172 350c24-26 54-39 84-39s60 13 84 39l-15 162H187Z" fill="#19394c"/>
+    <path d="M216 322h80v83c-24 18-56 18-80 0Z" fill="#c98f6f" stroke="#242730" stroke-width="9"/>
+    <ellipse cx="256" cy="228" rx="114" ry="130" fill="#d9a080" stroke="#242730" stroke-width="11"/>
+    <path d="M142 216c-12-76 25-141 94-155 70-14 134 21 142 101-43-29-91-36-140-23-31 8-62 33-96 77Z" fill="#173f49" stroke="#242730" stroke-width="11"/>
+    <path d="M157 143c38-62 117-76 186-34-52-4-105 12-150 45Z" fill="#55c9bf"/>
+    <path d="M150 216c-27 5-35 30-23 54 10 19 27 27 45 17M362 216c27 5 35 30 23 54-10 19-27 27-45 17" fill="#d9a080" stroke="#242730" stroke-width="9" stroke-linecap="round"/>
+    <rect x="171" y="215" width="72" height="54" rx="23" fill="#fff" fill-opacity="0.2" stroke="#242730" stroke-width="9"/>
+    <rect x="269" y="215" width="72" height="54" rx="23" fill="#fff" fill-opacity="0.2" stroke="#242730" stroke-width="9"/>
+    <path d="M243 235h26" stroke="#242730" stroke-width="9"/>
+    <ellipse cx="211" cy="241" rx="14" ry="18" fill="#242730"/><ellipse cx="301" cy="241" rx="14" ry="18" fill="#242730"/>
+    <circle cx="216" cy="235" r="5" fill="#fff"/><circle cx="306" cy="235" r="5" fill="#fff"/>
+    <path d="M225 294c21 16 41 16 62 0" fill="none" stroke="#242730" stroke-width="9" stroke-linecap="round"/>
+    <path d="M193 361l63 50 63-50" fill="none" stroke="#6ce0d6" stroke-width="10" stroke-linecap="round"/>
+  </g>
+  <circle cx="256" cy="256" r="244" fill="none" stroke="#6ce0d6" stroke-width="12"/>
+</svg>

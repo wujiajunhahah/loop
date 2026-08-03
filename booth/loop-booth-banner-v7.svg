@@ -1,0 +1,169 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="750mm" height="2000mm" viewBox="0 0 750 2000" role="img" aria-labelledby="title desc">
+  <title id="title">Loop living heirloom booth banner</title>
+  <desc id="desc">A dark template-aligned banner distinguishing temporary separation from death, explaining deep Context input, and showing a source-grounded interaction between past and present.</desc>
+  <defs>
+    <linearGradient id="eventLine" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ff7f83"/><stop offset="0.52" stop-color="#d4c4c4"/><stop offset="1" stop-color="#64e0d7"/></linearGradient>
+    <radialGradient id="orbBase" cx="48%" cy="35%" r="70%"><stop offset="0" stop-color="#f9f4ef"/><stop offset="0.22" stop-color="#ff8d9b"/><stop offset="0.48" stop-color="#6ee5df"/><stop offset="0.72" stop-color="#94b9d4"/><stop offset="1" stop-color="#0a1830"/></radialGradient>
+    <linearGradient id="orbRibbon" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f5f2ec" stop-opacity="0.95"/><stop offset="0.32" stop-color="#ff7185" stop-opacity="0.92"/><stop offset="0.58" stop-color="#6fe2d8" stop-opacity="0.95"/><stop offset="1" stop-color="#1d4265" stop-opacity="0.2"/></linearGradient>
+    <filter id="orbGlow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="20"/></filter>
+    <style>
+      text { font-family: Bahnschrift, Arial, "Microsoft YaHei", "PingFang SC", sans-serif; letter-spacing: 0; }
+      .serif { font-family: Georgia, "Times New Roman", "Microsoft YaHei", serif; }
+      .white { fill: #fffefa; }.muted { fill: #aebbd0; }.coral { fill: #ff8191; }.mint { fill: #6fe0d6; }
+      .micro { font-size: 10px; font-weight: 800; }.small { font-size: 12px; }.label { font-size: 12px; font-weight: 800; }
+    </style>
+  </defs>
+
+  <rect width="750" height="2000" fill="#031127"/>
+
+  <!-- Original template header proportions -->
+  <g transform="translate(58 86)">
+    <text class="white" x="0" y="0" font-size="58" font-weight="800">Physical AI</text>
+    <text class="white" x="0" y="88" font-size="58" font-weight="800">Hackathon 2026</text>
+    <text x="451" y="-14" font-size="29" font-weight="500" fill="url(#eventLine)">Bring AI To Life.</text>
+    <circle cx="620" cy="76" r="33" fill="none" stroke="#fffefa" stroke-width="6"/>
+    <circle cx="620" cy="76" r="13" fill="#fffefa"/>
+    <rect x="616" y="68" width="4" height="16" rx="2" fill="#031127"/><rect x="624" y="68" width="4" height="16" rx="2" fill="#031127"/>
+  </g>
+  <rect x="58" y="264" width="634" height="5" fill="url(#eventLine)"/>
+
+  <!-- Brand proposition -->
+  <g transform="translate(58 320)">
+    <text class="white" x="0" y="0" font-size="34" font-weight="700">LOOP</text>
+    <text class="coral" x="107" y="0" font-size="12" font-weight="800">A LIVING HEIRLOOM</text>
+    <text class="serif white" x="0" y="74" font-size="47" font-weight="500">人会缺席，</text>
+    <text class="serif white" x="0" y="133" font-size="47" font-weight="500">爱仍可被托付。</text>
+    <text class="white" x="1" y="174" font-size="24" font-weight="700">People leave. Love loops on.</text>
+    <text class="muted" x="1" y="220" font-size="15">一件在日常中深入记录生命、在缺席后继续承载关系的</text>
+    <text class="muted" x="1" y="244" font-size="15">可穿戴情感信物。</text>
+    <text class="muted" x="1" y="276" font-size="12">A wearable emotional keepsake that records a life</text>
+    <text class="muted" x="1" y="294" font-size="12">and carries its relationships forward.</text>
+
+    <!-- Dark-background QR placeholder -->
+    <g transform="translate(548 105)">
+      <rect width="88" height="88" rx="4" fill="none" stroke="#fffefa" stroke-width="5"/>
+      <g fill="#fffefa">
+        <rect x="9" y="9" width="25" height="25"/><rect x="54" y="9" width="25" height="25"/><rect x="9" y="54" width="25" height="25"/>
+        <rect x="42" y="42" width="10" height="10"/><rect x="58" y="47" width="8" height="8"/><rect x="41" y="61" width="9" height="18"/><rect x="58" y="62" width="21" height="17"/>
+      </g>
+      <rect x="16" y="16" width="11" height="11" fill="#031127"/><rect x="61" y="16" width="11" height="11" fill="#031127"/><rect x="16" y="61" width="11" height="11" fill="#031127"/>
+      <text class="muted" x="44" y="113" text-anchor="middle" font-size="11">替换二维码</text>
+      <text class="white" x="44" y="143" text-anchor="middle" font-size="12" font-weight="800">扫码体验</text>
+      <text class="muted" x="44" y="163" text-anchor="middle" font-size="10">SCAN TO EXPERIENCE</text>
+    </g>
+  </g>
+
+  <!-- Separation comparison: no generic icons -->
+  <g transform="translate(36 642)">
+    <rect width="678" height="246" rx="7" fill="#14213a"/>
+    <text class="coral" x="22" y="35" font-size="13" font-weight="800">01</text>
+    <text class="white" x="55" y="35" font-size="22" font-weight="800">离别，并不都是同一种离别。</text>
+    <text class="muted" x="640" y="35" text-anchor="end" font-size="11">TWO KINDS OF ABSENCE</text>
+    <path d="M22 56H656" stroke="#526179"/>
+
+    <g transform="translate(22 79)">
+      <text class="muted" x="0" y="0" font-size="11" font-weight="800">普通离别 · TEMPORARY SEPARATION</text>
+      <text class="white" x="0" y="33" font-size="16" font-weight="700">人仍可能回来、修正、继续说。</text>
+      <path d="M335 23H569" stroke="#8290a5" stroke-width="3"/>
+      <path d="M335 23l15-9M335 23l15 9M569 23l-15-9M569 23l-15 9" fill="none" stroke="#8290a5" stroke-width="3" stroke-linecap="round"/>
+      <text class="muted" x="452" y="51" text-anchor="middle" font-size="11">关系继续自然更新</text>
+    </g>
+
+    <path d="M22 143H656" stroke="#33435b"/>
+    <g transform="translate(22 166)">
+      <text class="coral" x="0" y="0" font-size="11" font-weight="800">死亡离别 · PERMANENT ABSENCE</text>
+      <text class="white" x="0" y="33" font-size="16" font-weight="700">人不会回来，也不会再产生新的原话。</text>
+      <path d="M363 23H455" stroke="#ff8191" stroke-width="3"/>
+      <path d="M475 23H569" stroke="#6fe0d6" stroke-width="3" stroke-dasharray="5 6"/>
+      <path d="M447 11l16 12-16 12" fill="none" stroke="#ff8191" stroke-width="3"/>
+      <text class="coral" x="465" y="-4" text-anchor="middle" font-size="10" font-weight="800">缺席</text>
+      <text class="mint" x="522" y="51" text-anchor="middle" font-size="11">只有生前真实留下的 Context</text>
+    </g>
+  </g>
+
+  <!-- Deep Context input -->
+  <g transform="translate(36 908)">
+    <rect width="678" height="222" rx="7" fill="#1a2942"/>
+    <text class="coral" x="22" y="35" font-size="13" font-weight="800">02</text>
+    <text class="white" x="55" y="35" font-size="22" font-weight="800">当我还在</text>
+    <text class="muted" x="178" y="35" font-size="12">WHILE I'M HERE</text>
+    <text class="muted" x="654" y="35" text-anchor="end" font-size="11">深度输入 → 本人审核 → 关系托付</text>
+    <path d="M22 56H656" stroke="#526179"/>
+
+    <text class="serif white" x="22" y="96" font-size="25" font-weight="700">Context 不是更多文件，</text>
+    <text class="serif white" x="22" y="128" font-size="25" font-weight="700">而是让未来知道：这句话为什么像我。</text>
+    <text class="muted" x="22" y="157" font-size="12">不只保存“说了什么”，还保存对谁说、为何重要、何时出现，以及哪些内容永远不能被 AI 改写。</text>
+
+    <g transform="translate(22 179)">
+      <text class="coral" x="0" y="0" font-size="10" font-weight="800">声音 VOICE</text>
+      <text class="white" x="97" y="0" font-size="10" font-weight="800">故事 STORY</text>
+      <text class="mint" x="185" y="0" font-size="10" font-weight="800">关系 RELATIONSHIP</text>
+      <text class="white" x="333" y="0" font-size="10" font-weight="800">选择 CHOICES</text>
+      <text class="coral" x="442" y="0" font-size="10" font-weight="800">价值观 VALUES</text>
+      <text class="mint" x="557" y="0" font-size="10" font-weight="800">边界 BOUNDARIES</text>
+      <path d="M0 15H632" stroke="url(#eventLine)" stroke-width="3"/>
+    </g>
+  </g>
+
+  <!-- Past meets present -->
+  <g transform="translate(36 1150)">
+    <rect width="678" height="297" rx="7" fill="#104d55"/>
+    <text class="mint" x="22" y="35" font-size="13" font-weight="800">03</text>
+    <text class="white" x="55" y="35" font-size="22" font-weight="800">当我不在</text>
+    <text fill="#a9dbd7" x="178" y="35" font-size="12">WHEN I'M GONE</text>
+    <text fill="#a9dbd7" x="654" y="35" text-anchor="end" font-size="11">过去 Context + 当下生活 → 有出处的回应</text>
+    <path d="M22 56H656" stroke="#659499"/>
+
+    <g transform="translate(22 84)">
+      <text fill="#a9dbd7" x="0" y="0" font-size="10" font-weight="800">NOW · 接收者主动分享</text>
+      <text class="serif white" x="0" y="40" font-size="24" font-weight="700">“妈，今天又下雨了。</text>
+      <text class="serif white" x="0" y="70" font-size="24" font-weight="700">我还是忘了带伞。”</text>
+      <text fill="#a9dbd7" x="0" y="101" font-size="11">文字 / 照片 / 语音，由接收者选择是否发送</text>
+    </g>
+
+    <path d="M314 133H363" stroke="#6fe0d6" stroke-width="3"/>
+    <path d="M350 122l15 11-15 11" fill="none" stroke="#6fe0d6" stroke-width="3"/>
+    <text class="mint" x="339" y="115" text-anchor="middle" font-size="9" font-weight="800">LOOP 检索</text>
+
+    <g transform="translate(388 84)">
+      <text class="coral" x="0" y="0" font-size="10" font-weight="800">PAST · ORIGINAL VOICE</text>
+      <text class="serif white" x="0" y="40" font-size="22" font-weight="700">“又不带伞。</text>
+      <text class="serif white" x="0" y="69" font-size="22" font-weight="700">淋湿了回去先把头发吹干。”</text>
+      <text fill="#a9dbd7" x="0" y="101" font-size="11">来源：雨天 · 关心 · 母女共同记忆</text>
+    </g>
+
+    <g transform="translate(22 226)">
+      <rect width="634" height="48" rx="4" fill="#0b3b43"/>
+      <text class="mint" x="16" y="19" font-size="10" font-weight="800">最终交付 · TODAY'S LETTER</text>
+      <text class="white" x="16" y="38" font-size="13" font-weight="700">今天的你，听见过去的她。原声先抵达，AI 只负责有标记地连接此刻。</text>
+      <text fill="#a9dbd7" x="616" y="31" text-anchor="end" font-size="10">可收藏 · 可退出 · 可追溯</text>
+    </g>
+  </g>
+
+  <!-- Proof and team -->
+  <g transform="translate(58 1498)">
+    <text class="serif white" x="0" y="0" font-size="34">每一句“我在”，都有出处。</text>
+    <text class="muted" x="0" y="34" font-size="16">Every “I’m here” has a source.</text>
+    <path d="M0 67H634" stroke="#6b7890"/>
+
+    <g transform="translate(0 91)"><circle cx="15" cy="0" r="14" fill="#ff8191"/><path d="m8 0 5 5 10-12" fill="none" stroke="#031127" stroke-width="3"/><text class="white" x="38" y="-2" font-size="13" font-weight="800">不虚构</text><text class="muted" x="38" y="17" font-size="10">NO INVENTED WISHES</text></g>
+    <g transform="translate(244 91)"><circle cx="15" cy="0" r="14" fill="#6fe0d6"/><path d="m8 0 5 5 10-12" fill="none" stroke="#031127" stroke-width="3"/><text class="white" x="38" y="-2" font-size="13" font-weight="800">可追溯</text><text class="muted" x="38" y="17" font-size="10">SOURCE-GROUNDED</text></g>
+    <g transform="translate(486 91)"><circle cx="15" cy="0" r="14" fill="#fffefa"/><path d="m8 0 5 5 10-12" fill="none" stroke="#031127" stroke-width="3"/><text class="white" x="38" y="-2" font-size="13" font-weight="800">由本人托付</text><text class="muted" x="38" y="17" font-size="10">YOU STAY IN CONTROL</text></g>
+
+    <text class="mint" x="0" y="150" font-size="10" font-weight="800">TEAM LOOP · 5 BUILDERS</text>
+    <g transform="translate(42 190)"><image href="avatars/lavine.svg" x="-27" y="-27" width="54" height="54"/><text class="white" y="42" text-anchor="middle" font-size="9" font-weight="800">Lavine</text></g>
+    <g transform="translate(167 190)"><image href="avatars/xi-yuqi.svg" x="-27" y="-27" width="54" height="54"/><text class="white" y="42" text-anchor="middle" font-size="9" font-weight="800">奚钰淇</text></g>
+    <g transform="translate(292 190)"><image href="avatars/gaazone.svg" x="-27" y="-27" width="54" height="54"/><text class="white" y="42" text-anchor="middle" font-size="9" font-weight="800">Gaazone</text></g>
+    <g transform="translate(417 190)"><image href="avatars/xu-renbing.svg" x="-27" y="-27" width="54" height="54"/><text class="white" y="42" text-anchor="middle" font-size="9" font-weight="800">许人冰</text></g>
+    <g transform="translate(542 190)"><image href="avatars/cieye.svg" x="-27" y="-27" width="54" height="54"/><text class="white" y="42" text-anchor="middle" font-size="9" font-weight="800">Cieye</text></g>
+  </g>
+
+  <!-- Original template lower orb -->
+  <ellipse cx="390" cy="1934" rx="430" ry="206" fill="#16304d" opacity="0.75" filter="url(#orbGlow)"/>
+  <path d="M-85 2050C22 1870 170 1782 376 1814C528 1838 652 1790 822 1880V2050Z" fill="url(#orbBase)"/>
+  <path d="M-42 2012C101 1876 224 1860 355 1902C491 1945 614 1831 798 1901" fill="none" stroke="url(#orbRibbon)" stroke-width="59" opacity="0.84"/>
+  <path d="M-25 2042C147 1933 274 1934 407 1960C541 1986 658 1898 792 1940" fill="none" stroke="#fffefa" stroke-width="15" opacity="0.62"/>
+  <path d="M-36 2017C128 1877 248 1882 379 1916C520 1951 632 1850 798 1908" fill="none" stroke="#ff7f83" stroke-width="12" opacity="0.84"/>
+  <path d="M-18 2050C137 1960 288 1962 434 1980C569 1997 676 1921 790 1953" fill="none" stroke="#5be0d8" stroke-width="18" opacity="0.8"/>
+  <g transform="translate(58 1770)"><text class="white" x="0" y="0" font-size="20" font-weight="800">LOOP</text><text class="muted" x="63" y="0" font-size="11">CAPTURE A LIFE · CARRY LOVE FORWARD</text></g>
+</svg>

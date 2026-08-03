@@ -1,0 +1,41 @@
+<template>
+  <style>
+    #root { position: relative; width: 1920px; height: 1080px; overflow: hidden; container-type: size; font-family: sans-serif; color: #f9fbfa; }
+    #root * { box-sizing: border-box; }
+    .f06-ground { position: absolute; inset: 0; background: #224652; }
+    .f06-top { position: absolute; top: 58px; left: 76px; right: 76px; display: flex; justify-content: space-between; color: #c4dee6; font: 500 21px/1 monospace; letter-spacing: .12em; }
+    .f06-swap { position: absolute; top: 150px; left: 220px; width: 1480px; height: 650px; }
+    .f06-card, .f06-lock { position: absolute; inset: 0; transform-origin: 50% 50%; }
+    .f06-card { opacity: 0; padding: 62px 72px; color: #172421; background: #f9fbfa; border: 2px solid #397487; border-radius: 8px; }
+    .f06-card header { display: flex; justify-content: space-between; color: #397487; font: 500 20px/1 monospace; }
+    .f06-card blockquote { width: 1040px; margin: 105px 0 0; font-size: 58px; line-height: 1.25; font-weight: 500; }
+    .f06-source { position: absolute; left: 72px; right: 72px; bottom: 55px; padding-top: 18px; border-top: 2px solid #224652; color: #c7553f; font: 500 20px/1 monospace; }
+    .f06-route { position: absolute; left: 72px; top: 185px; width: 860px; height: 2px; background: #c7553f; transform-origin: left center; }
+    .f06-lock { display: grid; place-content: center; text-align: center; }
+    .f06-brand { color: #c4dee6; font-size: 96px; line-height: 1; font-weight: 500; }
+    .f06-line { margin-top: 38px; color: #f9fbfa; font-size: 52px; line-height: 1.2; font-weight: 500; }
+    .f06-en { margin-top: 38px; color: #c4dee6; font: 500 22px/1 monospace; letter-spacing: .14em; }
+    .f06-foot { position: absolute; left: 76px; right: 76px; bottom: 92px; display: flex; justify-content: space-between; padding-top: 20px; border-top: 2px solid #397487; color: #c4dee6; font: 500 20px/1 monospace; }
+  </style>
+  <div data-hf-id="hf-2rn7" id="root" data-composition-id="06-here-outro" data-start="0" data-duration="7" data-width="1920" data-height="1080">
+    <div data-hf-id="hf-p23l" class="clip f06-ground" data-start="0" data-duration="7" data-track-index="0"></div>
+    <div data-hf-id="hf-1dcy" class="clip f06-top" data-start="0" data-duration="7" data-track-index="1"><span data-hf-id="hf-afzt">W·HERE / DISTANT REPLY</span><span data-hf-id="hf-axi8">06 / 06</span></div>
+    <div data-hf-id="hf-f0bz" class="clip f06-swap" data-start="0" data-duration="7" data-track-index="2" data-layout-allow-overlap="">
+      <article data-hf-id="hf-gdwz" id="f06-card" class="f06-card"><header data-hf-id="hf-0drs"><span data-hf-id="hf-yrdj">远方回信 · 已收藏</span><span data-hf-id="hf-qlrr">W·HERE / 01</span></header><div data-hf-id="hf-mv7u" id="f06-route" class="f06-route"></div><blockquote data-hf-id="hf-w41l" id="f06-now">今天下雨，我又忘记带伞了。</blockquote><div data-hf-id="hf-3iko" id="f06-source" class="f06-source">AI 整理 · 来源 context-rainy-day · 明确标记</div></article>
+      <div data-hf-id="hf-j0mq" id="f06-lock" class="f06-lock"><div data-hf-id="hf-vld3" class="f06-brand">我在 W·HERE</div><div data-hf-id="hf-2xet" class="f06-line">过去的记忆，回应现在的生活。</div><div data-hf-id="hf-2afq" class="f06-en">WHEN YOU REACH OUT, WE ARE HERE.</div></div>
+    </div>
+    <div data-hf-id="hf-ju93" class="clip f06-foot" data-start="0" data-duration="7" data-track-index="3"><span data-hf-id="hf-3xh5">真实 · 授权 · 有来源</span><span data-hf-id="hf-iocf">WE ARE HERE.</span></div>
+  </div>
+  <script>
+    window.__timelines = window.__timelines || {};
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo('#f06-card', { opacity: 0, y: 46, scale: .97 }, { opacity: 1, y: 0, scale: 1, duration: .75, ease: 'power3.out' }, .05);
+    tl.fromTo('#f06-now', { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: .5, ease: 'power3.out' }, 1.4);
+    tl.fromTo('#f06-route', { scaleX: 0 }, { scaleX: 1, duration: .7, ease: 'power2.out' }, 2.0);
+    tl.fromTo('#f06-source', { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: .45, ease: 'power3.out' }, 2.65);
+    tl.fromTo('#f06-lock', { opacity: 0, scale: .82 }, { opacity: 0, scale: .82, duration: .01 }, 0);
+    tl.to('#f06-card', { opacity: 0, scale: .78, duration: .45, ease: 'power2.in' }, 3.6);
+    tl.to('#f06-lock', { opacity: 1, scale: 1, duration: .65, ease: 'power3.out' }, 3.88);
+    window.__timelines['06-here-outro'] = tl;
+  </script>
+</template>

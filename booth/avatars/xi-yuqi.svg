@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Xi Yuqi chibi avatar">
+  <defs><clipPath id="c"><circle cx="256" cy="256" r="244"/></clipPath></defs>
+  <g clip-path="url(#c)">
+    <circle cx="256" cy="256" r="244" fill="#edf6f2"/>
+    <path d="M18 424c62-76 144-112 238-112s176 36 238 112v108H18Z" fill="#e9d5c6"/>
+    <path d="M162 358c26-31 57-46 94-46s68 15 94 46l-19 154H181Z" fill="#fffaf2" stroke="#242730" stroke-width="9"/>
+    <path d="M216 320h80v86c-22 18-58 18-80 0Z" fill="#e9b18d" stroke="#242730" stroke-width="9"/>
+    <ellipse cx="256" cy="229" rx="116" ry="132" fill="#f3c19f" stroke="#242730" stroke-width="11"/>
+    <path d="M139 212c-6-66 14-121 64-145 48-24 123-12 158 30 28 33 27 77 10 111-12-45-42-74-80-88l-18 36-24-38c-29 44-66 72-110 94Z" fill="#20252b" stroke="#242730" stroke-width="11" stroke-linejoin="round"/>
+    <path d="M162 119c19-41 54-62 99-63l-21 38c42-35 87-27 118 8-66-16-128-5-196 17Z" fill="#48525c"/>
+    <path d="M146 215c-27 6-34 31-22 54 10 20 29 27 47 17M366 215c27 6 34 31 22 54-10 20-29 27-47 17" fill="#f3c19f" stroke="#242730" stroke-width="9" stroke-linecap="round"/>
+    <path d="M183 207c19-11 39-11 57 0M272 207c19-11 39-11 57 0" fill="none" stroke="#242730" stroke-width="9" stroke-linecap="round"/>
+    <ellipse cx="212" cy="241" rx="17" ry="22" fill="#242730"/><ellipse cx="300" cy="241" rx="17" ry="22" fill="#242730"/>
+    <circle cx="218" cy="234" r="6" fill="#fff"/><circle cx="306" cy="234" r="6" fill="#fff"/>
+    <path d="M230 292c18 11 34 11 52 0" fill="none" stroke="#242730" stroke-width="9" stroke-linecap="round"/>
+    <path d="M180 358l76 55 76-55M256 413v99" fill="none" stroke="#d7674c" stroke-width="9" stroke-linejoin="round"/>
+  </g>
+  <circle cx="256" cy="256" r="244" fill="none" stroke="#f2c9c4" stroke-width="12"/>
+</svg>

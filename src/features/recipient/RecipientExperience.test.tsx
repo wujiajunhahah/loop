@@ -14,7 +14,7 @@ describe('recipient experience demo', () => {
 
   async function enterWithPresentMoment(content = '今天下雨，我又忘记带伞了。') {
     fireEvent.click(screen.getByRole('button', { name: /主动进入/ }))
-    fireEvent.click(await screen.findByRole('button', { name: /是留给我的，继续/ }))
+    fireEvent.click(await screen.findByRole('button', { name: /继续到今天的回应/ }))
     fireEvent.change(await screen.findByLabelText('今天发生了什么？'), {
       target: { value: content },
     })
@@ -24,7 +24,7 @@ describe('recipient experience demo', () => {
   it('requires explicit entry and keeps original playback user initiated', async () => {
     render(<RecipientExperience />)
 
-    expect(screen.getByText(/W·HERE · pull_only/)).toBeInTheDocument()
+    expect(screen.getByText(/W·HERE · 仅主动进入/)).toBeInTheDocument()
     expect(playbackService.current).toBeUndefined()
 
     await enterWithPresentMoment()
@@ -38,6 +38,14 @@ describe('recipient experience demo', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /播放原声/ }))
     await waitFor(() => expect(playbackService.current?.uri).toBe('/demo/mei-tomato-eggs.mp3'))
+  })
+
+  it('offers Echo Map only after recipient identity confirmation', async () => {
+    render(<RecipientExperience />)
+    expect(screen.queryByRole('button', { name: '进入 Echo Map 旅程' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /主动进入/ }))
+    fireEvent.click(await screen.findByRole('button', { name: '进入 Echo Map 旅程' }))
+    expect(window.location.hash).toBe('#/recipient/echo-map')
   })
 
   it('stores recipient choice, creates one postcard artifact, and attributes response to recipient', async () => {

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Cieye chibi avatar">
+  <defs><clipPath id="c"><circle cx="256" cy="256" r="244"/></clipPath></defs>
+  <g clip-path="url(#c)">
+    <circle cx="256" cy="256" r="244" fill="#f2f7f0"/>
+    <path d="M15 419c65-75 151-109 241-109s176 34 241 109v113H15Z" fill="#f3cfc7"/>
+    <path d="M166 352c25-29 57-43 90-43s65 14 90 43l-18 160H184Z" fill="#fffaf2"/>
+    <path d="M216 321h80v84c-23 18-57 18-80 0Z" fill="#e9ae8d" stroke="#242730" stroke-width="9"/>
+    <path d="M132 236c0-107 48-174 124-174s124 67 124 174v83c-25 31-52 43-78 50l-46-45-46 45c-28-8-55-23-78-50Z" fill="#8b4c47" stroke="#242730" stroke-width="11"/>
+    <ellipse cx="256" cy="225" rx="109" ry="127" fill="#f3c09f" stroke="#242730" stroke-width="11"/>
+    <path d="M149 202c6-88 53-135 116-135 59 0 102 39 114 107-42-30-86-41-128-31-39 9-68 35-102 59Z" fill="#9e5750"/>
+    <path d="M151 216c-25 6-31 30-20 52 9 18 25 25 42 16M361 216c25 6 31 30 20 52-9 18-25 25-42 16" fill="#f3c09f" stroke="#242730" stroke-width="9" stroke-linecap="round"/>
+    <circle cx="210" cy="239" r="36" fill="#fff" fill-opacity="0.18" stroke="#242730" stroke-width="8"/>
+    <circle cx="302" cy="239" r="36" fill="#fff" fill-opacity="0.18" stroke="#242730" stroke-width="8"/>
+    <path d="M246 239h20" stroke="#242730" stroke-width="8"/>
+    <ellipse cx="211" cy="240" rx="14" ry="18" fill="#242730"/><ellipse cx="301" cy="240" rx="14" ry="18" fill="#242730"/>
+    <circle cx="216" cy="234" r="5" fill="#fff"/><circle cx="306" cy="234" r="5" fill="#fff"/>
+    <path d="M227 292c19 14 39 14 58 0" fill="none" stroke="#242730" stroke-width="9" stroke-linecap="round"/>
+    <circle cx="178" cy="275" r="12" fill="#ed8f8c" opacity="0.55"/><circle cx="334" cy="275" r="12" fill="#ed8f8c" opacity="0.55"/>
+    <path d="M192 362l64 49 64-49" fill="none" stroke="#6ce0d6" stroke-width="10" stroke-linecap="round"/>
+  </g>
+  <circle cx="256" cy="256" r="244" fill="none" stroke="#ff7f83" stroke-width="12"/>
+</svg>

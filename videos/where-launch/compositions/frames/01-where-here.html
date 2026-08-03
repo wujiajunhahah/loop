@@ -1,0 +1,40 @@
+<template>
+  <style>
+    #root { position: relative; width: 1920px; height: 1080px; overflow: hidden; container-type: size; font-family: sans-serif; color: #f9fbfa; }
+    #root * { box-sizing: border-box; }
+    .f01-ground { position: absolute; inset: 0; background: #224652; }
+    .f01-grid { position: absolute; inset: 64px 96px 180px; border-top: 2px solid #397487; border-bottom: 2px solid #397487; }
+    .f01-top { position: absolute; top: 82px; left: 96px; right: 96px; display: flex; justify-content: space-between; color: #c4dee6; font: 500 24px/1 monospace; letter-spacing: .12em; }
+    .f01-stage { position: absolute; inset: 180px 96px 210px; display: grid; place-items: center; }
+    .f01-word { position: absolute; width: 100%; text-align: center; font-size: 184px; line-height: .92; font-weight: 500; letter-spacing: 0; }
+    .f01-question-cn { font-size: 142px; }
+    .f01-rule { position: absolute; top: calc(50% + 118px); left: 50%; width: 470px; height: 2px; margin-left: -235px; background: #c7553f; transform-origin: left center; }
+    .f01-lock { position: absolute; top: calc(50% + 132px); width: 100%; text-align: center; color: #c4dee6; font: 500 25px/1.3 monospace; letter-spacing: .14em; }
+    .f01-index { position: absolute; bottom: 112px; left: 96px; color: #c4dee6; font: 500 24px/1 monospace; }
+  </style>
+  <div data-hf-id="hf-8wsy" id="root" data-composition-id="01-where-here" data-start="0" data-duration="5.4" data-width="1920" data-height="1080">
+    <div data-hf-id="hf-b43w" class="clip f01-ground" data-start="0" data-duration="5.4" data-track-index="0"></div>
+    <div data-hf-id="hf-ais4" class="clip f01-grid" data-start="0" data-duration="5.4" data-track-index="1"></div>
+    <div data-hf-id="hf-8osu" class="clip f01-top" data-start="0" data-duration="5.4" data-track-index="2"><span data-hf-id="hf-tjmn">W·HERE / BRAND QUESTION</span><span data-hf-id="hf-51sb">01 / 06</span></div>
+    <div data-hf-id="hf-1bw8" class="clip f01-stage" data-start="0" data-duration="5.4" data-track-index="3">
+      <div data-hf-id="hf-eul7" id="f01-where" class="f01-word">WHERE?</div>
+      <div data-hf-id="hf-f0z2" id="f01-cn" class="f01-word f01-question-cn">你在哪里？</div>
+      <div data-hf-id="hf-0n3s" id="f01-here" class="f01-word">HERE.</div>
+      <div data-hf-id="hf-lkea" id="f01-rule" class="f01-rule"></div>
+      <div data-hf-id="hf-34dq" id="f01-lock" class="f01-lock">我在 / WE ARE HERE</div>
+    </div>
+    <div data-hf-id="hf-nzro" class="clip f01-index" data-start="0" data-duration="5.4" data-track-index="4">WHERE → HERE</div>
+  </div>
+  <script>
+    window.__timelines = window.__timelines || {};
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo('#f01-where', { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: .55, ease: 'power3.out' }, .05);
+    tl.to('#f01-where', { opacity: 0, duration: .01 }, 1.5);
+    tl.fromTo('#f01-cn', { opacity: 0 }, { opacity: 1, duration: .01 }, 1.5);
+    tl.fromTo('#f01-rule', { scaleX: 0 }, { scaleX: 1, duration: .65, ease: 'power2.out' }, 2.15);
+    tl.to('#f01-cn', { opacity: 0, duration: .01 }, 3.2);
+    tl.fromTo('#f01-here', { opacity: 0, scale: .92 }, { opacity: 1, scale: 1, duration: .55, ease: 'power3.out' }, 3.2);
+    tl.fromTo('#f01-lock', { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: .5, ease: 'power3.out' }, 3.72);
+    window.__timelines['01-where-here'] = tl;
+  </script>
+</template>

@@ -1,0 +1,38 @@
+<template>
+  <style>
+    #root { position: relative; width: 1920px; height: 1080px; overflow: hidden; container-type: size; font-family: sans-serif; color: #172421; }
+    #root * { box-sizing: border-box; }
+    .f03-ground { position: absolute; inset: 0; background: #c4dee6; }
+    .f03-top { position: absolute; top: 56px; left: 74px; right: 74px; display: flex; justify-content: space-between; color: #224652; font: 500 22px/1 monospace; letter-spacing: .12em; }
+    .f03-rail { position: absolute; top: 120px; left: 74px; width: 420px; height: 730px; padding: 46px 38px; border: 2px solid #224652; background: #f9fbfa; }
+    .f03-rail h2 { margin: 92px 0 25px; font-size: 72px; line-height: .98; font-weight: 500; color: #224652; }
+    .f03-rail p { margin: 0; color: #2b5765; font-size: 27px; line-height: 1.5; }
+    .f03-mono { color: #c7553f; font: 500 22px/1.6 monospace; letter-spacing: .1em; }
+    .f03-window { position: absolute; top: 120px; left: 535px; width: 1310px; height: 730px; overflow: hidden; border: 2px solid #224652; background: #edf1ef; }
+    .f03-window img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .f03-focus { position: absolute; top: 377px; left: 840px; width: 120px; height: 52px; border: 4px solid #c7553f; border-radius: 6px; transform-origin: left center; }
+    .f03-exit { position: absolute; top: 527px; left: 349px; width: 102px; height: 35px; border-bottom: 4px solid #397487; transform-origin: left center; }
+    .f03-decision { position: absolute; left: 536px; bottom: 98px; width: 1310px; display: flex; justify-content: space-between; align-items: baseline; padding-top: 25px; border-top: 2px solid #224652; color: #224652; }
+    .f03-decision strong { font-size: 46px; font-weight: 500; }
+    .f03-decision span { color: #c7553f; font: 500 22px/1 monospace; }
+  </style>
+  <div data-hf-id="hf-f4pp" id="root" data-composition-id="03-active-entry" data-start="0" data-duration="8.5" data-width="1920" data-height="1080">
+    <div data-hf-id="hf-ye1u" class="clip f03-ground" data-start="0" data-duration="8.5" data-track-index="0"></div>
+    <div data-hf-id="hf-yjcz" class="clip f03-top" data-start="0" data-duration="8.5" data-track-index="1"><span data-hf-id="hf-mqka">W·HERE / RECIPIENT CONTROL</span><span data-hf-id="hf-si15">03 / 06</span></div>
+    <aside data-hf-id="hf-hqkw" class="clip f03-rail" data-start="0" data-duration="8.5" data-track-index="2"><div data-hf-id="hf-1s45" class="f03-mono">LIN<br data-hf-id="hf-x5px">RECIPIENT<br data-hf-id="hf-rsrt">PULL_ONLY</div><h2 data-hf-id="hf-2s9v" id="f03-action">主动进入</h2><p data-hf-id="hf-rtjk">任何内容都不会自动打开。</p></aside>
+    <div data-hf-id="hf-6x04" class="clip f03-window" data-start="0" data-duration="8.5" data-track-index="3"><img data-hf-id="hf-pz46" src="assets/recipient-entry.png" alt="W·HERE recipient entry"><div data-hf-id="hf-j64y" id="f03-focus" class="f03-focus"></div><div data-hf-id="hf-esg2" id="f03-exit" class="f03-exit"></div></div>
+    <div data-hf-id="hf-9y37" id="f03-decision" class="clip f03-decision" data-start="0" data-duration="8.5" data-track-index="4"><strong data-hf-id="hf-3eu1">进入或离开，都由 Lin 决定。</strong><span data-hf-id="hf-249h">CONTROL REMAINS WITH THE RECIPIENT</span></div>
+  </div>
+  <script>
+    window.__timelines = window.__timelines || {};
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo('.f03-window', { x: 150, opacity: 0 }, { x: 0, opacity: 1, duration: .8, ease: 'power3.out' }, .05);
+    tl.fromTo('.f03-rail', { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: .65, ease: 'power3.out' }, .3);
+    tl.fromTo('#f03-focus', { scaleX: 0, opacity: 0 }, { scaleX: 1, opacity: 1, duration: .7, ease: 'power2.out' }, 2.0);
+    tl.fromTo('#f03-action', { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: .55, ease: 'power3.out' }, 2.7);
+    tl.to('#f03-focus', { opacity: .25, duration: .35, ease: 'power2.out' }, 5.3);
+    tl.fromTo('#f03-exit', { scaleX: 0, opacity: 0 }, { scaleX: 1, opacity: 1, duration: .55, ease: 'power2.out' }, 5.35);
+    tl.fromTo('#f03-decision', { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: .6, ease: 'power3.out' }, 6.05);
+    window.__timelines['03-active-entry'] = tl;
+  </script>
+</template>

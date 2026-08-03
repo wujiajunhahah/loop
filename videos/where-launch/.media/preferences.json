@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "preferences": {
+    "storyboard": {
+      "value": "no",
+      "confirmed_in": [
+        "where-launch"
+      ],
+      "updated_at": "2026-08-02T17:10:38.947Z"
+    },
+    "style_preset.product-launch-video": {
+      "value": "editorial-forest",
+      "confirmed_in": [
+        "where-launch"
+      ],
+      "updated_at": "2026-08-02T17:20:41.956Z"
+    }
+  },
+  "sightings": {}
+}

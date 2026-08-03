@@ -1,5 +1,16 @@
 # Loop Project Status
 
+## Temporary coordination handoff
+
+Until the user explicitly cancels this arrangement or the Codex desktop overview
+window resumes, the designated OpenCode window may temporarily perform the
+overview responsibilities: status maintenance, task scheduling, dependency and
+conflict review, integration decisions, and Demo readiness review.
+
+The `.loop/` directory remains the canonical record. Decisions, claims, risks,
+verification evidence, and handoffs must be written there so another window can
+resume without relying on chat history.
+
 ## Current phase
 
 Integrated Software MVP V2 is in controlled quality iteration. The P0 offline
@@ -28,14 +39,14 @@ write claims / reports in this canonical root.
 
 ## Baseline evidence
 
-- `origin/main` points to `4df8023` (`docs: polish hackathon demo readme`).
+- `origin/main` points to `157085b` (`feat: evolve demo into W·HERE memory response`).
 - Current branch: `agent/loop-v2-integration`.
-- The last verified pushed commit on `origin/agent/loop-v2-integration` is
-  `8f2724b` (`docs: add final browser smoke evidence`).
-- The current working tree is clean.
-- Verification on the current integrated branch: 15 test files / 85 tests
-  passed, typecheck passed, production build passed, and `git diff --check`
-  passed.
+- The pushed branch and local HEAD point to `8846922`
+  (`feat: evolve demo into W·HERE memory response`).
+- The working tree contains uncommitted W·HERE UI, Echo Map, browser-test,
+  documentation, booth, video and project-tooling changes.
+- Current verification: 19 test files / 199 tests, typecheck, production build,
+  `git diff --check`, and 6 desktop/mobile Playwright tests passed.
 - `npm test -- --run` can occasionally spend longer starting parallel Vitest
   workers in this environment; verbose and single-worker runs have passed, and
   the latest full run completed normally.
@@ -44,7 +55,7 @@ write claims / reports in this canonical root.
 
 - The current branch is `agent/loop-v2-integration`; do not switch branches
   automatically when resuming.
-- The latest verified result is 15 test files / 85 tests passed, typecheck,
+- The current verified result is 19 test files / 199 tests passed, typecheck,
   production build, and `git diff --check` passed.
 - The recipient, capture, and hardware async recovery fixes are complete. The
   integrated Demo remains software-first, pull-only, source-backed, and hardware
@@ -52,16 +63,40 @@ write claims / reports in this canonical root.
 - GitHub access works through the Windows system proxy `127.0.0.1:7890`. Git
   does not inherit it automatically; for a push, set temporary `HTTP_PROXY` and
   `HTTPS_PROXY` variables in the command process only.
-- The next useful action is a现场 rehearsal or a new evidence-backed P1 issue;
+- The next useful action is a 现场 rehearsal or a new evidence-backed P1 issue;
   do not add persistence or new product scope without a concrete Demo need.
+- The game-concept document has been confirmed as Loop's intended Agent game
+  form and reviewed in `.loop/reports/concept-review-2026-08-02.md`. The current
+  P0 is its Context, safety, provenance, and artifact foundation. The next product
+  design should specify one playable Echo Map journey before implementation;
+  sensor inference, persistent progression, and shared worlds remain later scope.
+- `TASK-016-agent-game-first-playable-design.md` is complete and accepted after
+  two independent review rounds. DR-016-01 through DR-016-03 are approved under
+  V2-008, and Gate 5 has passed.
+- `TASK-017-journey-domain-state-machine.md` is complete and accepted after three
+  skeptical review rounds. Verification passed with 16 test files / 163 tests,
+  typecheck, production build, and `git diff --check`.
+- `TASK-018-offline-journey-orchestration.md` is complete and accepted. Verification
+  passed with 18 test files / 183 tests, typecheck, build, and `git diff --check`.
+- `TASK-019-echo-map-recipient-ui.md` is complete and accepted. Verification
+  passed with 19 test files / 195 tests, typecheck, build, `git diff --check`, and
+  desktop/narrow browser smoke.
+- `TASK-020-echo-map-demo-integration.md` is complete and accepted. The first
+  Echo Map playable is discoverable after recipient identity confirmation and
+  integrated through postcard and lit node.
+- Final verification: 19 test files / 199 tests, typecheck, production build,
+  `git diff --check`, and desktop/narrow browser smoke passed.
+- No implementation task is currently active. Further game nodes, persistence,
+  sensors, routes, hardware, Memory Garden, or multiplayer require a new
+  evidence-backed task and explicit scope decision.
 
-## V2 migration finding
+## V2 implementation finding
 
-The current runtime is a working offline demo, but its public domain boundary
-still uses `Person`, `Memory`, `OrganizedContent`, and a boolean-style policy.
-The V2 definition requires explicit Context, provenance, generation policy,
-trigger policy, and interaction artifacts. These are migration work, not proof
-that the current demo is broken.
+The routed offline Demo now uses explicit Context, OriginalAsset, provenance,
+generation policy, trigger policy, recipient-scoped Agent execution and
+InteractionArtifact boundaries. Some legacy standalone fixtures and component
+tests still use earlier `Person`, `Memory` or planned-interaction abstractions;
+they are compatibility/test material, not the active routed integration path.
 
 ## Priority contract
 

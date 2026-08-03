@@ -135,8 +135,9 @@ export class OfflineDemoService implements GuidedCapturePort, AgentRuntimeReposi
           triggerPolicy: structuredClone(rainyDayTriggerPolicy),
         }
       },
-      runAgent: (source, request) =>
-        new RecipientScopedAgentRuntime(
+      runAgent: (source, request) => {
+        const timestamp = this.now()
+        return new RecipientScopedAgentRuntime(
           {
             getRelationship: async (id) =>
               id === source.relationship.id ? source.relationship : undefined,
@@ -157,10 +158,11 @@ export class OfflineDemoService implements GuidedCapturePort, AgentRuntimeReposi
           new DeterministicOwnerReviewAdapter({
             approved: true,
             reviewedByUserId: source.relationship.ownerId,
-            reviewedAt: '2026-08-02T12:00:00.000Z',
+            reviewedAt: timestamp,
           }),
-          this.now,
-        ).run(request),
+          () => timestamp,
+        ).run(request)
+      },
       artifacts: this.artifactService,
       now: this.now,
     })

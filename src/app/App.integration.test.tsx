@@ -14,7 +14,7 @@ describe('offline V2 Demo integration', () => {
   it('carries an owner-reviewed Context through Agent provenance to a postcard and response', async () => {
     render(<App />)
 
-    await screen.findByRole('option', { name: 'Lin · Mother and daughter' })
+    await screen.findByRole('option', { name: 'Lin · 母女' })
     fireEvent.change(screen.getByLabelText('原始内容'), {
       target: { value: '雨天一起回家的真实记录。' },
     })
@@ -32,12 +32,12 @@ describe('offline V2 Demo integration', () => {
     fireEvent.click(screen.getByRole('button', { name: '批准' }))
     fireEvent.click(screen.getByLabelText('我已审核原始素材、每条 AI 建议、情绪权重和关系范围'))
     fireEvent.click(screen.getByRole('button', { name: '保存已审核 Context' }))
-    await screen.findByText('This moment has a place.')
+    await screen.findByText('这一刻，有了安放的地方。')
 
     window.location.hash = '#/recipient'
     await screen.findByRole('button', { name: /主动进入/ })
     fireEvent.click(screen.getByRole('button', { name: /主动进入/ }))
-    fireEvent.click(await screen.findByRole('button', { name: /是留给我的，继续/ }))
+    fireEvent.click(await screen.findByRole('button', { name: /继续到今天的回应/ }))
     fireEvent.change(await screen.findByLabelText('今天发生了什么？'), {
       target: { value: '今天下雨，我又忘记带伞了。' },
     })
@@ -89,5 +89,89 @@ describe('offline V2 Demo integration', () => {
       expect(result.event.payload).toMatchObject({ fallback: true, originalSource: 'touch' })
       await waitFor(() => expect(result.event.recipientId).toBe('person-lin'))
     }
+  })
+
+  it('enters Echo Map after identity confirmation and completes one sourced glimmer journey', async () => {
+    window.location.hash = '#/recipient'
+    render(<App />)
+
+    fireEvent.click(await screen.findByRole('button', { name: /主动进入/ }))
+    fireEvent.click(await screen.findByRole('button', { name: '进入 Echo Map 旅程' }))
+    await screen.findByRole('heading', { name: '同一把伞下的雨' })
+
+    fireEvent.click(screen.getByRole('radio', { name: '微光' }))
+    fireEvent.click(screen.getByRole('button', { name: '查看这段旅程' }))
+    fireEvent.click(await screen.findByRole('button', { name: '采用中立动作' }))
+    fireEvent.click(await screen.findByRole('button', { name: '我已经做了' }))
+    await screen.findByRole('heading', { name: '那次雨中回家。' })
+    fireEvent.click(screen.getByRole('button', { name: '打开原始内容' }))
+    expect(screen.getByText(/你从小就总忘带伞/)).toBeInTheDocument()
+    expect(screen.getAllByText(/AI 生成/).length).toBeGreaterThan(0)
+    expect(screen.getAllByText('context-rainy-day').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('asset-rainy-day').length).toBeGreaterThan(0)
+    expect(screen.getByText('source_replay')).toBeInTheDocument()
+    expect(screen.getByText('source_composition')).toBeInTheDocument()
+    expect(offlineDemoService.getJourneySnapshot().presentation).toMatchObject({
+      original: {
+        aiLabel: 'Original source',
+        provenance: {
+          sourceContextIds: ['context-rainy-day'],
+          sourceAssetIds: ['asset-rainy-day'],
+          aiGenerated: false,
+        },
+      },
+      composition: {
+        aiLabel: 'AI-generated',
+        provenance: {
+          sourceContextIds: ['context-rainy-day'],
+          sourceAssetIds: ['asset-rainy-day'],
+          aiGenerated: true,
+        },
+      },
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: '继续' }))
+    fireEvent.change(await screen.findByLabelText('Lin 今天的回应'), {
+      target: { value: '今天我也听见了雨。' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: '保存并生成明信片' }))
+    await screen.findByRole('heading', { name: '雨，被带到了今天。' })
+    expect(screen.getByText(/今天我也听见了雨/)).toBeInTheDocument()
+    expect(screen.getAllByText('asset-rainy-day').length).toBeGreaterThan(0)
+
+    fireEvent.click(screen.getByRole('button', { name: '收藏明信片并点亮节点' }))
+    await screen.findByText('记忆节点已点亮 · 旅程完成')
+    expect(offlineDemoService.getJourneySnapshot().session).toMatchObject({
+      state: 'node_lit',
+      artifactId: 'artifact:interaction:journey:journey-rainy-day-1',
+    })
+    expect(offlineDemoService.getJourneySnapshot().response).toMatchObject({
+      authorRole: 'recipient',
+      eligibleAsRecorderContext: false,
+    })
+  })
+
+  it('does not create a journey from a direct Echo Map URL without confirmation', async () => {
+    window.location.hash = '#/recipient'
+    render(<App />)
+    await screen.findByRole('button', { name: /主动进入/ })
+    window.location.hash = '#/recipient/echo-map'
+    await screen.findByRole('heading', { name: '请先确认这是留给你的。' })
+    expect(offlineDemoService.getJourneySnapshot().session).toBeUndefined()
+  })
+
+  it('revokes Echo Map entry after leaving the authorized route', async () => {
+    window.location.hash = '#/recipient'
+    render(<App />)
+
+    fireEvent.click(await screen.findByRole('button', { name: /主动进入/ }))
+    fireEvent.click(await screen.findByRole('button', { name: '进入 Echo Map 旅程' }))
+    await screen.findByRole('heading', { name: '同一把伞下的雨' })
+
+    window.location.hash = '#/'
+    await screen.findByRole('heading', { name: /过去的记忆/ })
+    window.location.hash = '#/recipient/echo-map'
+
+    await screen.findByRole('heading', { name: '请先确认这是留给你的。' })
   })
 })

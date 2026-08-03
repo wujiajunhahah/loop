@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Xu Renbing chibi avatar">
+  <defs><clipPath id="c"><circle cx="256" cy="256" r="244"/></clipPath></defs>
+  <g clip-path="url(#c)">
+    <circle cx="256" cy="256" r="244" fill="#fff0ed"/>
+    <path d="M12 418c65-76 153-110 244-110s179 34 244 110v114H12Z" fill="#64d8cc"/>
+    <path d="M165 352c24-29 57-44 91-44s67 15 91 44l-18 160H183Z" fill="#e8faf5"/>
+    <path d="M216 322h80v84c-23 18-57 18-80 0Z" fill="#efb18f" stroke="#242730" stroke-width="9"/>
+    <path d="M133 227c0-104 46-167 123-167 78 0 123 63 123 167v122c-31-31-59-42-82-48H215c-28 8-53 25-82 50Z" fill="#342b3c" stroke="#242730" stroke-width="11"/>
+    <ellipse cx="256" cy="224" rx="108" ry="128" fill="#f5c4a5" stroke="#242730" stroke-width="11"/>
+    <path d="M150 205c4-90 49-137 118-137 51 0 93 30 108 86-39-18-77-26-114-16-40 11-68 36-112 67Z" fill="#3d3144"/>
+    <path d="M151 215c-25 6-31 30-20 52 9 18 25 25 42 16M361 215c25 6 31 30 20 52-9 18-25 25-42 16" fill="#f5c4a5" stroke="#242730" stroke-width="9" stroke-linecap="round"/>
+    <path d="M182 204c18-10 37-10 54 1M276 205c18-10 37-10 54-1" fill="none" stroke="#242730" stroke-width="9" stroke-linecap="round"/>
+    <ellipse cx="211" cy="240" rx="18" ry="23" fill="#242730"/><ellipse cx="301" cy="240" rx="18" ry="23" fill="#242730"/>
+    <circle cx="217" cy="233" r="6" fill="#fff"/><circle cx="307" cy="233" r="6" fill="#fff"/>
+    <path d="M225 291c20 18 42 18 62 0" fill="none" stroke="#242730" stroke-width="9" stroke-linecap="round"/>
+    <path d="M324 106l35-18 19 31-37 15Z" fill="#ff7f83" stroke="#242730" stroke-width="7" stroke-linejoin="round"/>
+    <path d="M190 362l66 48 66-48" fill="none" stroke="#ff7f83" stroke-width="10" stroke-linecap="round"/>
+  </g>
+  <circle cx="256" cy="256" r="244" fill="none" stroke="#f2c9c4" stroke-width="12"/>
+</svg>

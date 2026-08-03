@@ -27,8 +27,9 @@
 .sim-kicker,
 .sim-number {
   margin-bottom: 10px;
-  color: var(--coral);
-  font-size: 12px;
+  color: var(--rain);
+  font-family: var(--mono);
+  font-size: 11px;
   font-weight: 800;
   text-transform: uppercase;
 }
@@ -39,10 +40,13 @@
 }
 
 .sim-nav a {
+  padding-bottom: 5px;
   color: var(--muted);
   font-size: 14px;
   font-weight: 700;
 }
+
+.sim-nav a[aria-current='page'] { color: var(--ink); text-decoration-color: var(--coral); text-decoration-thickness: 2px; text-underline-offset: 6px; }
 
 .feedback-strip {
   min-height: 46px;
@@ -50,14 +54,15 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
   align-items: center;
   margin-bottom: 36px;
-  background: var(--ink);
+  background: var(--green-dark);
   color: var(--surface);
   font-size: 12px;
 }
 
 .feedback-strip span {
   padding: 10px 14px;
-  border-right: 1px solid #49504b;
+  border-right: 1px solid rgba(255, 255, 255, .2);
+  font-family: var(--mono);
 }
 
 .sim-dashboard {
@@ -93,9 +98,11 @@
 }
 
 .sim-trigger-controls {
-  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: end;
 }
+
+.sim-trigger-controls .button { justify-self: start; }
 
 .sim-form-grid label,
 .sim-trigger-controls label {
@@ -113,7 +120,7 @@
   min-height: 44px;
   padding: 10px 12px;
   border: 1px solid var(--line);
-  border-radius: 4px;
+  border-radius: 2px;
   background: var(--surface);
   color: var(--ink);
   font: inherit;
@@ -137,6 +144,8 @@ button.button {
   color: var(--muted);
 }
 
+.sim-notice--error { color: #8d3826; border-left-color: var(--coral); background: #fff0eb; }
+
 .event-timeline {
   margin: 28px 0 0;
   padding: 0;
@@ -156,6 +165,13 @@ button.button {
 .event-timeline code {
   color: var(--muted);
   overflow-wrap: anywhere;
+}
+
+.event-timeline code { font-family: var(--mono); font-size: 11px; }
+
+@media (max-width: 900px) {
+  .feedback-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sim-trigger-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 720px) {
