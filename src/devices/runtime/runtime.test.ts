@@ -240,6 +240,7 @@ describe('device runtime', () => {
 
     await runtime.ready()
     await runtime.scan()
+    expect(runtime.getSnapshot().discoveryActive).toBe(true)
     const [omi, ring] = await Promise.all([
       runtime.connect(omiDevice.discoveryId, { consent: { audioCapture: true } }),
       runtime.connect(ringDevice.discoveryId),
@@ -253,8 +254,10 @@ describe('device runtime', () => {
       expect.arrayContaining(['omi', 'ring']),
     )
     expect(snapshot.sessions.every((session) => session.history.length <= 1)).toBe(true)
+    expect(snapshot.discoveryActive).toBe(false)
     await runtime.scan()
     expect(runtime.getSnapshot().phase).toBe('connected')
+    expect(runtime.getSnapshot().discoveryActive).toBe(true)
     await runtime.disconnect(omiDevice.discoveryId)
     expect(runtime.getSnapshot().sessions).toHaveLength(1)
     expect(runtime.getSnapshot().phase).toBe('connected')

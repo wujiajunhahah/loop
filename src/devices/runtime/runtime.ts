@@ -413,6 +413,7 @@ interface ActiveScan {
   controller: AbortController
   sessions: Set<DeviceDiscoverySession>
   removeAbort: RuntimeUnsubscribe
+  timeout?: ReturnType<typeof setTimeout>
 }
 
 export function createDeviceRuntime(options: DeviceRuntimeOptions): DeviceRuntime {
@@ -454,6 +455,7 @@ export function createDeviceRuntime(options: DeviceRuntimeOptions): DeviceRuntim
   const snapshot = (): RuntimeSnapshot =>
     deepFreeze({
       phase,
+      discoveryActive: activeScan !== undefined && !activeScan.controller.signal.aborted,
       scanGeneration,
       devices: [...devices.values()].map((device) => ({
         deviceKey: device.deviceKey,
@@ -589,6 +591,7 @@ export function createDeviceRuntime(options: DeviceRuntimeOptions): DeviceRuntim
     if (candidate === undefined) return
     candidate.controller.abort()
     candidate.removeAbort()
+    if (candidate.timeout !== undefined) clearTimeout(candidate.timeout)
     await Promise.allSettled(
       [...candidate.sessions].map(async (session) => {
         await session.stop()
@@ -596,6 +599,15 @@ export function createDeviceRuntime(options: DeviceRuntimeOptions): DeviceRuntim
     )
     candidate.sessions.clear()
     if (activeScan?.generation === candidate.generation) activeScan = undefined
+  }
+
+  const completeActiveScan = async (candidate: ActiveScan) => {
+    if (!isCurrentScan(candidate)) return
+    await stopScan(candidate)
+    if (closed) return
+    phase = steadyPhase()
+    addDiagnostic('scan', phase, 'Discovery completed.')
+    publish()
   }
 
   const addDiscovered = (device: DiscoveredDevice, candidate: ActiveScan) => {
@@ -704,8 +716,25 @@ export function createDeviceRuntime(options: DeviceRuntimeOptions): DeviceRuntim
       publish()
       return { ok: false, error: failures[0] }
     }
+    if (candidate.sessions.size === 0) {
+      await completeActiveScan(candidate)
+      return ok({
+        scanId: candidate.scanId,
+        devices: [...devices.values()].map((entry) => deviceSnapshot(entry)),
+      })
+    }
+    if (
+      scanOptions.timeoutMs !== undefined &&
+      Number.isFinite(scanOptions.timeoutMs) &&
+      scanOptions.timeoutMs > 0
+    ) {
+      candidate.timeout = setTimeout(
+        () => void completeActiveScan(candidate),
+        scanOptions.timeoutMs,
+      )
+    }
     phase = steadyPhase()
-    addDiagnostic('scan', phase, 'Discovery completed.')
+    addDiagnostic('scan', phase, 'Discovery is active.')
     publish()
     return ok({
       scanId: candidate.scanId,
@@ -714,9 +743,11 @@ export function createDeviceRuntime(options: DeviceRuntimeOptions): DeviceRuntim
   }
 
   const cancelScan = async (): Promise<DeviceResult<void>> => {
+    const wasScanning = activeScan !== undefined || phase === 'scanning'
     await stopScan(activeScan)
-    if (!closed && phase === 'scanning') {
-      phase = steadyPhase()
+    if (!closed && wasScanning) {
+      if (phase === 'scanning') phase = steadyPhase()
+      addDiagnostic('scan', phase, 'Discovery stopped.')
       publish()
     }
     return ok(undefined)
@@ -1057,6 +1088,7 @@ export function createDeviceRuntime(options: DeviceRuntimeOptions): DeviceRuntim
     }
     const existing = sessions.get(entry.deviceKey)
     if (existing?.phase === 'connected') return ok(makeConnection(entry.deviceKey, existing))
+    await cancelScan()
     const operation = beginOperation(entry.deviceKey, 'connect', connectOptions.signal)
     if (operation.controller.signal.aborted) {
       const result = cancelled<RuntimeConnection>()

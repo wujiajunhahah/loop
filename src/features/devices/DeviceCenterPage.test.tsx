@@ -75,6 +75,7 @@ function device(
 function snapshot(overrides: Partial<RuntimeSnapshot> = {}): RuntimeSnapshot {
   return {
     phase: 'ready',
+    discoveryActive: overrides.phase === 'scanning',
     scanGeneration: 0,
     devices: [],
     sessions: [],
@@ -99,9 +100,14 @@ function createRuntimeHarness(initial = snapshot()) {
     for (const listener of listeners) listener()
   }
   const scan = vi.fn(async (): Promise<DeviceResult<RuntimeScanResult>> => {
-    publish({ ...current, phase: 'scanning' })
+    publish({ ...current, phase: 'scanning', discoveryActive: true })
     await Promise.resolve()
-    const next = { ...current, phase: 'ready' as const, scanGeneration: current.scanGeneration + 1 }
+    const next = {
+      ...current,
+      phase: 'ready' as const,
+      discoveryActive: false,
+      scanGeneration: current.scanGeneration + 1,
+    }
     publish(next)
     return { ok: true, value: { scanId: `scan-${next.scanGeneration}`, devices: next.devices } } as const
   })
@@ -162,7 +168,7 @@ function createRuntimeHarness(initial = snapshot()) {
     },
     scan,
     cancelScan: vi.fn(async () => {
-      publish({ ...current, phase: 'ready' })
+      publish({ ...current, phase: 'ready', discoveryActive: false })
       return { ok: true, value: undefined } as const
     }),
     connect,
@@ -245,9 +251,14 @@ describe('DeviceCenterPage', () => {
         finishResume = resolve
       }))
 
+    const refreshBluetoothState = vi.fn(async () => ({ bluetoothPowered: false }))
     renderCenter({
       runtime: harness.runtime,
-      environment: { physicalSupported: true, permission: 'granted' },
+      environment: {
+        physicalSupported: true,
+        permission: 'granted',
+        refreshBluetoothState,
+      },
     })
 
     visibility.mockReturnValue('hidden')
@@ -261,7 +272,32 @@ describe('DeviceCenterPage', () => {
     await act(async () => {
       finishResume?.({ ok: true, value: undefined })
     })
-    expect(await screen.findByText('可以开始查找附近设备')).toBeInTheDocument()
+    expect(refreshBluetoothState).toHaveBeenCalledTimes(1)
+    expect(await screen.findByText('蓝牙已关闭')).toBeInTheDocument()
+  })
+
+  it('synchronizes granted permission and powered-off state from scan results', async () => {
+    const granted = createRuntimeHarness()
+    renderCenter({
+      runtime: granted.runtime,
+      environment: { physicalSupported: true, permission: 'prompt' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: '继续并允许蓝牙' }))
+    await waitFor(() => expect(granted.scan).toHaveBeenCalledWith({ timeoutMs: 10_000 }))
+    expect(screen.queryByText('需要蓝牙权限才能查找附近设备')).not.toBeInTheDocument()
+    cleanup()
+
+    const poweredOff = createRuntimeHarness()
+    poweredOff.scan.mockResolvedValueOnce({
+      ok: false,
+      error: { code: 'powered_off', message: 'off', retryable: true },
+    })
+    renderCenter({
+      runtime: poweredOff.runtime,
+      environment: { physicalSupported: true, permission: 'prompt' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: '继续并允许蓝牙' }))
+    expect(await screen.findByText('蓝牙已关闭')).toBeInTheDocument()
   })
 
   it('gates OMI connection on explicit audio consent', async () => {
@@ -300,6 +336,7 @@ describe('DeviceCenterPage', () => {
     renderCenter({
       runtime: harness.runtime,
       environment: { physicalSupported: true, permission: 'granted' },
+      now: () => Date.parse('2026-08-03T00:00:00.000Z'),
     })
     fireEvent.click(screen.getByRole('button', { name: '扫描设备' }))
     await waitFor(() => expect(harness.scan).toHaveBeenCalledTimes(1))

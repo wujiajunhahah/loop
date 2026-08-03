@@ -17,13 +17,19 @@ The ten planned tasks are implemented as one layered system:
 | OMI-RING-007 | Multi-device runtime, persistence and simulators | `79eb815` |
 | OMI-RING-008 | Device center, consent and source-aware UI | `e08268b` |
 | OMI-RING-009 | Generated native iOS project and validation guide | `934ce09` |
-| OMI-RING-010 | Native runtime wiring, lifecycle, trusted handoff, narrative flows, tests and docs | This integration |
+| OMI-RING-010 | Native runtime wiring, lifecycle, trusted handoff, narrative flows, tests and docs | `0cacedd` plus final lifecycle hardening |
 
 OpenCode generated the bounded `ios/**`/native-validation result for task 009.
 Codex then inspected its files, made the native tree trackable, and independently
 reran web, Capacitor, plist, dependency, and Xcode checks. A device-core sub-agent
 implemented task 010 lifecycle/consent/diagnostic changes in `src/devices/**`;
 the primary agent inspected that diff and reran repository checks.
+
+A final parallel UI review found that an active BLE discovery session could outlive
+the runtime's `scanning` phase. The follow-up adds an explicit `discoveryActive`
+snapshot state, a bounded ten-second foreground scan, cancellation on background
+or connect, native Bluetooth power refresh on resume, immediate stale values after
+disconnect, and lifecycle forwarding for the unconfigured OMI adapter.
 
 ## Proven paths
 
@@ -51,7 +57,7 @@ Primary-agent results:
 | Check | Result |
 | --- | --- |
 | `npm run typecheck` | Passed |
-| `npm test -- --run --maxWorkers=1` | 25 files, 166 tests passed |
+| `npm test -- --run --maxWorkers=1` | 25 files, 172 tests passed |
 | `npm run build` | Passed |
 | `npx cap sync ios` | Passed; Bluetooth LE 8.2 plugin included through SPM |
 | plist syntax and usage strings | Passed; Bluetooth and microphone descriptions present; `UIBackgroundModes` absent |
@@ -59,10 +65,10 @@ Primary-agent results:
 | `xcodebuild ... -resolvePackageDependencies` | Passed; Capacitor 8.5.0 resolved |
 | unsigned iPhone 16 Pro / iOS 18.5 simulator build | `BUILD SUCCEEDED` |
 | simulator -> runtime -> UI creator/recipient integration | 2 tests passed |
+| Playwright desktop/mobile horizontal-overflow checks | 6 routes/viewports passed; screenshots inspected |
 | tracked-source path/credential scan | No local audio path or common key pattern found after redaction |
 
-The final command set should be rerun after any later code edit; this report must
-be updated if its counts change.
+The final command set was rerun after the foreground-lifecycle review fixes.
 
 ## Evidence boundaries
 

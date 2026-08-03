@@ -118,6 +118,7 @@ export interface RuntimeSessionSnapshot {
 
 export interface RuntimeSnapshot {
   phase: RuntimePhase
+  discoveryActive: boolean
   scanGeneration: number
   devices: readonly RuntimeDeviceSnapshot[]
   sessions: readonly RuntimeSessionSnapshot[]

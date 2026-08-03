@@ -1,4 +1,8 @@
 import { describe, expect, it } from 'vitest'
+import type {
+  DeviceTransportSession,
+  DeviceTransportSessionState,
+} from '../../devices/contracts'
 import {
   createConfiguredPhysicalAdapters,
   readDeviceNativeConfiguration,
@@ -56,6 +60,35 @@ describe('native device configuration', () => {
 
     expect(adapter?.adapterId).toBe('omi-audio-unconfigured')
     expect(adapter?.matches(omiDevice)).toBe(true)
+  })
+
+  it('propagates transport disconnects from the unconfigured OMI session', async () => {
+    const [adapter] = createConfiguredPhysicalAdapters({})
+    let transportState: DeviceTransportSessionState = 'connected'
+    let stateListener: ((state: DeviceTransportSessionState) => void) | undefined
+    const transportSession = {
+      sessionId: 'omi-transport-session',
+      device: omiDevice,
+      getState: () => transportState,
+      subscribeState(listener: (state: DeviceTransportSessionState) => void) {
+        stateListener = listener
+        listener(transportState)
+        return { unsubscribe() { stateListener = undefined } }
+      },
+      close: async () => ({ ok: true, value: undefined } as const),
+    } as unknown as DeviceTransportSession
+
+    const opened = await adapter!.openSession(transportSession)
+    expect(opened.ok).toBe(true)
+    if (!opened.ok) return
+    const observed: string[] = []
+    opened.value.subscribeState?.((state) => observed.push(state))
+
+    transportState = 'disconnected'
+    stateListener?.(transportState)
+
+    expect(opened.value.getState()).toBe('disconnected')
+    expect(observed).toEqual(['open', 'disconnected'])
   })
 
   it('only recognizes a ring from explicit discovery hints', () => {

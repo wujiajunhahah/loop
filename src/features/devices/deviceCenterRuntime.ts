@@ -1,5 +1,9 @@
 import { createDeviceRuntime, type DeviceRuntime } from '../../devices/runtime'
-import { createOmiSimulator, createRingSimulator } from '../../devices/simulators'
+import {
+  createDeterministicClock,
+  createOmiSimulator,
+  createRingSimulator,
+} from '../../devices/simulators'
 import { createCapacitorBleTransport } from '../../devices/transports'
 import type { SimulatorRuntime } from '../../devices/simulators/types'
 import type { NormalizedDeviceEventBase } from '../../devices/contracts'
@@ -60,14 +64,29 @@ export function getDefaultDeviceCenterEnvironment() {
         BleClient.openAppSettings(),
       )
     },
+    refreshBluetoothState: async () => {
+      try {
+        const { BleClient } = await import('@capacitor-community/bluetooth-le')
+        return { bluetoothPowered: await BleClient.isEnabled() }
+      } catch {
+        return {}
+      }
+    },
   }
 }
 
 export function getDeterministicSimulatorRuntime() {
   if (simulatorRuntime !== undefined) return simulatorRuntime
 
-  const omi = createOmiSimulator({ deviceName: 'OMI 演示设备' })
-  const ring = createRingSimulator({ deviceName: '智能戒指演示设备' })
+  const initialTime = new Date().toISOString()
+  const omi = createOmiSimulator({
+    clock: createDeterministicClock(initialTime),
+    deviceName: 'OMI 演示设备',
+  })
+  const ring = createRingSimulator({
+    clock: createDeterministicClock(initialTime),
+    deviceName: '智能戒指演示设备',
+  })
   simulatorSources = { omi, ring }
   simulatorRuntime = createDeviceRuntime({
     transports: [omi.transport, ring.transport],

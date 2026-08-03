@@ -6,6 +6,7 @@ import {
   type DeviceResult,
   type DeviceSession,
   type DeviceSessionState,
+  type DeviceStateSubscription,
   type DeviceSubscription,
   type DeviceTransportSession,
   type DiscoveredDevice,
@@ -173,6 +174,28 @@ function createOmiDiscoveryOnlyAdapter(): DeviceAdapter {
       const sessionId = `omi-unconfigured-session-${++sessionSequence}`
       let state: DeviceSessionState = 'open'
       let closePromise: Promise<DeviceResult<void>> | undefined
+      const stateListeners = new Set<(next: DeviceSessionState) => void>()
+      const transitionState = (next: DeviceSessionState) => {
+        if (state === next) return
+        state = next
+        for (const listener of [...stateListeners]) listener(next)
+      }
+      const transportStateSubscription = transportSession.subscribeState?.((next) => {
+        if (state === 'closing' || state === 'closed') return
+        if (next === 'disconnected' || next === 'failed') transitionState(next)
+      })
+      const transportState = transportSession.getState()
+      if (transportState === 'disconnected' || transportState === 'failed') {
+        transportStateSubscription?.unsubscribe()
+        return {
+          ok: false,
+          error: {
+            code: 'disconnected',
+            message: 'The OMI transport disconnected while opening the adapter session.',
+            retryable: true,
+          },
+        }
+      }
       return {
         ok: true,
         value: {
@@ -185,6 +208,18 @@ function createOmiDiscoveryOnlyAdapter(): DeviceAdapter {
           },
           capabilities: unavailableCapabilities,
           getState: () => state,
+          subscribeState(listener): DeviceStateSubscription {
+            stateListeners.add(listener)
+            listener(state)
+            let subscribed = true
+            return {
+              unsubscribe() {
+                if (!subscribed) return
+                subscribed = false
+                stateListeners.delete(listener)
+              },
+            }
+          },
           subscribe(): DeviceResult<DeviceSubscription> {
             return {
               ok: true,
@@ -204,9 +239,10 @@ function createOmiDiscoveryOnlyAdapter(): DeviceAdapter {
           },
           close() {
             if (closePromise !== undefined) return closePromise
-            state = 'closing'
+            transitionState('closing')
+            transportStateSubscription?.unsubscribe()
             closePromise = transportSession.close().then((result) => {
-              state = result.ok ? 'closed' : 'failed'
+              transitionState(result.ok ? 'closed' : 'failed')
               return result
             })
             return closePromise

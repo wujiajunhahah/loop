@@ -23,6 +23,10 @@
   line-height: 1.1;
 }
 
+.device-center__header h1[tabindex='-1']:focus {
+  outline: none;
+}
+
 .device-center__lead {
   margin-bottom: 0;
   color: var(--muted);

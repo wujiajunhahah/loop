@@ -52,6 +52,7 @@ export interface DeviceCenterEnvironment {
   bluetoothPowered?: boolean
   appState?: 'foreground' | 'background' | 'resuming'
   openSettings?: () => void
+  refreshBluetoothState?: () => Promise<{ bluetoothPowered?: boolean }>
 }
 
 export interface DeviceCenterPageProps {
@@ -156,6 +157,7 @@ interface BluetoothGateProps {
   snapshot: RuntimeSnapshot
   simulated: boolean
   onPermissionChange(permission: PermissionState): void
+  onBluetoothPoweredChange(powered: boolean): void
   onError(message?: string): void
 }
 
@@ -166,6 +168,7 @@ function BluetoothGate({
   snapshot,
   simulated,
   onPermissionChange,
+  onBluetoothPoweredChange,
   onError,
 }: BluetoothGateProps) {
   const visibleDevices = snapshot.devices.filter((device) =>
@@ -174,10 +177,21 @@ function BluetoothGate({
 
   const scan = async () => {
     onError(undefined)
-    const result = await runtime.scan()
-    if (result.ok) return
+    const result = await runtime.scan({ timeoutMs: 10_000 })
+    if (result.ok) {
+      if (!simulated) {
+        onPermissionChange('granted')
+        onBluetoothPoweredChange(true)
+      }
+      return
+    }
     if (result.error.code === 'permission_denied') {
       onPermissionChange('denied')
+      return
+    }
+    if (result.error.code === 'powered_off') {
+      onPermissionChange('granted')
+      onBluetoothPoweredChange(false)
       return
     }
     onError('扫描没有完成。你可以重试，或在诊断信息中查看安全错误代码。')
@@ -200,7 +214,7 @@ function BluetoothGate({
   )
 
   if (simulated) {
-    if (snapshot.phase === 'scanning') {
+    if (snapshot.discoveryActive) {
       message = '正在准备演示设备'
       description = '演示数据来自可重复的本地场景，不代表真机验证。'
       action = (
@@ -272,7 +286,7 @@ function BluetoothGate({
         打开系统设置
       </button>
     )
-  } else if (snapshot.phase === 'scanning') {
+  } else if (snapshot.discoveryActive) {
     message = visibleDevices.length === 0
       ? '正在查找附近设备'
       : `找到 ${visibleDevices.length} 台设备`
@@ -295,7 +309,7 @@ function BluetoothGate({
     description = 'OMI 与智能戒指可以分别连接或断开。'
   }
 
-  const busy = snapshot.phase === 'opening' || snapshot.phase === 'scanning'
+  const busy = snapshot.phase === 'opening' || snapshot.discoveryActive
   return (
     <section className="bluetooth-gate" aria-busy={busy} aria-labelledby="bluetooth-heading">
       <div>
@@ -353,7 +367,7 @@ function LiveData({ device, kind, now }: { device: RuntimeDeviceSnapshot; kind: 
     <>
       <dl className="device-values">
         {values.map((value) => {
-          const freshness = freshnessFor(value, now)
+          const freshness = device.phase === 'connected' ? freshnessFor(value, now) : 'stale'
           return (
             <div key={value.name} className={freshness === 'stale' ? 'is-stale' : undefined}>
               <dt>{metricLabels[value.name] ?? value.name}</dt>
@@ -778,6 +792,7 @@ export function DeviceCenterPage({
   const advanceSimulator = simulator?.advance ?? advanceDeterministicSimulator
   const [simulationEnabled, setSimulationEnabled] = useState(false)
   const [permission, setPermission] = useState<PermissionState>(environment.permission)
+  const [bluetoothPowered, setBluetoothPowered] = useState(environment.bluetoothPowered)
   const [mode, setMode] = useState<RoleMode>('creator')
   const [handledEventId, setHandledEventId] = useState<string>()
   const [verifiedPending, setVerifiedPending] = useState<{
@@ -790,6 +805,7 @@ export function DeviceCenterPage({
     environment.appState ?? (documentIsHidden() ? 'background' : 'foreground'),
   )
   const headingRef = useRef<HTMLHeadingElement>(null)
+  const refreshBluetoothStateRef = useRef(environment.refreshBluetoothState)
   const runtime = simulationEnabled ? demoRuntime : physicalRuntime
   const snapshot = useRuntimeSnapshot(runtime)
   const pending = findPendingDeviceEvent(snapshot)
@@ -803,6 +819,14 @@ export function DeviceCenterPage({
   }, [environment.permission])
 
   useEffect(() => {
+    setBluetoothPowered(environment.bluetoothPowered)
+  }, [environment.bluetoothPowered])
+
+  useEffect(() => {
+    refreshBluetoothStateRef.current = environment.refreshBluetoothState
+  }, [environment.refreshBluetoothState])
+
+  useEffect(() => {
     setAppState(
       environment.appState ?? (documentIsHidden() ? 'background' : 'foreground'),
     )
@@ -813,11 +837,15 @@ export function DeviceCenterPage({
     const syncVisibility = async () => {
       if (documentIsHidden()) {
         setAppState('background')
-        if (runtime.getSnapshot().phase === 'scanning') await runtime.cancelScan()
+        if (runtime.getSnapshot().discoveryActive) await runtime.cancelScan()
         return
       }
 
       setAppState('resuming')
+      const refreshed = await refreshBluetoothStateRef.current?.()
+      if (active && refreshed?.bluetoothPowered !== undefined) {
+        setBluetoothPowered(refreshed.bluetoothPowered)
+      }
       await runtime.ready()
       if (active && !documentIsHidden()) setAppState('foreground')
     }
@@ -988,13 +1016,14 @@ export function DeviceCenterPage({
       </section>
 
       <div className="sr-only" aria-atomic="true" aria-live="polite" role="status">
-        {snapshot.phase === 'scanning' ? '正在扫描设备' : `${connectedCount} 台设备已连接`}
+        {snapshot.discoveryActive ? '正在扫描设备' : `${connectedCount} 台设备已连接`}
       </div>
 
       {actionError !== undefined && <p className="device-center__alert" role="alert">{actionError}</p>}
 
       <BluetoothGate
-        environment={{ ...environment, appState }}
+        environment={{ ...environment, appState, bluetoothPowered }}
+        onBluetoothPoweredChange={setBluetoothPowered}
         onError={setActionError}
         onPermissionChange={setPermission}
         permission={permission}
