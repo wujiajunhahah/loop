@@ -1,6 +1,6 @@
 # Recording-derived interaction requirements
 
-Source: user-supplied audio /Users/wujiajun/Library/Containers/com.tencent.xinWeChat/Data/Documents/xwechat_files/wxid_a1wjv7heezs722_e53d/msg/file/2026-08/新录音 11.m4a, transcribed locally for design extraction. This is a product input, not an audio asset to commit.
+Source: user-supplied audio, transcribed locally for design extraction. This is a product input, not an audio asset to commit; the original local path is intentionally not retained.
 
 ## Product shape
 

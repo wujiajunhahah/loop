@@ -75,6 +75,7 @@ interface FakeTransportSession {
   subscribeCount(): number
   unsubscribeCount(): number
   closeCount(): number
+  disconnectUnexpectedly(): void
 }
 
 function createFakeTransportSession(options?: {
@@ -89,6 +90,13 @@ function createFakeTransportSession(options?: {
   let unsubscriptions = 0
   let closes = 0
   let state: ReturnType<DeviceTransportSession['getState']> = 'connected'
+  const stateListeners = new Set<
+    Parameters<NonNullable<DeviceTransportSession['subscribeState']>>[0]
+  >()
+  const transitionState = (next: ReturnType<DeviceTransportSession['getState']>) => {
+    state = next
+    for (const stateListener of [...stateListeners]) stateListener(state)
+  }
   const device: DiscoveredDevice = {
     discoveryId: 'opaque-omi-device',
     transportId: 'ble-test',
@@ -109,6 +117,18 @@ function createFakeTransportSession(options?: {
     sessionId: options?.sessionId ?? 'transport-session',
     device,
     getState: () => state,
+    subscribeState: (stateListener) => {
+      stateListeners.add(stateListener)
+      stateListener(state)
+      let stopped = false
+      return {
+        unsubscribe() {
+          if (stopped) return
+          stopped = true
+          stateListeners.delete(stateListener)
+        },
+      }
+    },
     read: async (characteristic) => {
       calls.push('read_codec')
       if (!sameCharacteristic(characteristic, profile.gatt.audioCodecId)) {
@@ -168,7 +188,7 @@ function createFakeTransportSession(options?: {
     },
     close: async () => {
       if (state !== 'disconnected') {
-        state = 'disconnected'
+        transitionState('disconnected')
         closes += 1
       }
       return ok(undefined)
@@ -193,10 +213,30 @@ function createFakeTransportSession(options?: {
     subscribeCount: () => subscriptions,
     unsubscribeCount: () => unsubscriptions,
     closeCount: () => closes,
+    disconnectUnexpectedly() {
+      transitionState('disconnected')
+    },
   }
 }
 
 describe('official OMI audio profile', () => {
+  it('forwards an unexpected transport disconnect as a normalized session state', async () => {
+    const transport = createFakeTransportSession()
+    const opened = await createOmiAudioAdapter({
+      framing: FRAMING,
+      firmware: FIRMWARE,
+    }).openSession(transport.session)
+    expect(opened.ok).toBe(true)
+    if (!opened.ok) return
+    const states: string[] = []
+    opened.value.subscribeState?.((state) => states.push(state))
+
+    transport.disconnectUnexpectedly()
+
+    expect(states).toEqual(['open', 'disconnected'])
+    expect(opened.value.getState()).toBe('disconnected')
+  })
+
   it('contains only the source-cited official audio GATT and codec values', () => {
     expect(OFFICIAL_OMI_AUDIO_PROFILE).toMatchObject({
       profileId: 'omi-audio-official-eb353430',

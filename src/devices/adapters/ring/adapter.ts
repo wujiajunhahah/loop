@@ -11,6 +11,8 @@ import {
   type DeviceResult,
   type DeviceSession,
   type DeviceSessionState,
+  type DeviceSessionStateListener,
+  type DeviceStateSubscription,
   type DeviceSubscription,
   type DeviceTransportNotificationSubscription,
   type DeviceTransportSession,
@@ -383,13 +385,29 @@ export function createRingAdapter(profile: RingProfile): RingAdapter {
       let eventSequence = 0
       let frameSequence = 0
       let listenerSequence = 0
+      let stateListenerSequence = 0
       const listeners = new Map<number, (event: RingAdapterEvent) => void>()
+      const stateListeners = new Map<number, DeviceSessionStateListener>()
       const transportSubscriptions = new Map<
         RingRole,
         DeviceTransportNotificationSubscription
       >()
       const activeWrites = new Set<Promise<DeviceResult<void>>>()
+      let transportStateSubscription: DeviceStateSubscription | undefined
       let closePromise: Promise<DeviceResult<void>> | undefined
+
+      const deliverState = (listener: DeviceSessionStateListener) => {
+        try {
+          listener(state)
+        } catch {
+          // Lifecycle observers cannot block adapter cleanup.
+        }
+      }
+      const transitionState = (next: DeviceSessionState) => {
+        if (state === next) return
+        state = next
+        for (const listener of [...stateListeners.values()]) deliverState(listener)
+      }
 
       const emit = (event: RingAdapterEvent) => {
         for (const listener of [...listeners.values()]) {
@@ -537,6 +555,19 @@ export function createRingAdapter(profile: RingProfile): RingAdapter {
         capabilities,
         ringCapabilities,
         getState: () => state,
+        subscribeState(listener): DeviceStateSubscription {
+          const listenerId = ++stateListenerSequence
+          stateListeners.set(listenerId, listener)
+          deliverState(listener)
+          let unsubscribed = false
+          return {
+            unsubscribe() {
+              if (unsubscribed) return
+              unsubscribed = true
+              stateListeners.delete(listenerId)
+            },
+          }
+        },
         subscribe(listener): DeviceResult<DeviceSubscription> {
           if (state !== 'open') return operationFailure('session_closed', false)
           const listenerId = ++listenerSequence
@@ -630,8 +661,9 @@ export function createRingAdapter(profile: RingProfile): RingAdapter {
         },
         close() {
           if (closePromise !== undefined) return closePromise
-          state = 'closing'
+          transitionState('closing')
           acceptingFrames = false
+          transportStateSubscription?.unsubscribe()
           closePromise = (async () => {
             await Promise.allSettled([...activeWrites])
             const subscriptionFailure = await cleanupSubscriptions()
@@ -645,7 +677,8 @@ export function createRingAdapter(profile: RingProfile): RingAdapter {
             listeners.clear()
             activeTransportSessions.delete(transportSession)
             const firstFailure = subscriptionFailure ?? sessionFailure
-            state = firstFailure === undefined ? 'closed' : 'failed'
+            transitionState(firstFailure === undefined ? 'closed' : 'failed')
+            stateListeners.clear()
             return firstFailure ?? { ok: true, value: undefined }
           })()
           return closePromise
@@ -710,7 +743,27 @@ export function createRingAdapter(profile: RingProfile): RingAdapter {
         transportSubscriptions.set(role, subscribed.value)
       }
 
-      state = 'open'
+      transportStateSubscription = transportSession.subscribeState?.((transportState) => {
+        if (state === 'closing' || state === 'closed') return
+        if (transportState === 'disconnected') {
+          acceptingFrames = false
+          transitionState('disconnected')
+        } else if (transportState === 'failed') {
+          acceptingFrames = false
+          transitionState('failed')
+        }
+      })
+      const transportStateAfterSubscription = transportSession.getState()
+      if (
+        transportStateAfterSubscription === 'disconnected' ||
+        transportStateAfterSubscription === 'failed'
+      ) {
+        transportStateSubscription?.unsubscribe()
+        await cleanupSubscriptions()
+        activeTransportSessions.delete(transportSession)
+        return operationFailure('disconnected', true)
+      }
+      transitionState('open')
       return { ok: true, value: session }
     },
   }

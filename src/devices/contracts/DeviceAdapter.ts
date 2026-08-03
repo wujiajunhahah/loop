@@ -1,5 +1,9 @@
 import type { DeviceResult } from './errors'
-import type { DeviceTransportSession, DiscoveredDevice } from './DeviceTransport'
+import type {
+  DeviceStateSubscription,
+  DeviceTransportSession,
+  DiscoveredDevice,
+} from './DeviceTransport'
 import type {
   CommandAcknowledgement,
   DeviceCapabilityReport,
@@ -15,7 +19,10 @@ export type DeviceSessionState =
   | 'open'
   | 'closing'
   | 'closed'
+  | 'disconnected'
   | 'failed'
+
+export type DeviceSessionStateListener = (state: DeviceSessionState) => void
 
 export type NormalizedDeviceEventListener<
   Event extends NormalizedDeviceEventBase = NormalizedDeviceEvent,
@@ -30,6 +37,8 @@ export interface DeviceSession<
   device: NormalizedDevice
   capabilities: DeviceCapabilityReport
   getState(): DeviceSessionState
+  /** Reports normalized lifecycle changes and immediately emits current state. */
+  subscribeState?(listener: DeviceSessionStateListener): DeviceStateSubscription
   subscribe(
     listener: NormalizedDeviceEventListener<Event>,
   ): DeviceResult<DeviceSubscription>

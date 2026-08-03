@@ -1,5 +1,10 @@
 # Integration Report
 
+> Historical report for the original offline MVP. The OMI/ring integration,
+> current test evidence, native iOS result, and remaining physical-device gates
+> are recorded in `.loop/reports/omi-ring-final-audit.md` and
+> `docs/hardware/support-matrix.md`.
+
 ## Scope
 
 Integrated `feat/capture`, `feat/agent`, `feat/recipient`, and `feat/hardware`

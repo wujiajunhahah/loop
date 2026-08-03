@@ -254,6 +254,19 @@ h1 {
 .choice { width: 100%; min-height: 76px; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 18px 0; color: var(--ink); background: transparent; border: 0; border-bottom: 1px solid var(--line); font: inherit; font-size: 18px; text-align: left; cursor: pointer; }
 .choice--strong { color: var(--green); font-weight: 750; }
 .provenance-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 42px; }
+.recipient-source, .recipient-presentation, .context-sources { margin-top: 28px; padding: 22px; border: 1px solid var(--line); background: var(--surface); border-radius: 6px; }
+.recipient-source { display: grid; gap: 6px; }
+.recipient-source span, .recipient-source small, .recipient-presentation p, .context-sources p { color: var(--muted); line-height: 1.55; }
+.presentation-choice { display: flex; gap: 8px; padding: 0; border: 0; margin: 30px 0 0; }
+.presentation-choice legend { width: 100%; margin-bottom: 12px; font-weight: 750; }
+.presentation-choice label { position: relative; }
+.presentation-choice input { position: absolute; opacity: 0; }
+.presentation-choice span { min-width: 72px; display: inline-flex; justify-content: center; padding: 9px 14px; border: 1px solid var(--line); border-radius: 4px; background: var(--surface); font-weight: 700; }
+.presentation-choice input:checked + span { color: var(--surface); border-color: var(--ink); background: var(--ink); }
+.presentation-choice input:focus-visible + span { outline: 3px solid #b9553d; outline-offset: 3px; }
+.context-sources dl { margin: 18px 0 0; }
+.context-sources dl div { display: flex; justify-content: space-between; gap: 20px; padding: 8px 0; border-top: 1px solid var(--line); }
+.context-sources dd { margin: 0; text-align: right; }
 .provenance-grid article + article { padding-left: 28px; border-left: 1px solid var(--line); }
 .tag { display: inline-block; padding: 5px 8px; border-radius: 3px; }
 .tag--original { color: #8a4939; background: #f6ddd5; }
@@ -281,6 +294,13 @@ blockquote { margin: 40px 0 0; padding-left: 24px; border-left: 3px solid var(--
 .capture-page { max-width: 960px; margin-inline: auto; }
 .step-count { color: var(--muted); font-size: 13px; font-weight: 750; white-space: nowrap; }
 .capture-form fieldset { padding: 0 0 40px; border: 0; border-bottom: 1px solid var(--line); margin: 0 0 36px; }
+.capture-trigger { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.6fr); gap: 32px; margin-bottom: 36px; padding-block: 24px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.capture-trigger h2 { margin-bottom: 10px; font-size: 24px; }
+.capture-trigger p { color: var(--muted); line-height: 1.6; }
+.capture-trigger dl { margin: 0; }
+.capture-trigger dl div { display: flex; justify-content: space-between; gap: 20px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.capture-trigger dt { color: var(--muted); }
+.capture-trigger dd { margin: 0; text-align: right; }
 .capture-form legend { margin-bottom: 22px; font-size: 20px; font-weight: 750; }
 .mode-grid, .kind-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
 .kind-grid { grid-template-columns: repeat(5, 1fr); }
@@ -382,6 +402,7 @@ footer {
   }
 
   .mode-grid, .kind-grid, .review-grid { grid-template-columns: 1fr; }
+  .capture-trigger { grid-template-columns: 1fr; }
   .mode-option { min-height: auto; }
   .capture-page .page-header { gap: 18px; }
 

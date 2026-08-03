@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { chooseRecipientAction, createRecipientSession } from './session'
+import {
+  chooseRecipientAction,
+  createRecipientSession,
+  isRecipientEntryPermanentlyClosed,
+  permanentlyCloseRecipientEntry,
+  resetRecipientEntryForTests,
+} from './session'
 
 describe('recipient session', () => {
   it('starts as a recipient-initiated active session', () => {
@@ -27,5 +33,15 @@ describe('recipient session', () => {
       status: 'closed',
       lastChoice: 'close',
     })
+  })
+
+  it('persists an explicit permanent-close choice', () => {
+    resetRecipientEntryForTests()
+    expect(isRecipientEntryPermanentlyClosed()).toBe(false)
+
+    permanentlyCloseRecipientEntry()
+
+    expect(isRecipientEntryPermanentlyClosed()).toBe(true)
+    resetRecipientEntryForTests()
   })
 })

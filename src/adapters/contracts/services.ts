@@ -4,6 +4,7 @@ import type {
   HardwareEvent,
   HardwareEventType,
   Memory,
+  MemoryTriggerProvenance,
   OriginalContent,
   Relationship,
 } from '../../domain'
@@ -16,6 +17,7 @@ export interface CaptureMemoryInput {
   meaning: string
   visibility: Memory['visibility']
   original: OriginalContent
+  trigger?: MemoryTriggerProvenance
 }
 
 export interface ContextCaptureService {

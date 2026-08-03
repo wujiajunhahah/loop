@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { createDeviceRuntime } from '../runtime'
 import {
   createDeterministicClock,
@@ -7,6 +7,91 @@ import {
 } from './index'
 
 describe('deterministic device simulators', () => {
+  it('gates the default mark/touch scenario on revocable interaction consent', async () => {
+    const simulator = createRingSimulator()
+    const runtime = createDeviceRuntime({
+      transports: [simulator.transport],
+      adapters: [simulator.adapter],
+    })
+    await runtime.ready()
+    await runtime.scan()
+    const connected = await runtime.connect(simulator.device.discoveryId)
+    expect(connected.ok).toBe(true)
+    if (!connected.ok) return
+    expect(connected.value.capabilities.interaction_events).toEqual({
+      status: 'implemented',
+    })
+    const delivered = vi.fn()
+    connected.value.subscribe(delivered)
+
+    expect(simulator.next()).toMatchObject({
+      kind: 'metric',
+      metric: { name: 'heart_rate', value: 72 },
+      source: 'simulated',
+    })
+    expect(simulator.next()).toMatchObject({
+      kind: 'interaction',
+      interaction: 'mark_moment',
+      provenance: {
+        sourceReference: 'simulator:ring:scenario:v1',
+        validation: 'fixture_only',
+      },
+      source: 'simulated',
+    })
+    expect(runtime.getSnapshot().sessions[0]?.latestEvent).toMatchObject({
+      kind: 'metric',
+    })
+    expect(delivered).toHaveBeenCalledTimes(1)
+
+    await runtime.setConsent({ interactionEvents: true })
+    expect(simulator.next()).toMatchObject({
+      kind: 'interaction',
+      interaction: 'touch',
+      source: 'simulated',
+    })
+    expect(runtime.getSnapshot().sessions[0]?.latestEvent).toMatchObject({
+      kind: 'interaction',
+      interaction: 'touch',
+      source: 'simulated',
+    })
+    expect(delivered).toHaveBeenCalledTimes(2)
+
+    await runtime.setConsent({ interactionEvents: false })
+    expect(runtime.getSnapshot().sessions[0]?.latestEvent).toMatchObject({
+      kind: 'metric',
+    })
+    simulator.emit({ kind: 'interaction', interaction: 'mark_moment' })
+    expect(runtime.getSnapshot().sessions[0]?.latestEvent).toMatchObject({
+      kind: 'metric',
+    })
+    expect(delivered).toHaveBeenCalledTimes(2)
+  })
+
+  it('turns an unexpected simulator transport end into a runtime failure', async () => {
+    const simulator = createRingSimulator()
+    const runtime = createDeviceRuntime({
+      transports: [simulator.transport],
+      adapters: [simulator.adapter],
+    })
+    await runtime.ready()
+    await runtime.scan()
+    await runtime.connect(simulator.device.discoveryId)
+
+    await simulator.transport.close()
+
+    expect(runtime.getSnapshot()).toMatchObject({
+      phase: 'failed',
+      sessions: [],
+      devices: [{ phase: 'failed' }],
+    })
+    expect(runtime.getSnapshot().diagnostics.at(-1)).toMatchObject({
+      operation: 'disconnect',
+      phase: 'failed',
+      code: 'disconnected',
+      message: 'The device session ended unexpectedly.',
+    })
+  })
+
   it('replays OMI metadata with simulated source and reproducible time/sequence', async () => {
     const firstClock = createDeterministicClock('2026-08-03T00:00:00.000Z')
     const first = createOmiSimulator({ clock: firstClock })

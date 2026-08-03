@@ -5,9 +5,11 @@ import type {
   DeviceDiscoverySession,
   DeviceOperationOptions,
   DeviceResult,
+  DeviceStateSubscription,
   DeviceTransport,
   DeviceTransportFrame,
   DeviceTransportSession,
+  DeviceTransportSessionStateListener,
   DeviceTransportSessionState,
   DeviceTransportState,
   DeviceWriteRequest,
@@ -57,6 +59,7 @@ function filterMatches(
 
 class SimulatorTransportSession implements DeviceTransportSession {
   private state: DeviceTransportSessionState = 'connected'
+  private readonly stateListeners = new Set<DeviceTransportSessionStateListener>()
   private readonly sequencer = createDeviceTransportFrameSequencer()
 
   constructor(
@@ -67,6 +70,21 @@ class SimulatorTransportSession implements DeviceTransportSession {
 
   getState() {
     return this.state
+  }
+
+  subscribeState(
+    listener: DeviceTransportSessionStateListener,
+  ): DeviceStateSubscription {
+    this.stateListeners.add(listener)
+    this.deliverState(listener)
+    let unsubscribed = false
+    return {
+      unsubscribe: () => {
+        if (unsubscribed) return
+        unsubscribed = true
+        this.stateListeners.delete(listener)
+      },
+    }
   }
 
   async read(
@@ -116,10 +134,24 @@ class SimulatorTransportSession implements DeviceTransportSession {
 
   async close(): Promise<DeviceResult<void>> {
     if (this.state === 'disconnected') return ok(undefined)
-    this.state = 'disconnecting'
-    this.state = 'disconnected'
+    this.transitionState('disconnecting')
+    this.transitionState('disconnected')
     this.onClosed()
     return ok(undefined)
+  }
+
+  private transitionState(state: DeviceTransportSessionState) {
+    if (this.state === state) return
+    this.state = state
+    for (const listener of [...this.stateListeners]) this.deliverState(listener)
+  }
+
+  private deliverState(listener: DeviceTransportSessionStateListener) {
+    try {
+      listener(this.state)
+    } catch {
+      // Lifecycle observers cannot block simulator cleanup.
+    }
   }
 
   private check<T>(

@@ -111,7 +111,7 @@ No normalized command contains vendor command bytes or characteristic identifier
 | `DeviceTransport` / `DeviceAdapter` | Platform connection, discovery, protocol decoding, normalized device capabilities, events, and commands. |
 | Existing `HardwareBridge` | Loop binding and entrustment, recipient identity verification, event deduplication, software fallback, feedback state, and event consumption. |
 
-A later integration task may add a dedicated mapper that accepts a normalized device interaction and calls the existing bridge API. That mapper must preserve the bridge's verification lifecycle and map only explicit supported fields. It must not pass telemetry as identity proof, infer a recipient, bypass binding, or auto-consume an event. Keeping this mapper separate prevents vendor protocol details from entering relationship-agent or recipient code and keeps existing behavior untouched.
+`src/features/devices/DeviceCenterPage.tsx` now performs the dedicated handoff. A normalized interaction is ignored unless interaction consent is enabled. Creator capture requires a verified device binding; recipient entry calls the bridge and requires binding, entrustment, recipient identity, and duplicate-event verification. Telemetry never enters this path. Only a verified, minimal provenance record is written to the session handoff, and navigation still requires an explicit user action. Dismissed recipient events are consumed without opening content.
 
 ## Real-device limits
 

@@ -54,7 +54,7 @@ export interface OmiSimulatorOptions {
   capabilities?: DeviceCapabilityReport
 }
 
-export interface RingSimulatorEventInput {
+export interface RingSimulatorDataEventInput {
   role: RingRole
   kind?: 'metric' | 'status' | 'history'
   name?: string
@@ -64,6 +64,15 @@ export interface RingSimulatorEventInput {
   record?: Readonly<Record<string, number | string | boolean>>
   privacy?: 'normalized' | 'local_only'
 }
+
+export interface RingSimulatorInteractionEventInput {
+  kind: 'interaction'
+  interaction: 'mark_moment' | 'touch'
+}
+
+export type RingSimulatorEventInput =
+  | RingSimulatorDataEventInput
+  | RingSimulatorInteractionEventInput
 
 export interface RingSimulatorOptions {
   clock?: DeterministicClock

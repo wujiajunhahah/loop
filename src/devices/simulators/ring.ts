@@ -3,7 +3,10 @@ import type {
   RingMetricEvent,
   RingStatusEvent,
 } from '../adapters/ring'
-import type { DeviceCapabilityReport } from '../contracts'
+import type {
+  DeviceCapabilityReport,
+  InteractionDeviceEvent,
+} from '../contracts'
 import { createSimulatorAdapter } from './adapter'
 import { createDeterministicClock } from './clock'
 import { createSimulatorTransport } from './transport'
@@ -13,13 +16,25 @@ import type {
   SimulatorRuntime,
 } from './types'
 
-type RingSimulatorEvent = RingMetricEvent | RingStatusEvent | RingHistoryEvent
+interface RingSimulatorInteractionEvent extends InteractionDeviceEvent {
+  sessionSequence: number
+  provenance: {
+    profileId: 'simulator:ring:scenario:v1'
+    sourceReference: 'simulator:ring:scenario:v1'
+    validation: 'fixture_only'
+  }
+}
+
+type RingSimulatorEvent =
+  | RingMetricEvent
+  | RingStatusEvent
+  | RingHistoryEvent
+  | RingSimulatorInteractionEvent
 
 const DEFAULT_CAPABILITIES: DeviceCapabilityReport = {
-  interaction_events: {
-    status: 'requires_vendor_profile',
-    reason: 'The ring simulator emits configured metric scenarios only.',
-  },
+  // This capability applies only to the visibly simulated scenario. It does not
+  // claim a physical ring UUID, opcode, firmware, or vendor profile.
+  interaction_events: { status: 'implemented' },
   telemetry: { status: 'implemented' },
   haptic_feedback: {
     status: 'requires_vendor_profile',
@@ -41,7 +56,8 @@ const DEFAULT_CAPABILITIES: DeviceCapabilityReport = {
 
 const DEFAULT_EVENTS: readonly RingSimulatorEventInput[] = [
   { role: 'heart_rate', value: 72, unit: 'bpm' },
-  { role: 'heart_rate', value: 73, unit: 'bpm' },
+  { kind: 'interaction', interaction: 'mark_moment' },
+  { kind: 'interaction', interaction: 'touch' },
 ]
 
 export function createRingSimulator(
@@ -78,12 +94,25 @@ export function createRingSimulator(
     },
     now: () => clock.now(),
     createEvent(input, context, sequence, occurredAt) {
-      const kind = input.kind ?? 'metric'
       const provenance = {
-        profileId: 'simulator:ring:scenario:v1',
-        sourceReference: 'simulator:ring:scenario:v1',
+        profileId: 'simulator:ring:scenario:v1' as const,
+        sourceReference: 'simulator:ring:scenario:v1' as const,
         validation: 'fixture_only' as const,
       }
+      if (input.kind === 'interaction') {
+        return {
+          eventId: `${context.sessionId}-event-${sequence}`,
+          deviceId: context.deviceId,
+          sessionId: context.sessionId,
+          occurredAt,
+          source: 'simulated',
+          kind: 'interaction',
+          sessionSequence: sequence,
+          interaction: input.interaction,
+          provenance,
+        }
+      }
+      const kind = input.kind ?? 'metric'
       const contextMetadata = {
         contextStrength: 'weak' as const,
         interpretationPolicy: 'no_emotion_grief_or_health_inference' as const,

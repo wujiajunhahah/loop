@@ -7,6 +7,8 @@ import {
   type DeviceResult,
   type DeviceSession,
   type DeviceSessionState,
+  type DeviceSessionStateListener,
+  type DeviceStateSubscription,
   type DeviceSubscription,
   type DeviceTransportNotificationSubscription,
   type DeviceTransportSession,
@@ -185,14 +187,30 @@ export function createOmiAudioAdapter(
       let acceptingFrames = true
       let eventSequence = 0
       let listenerSequence = 0
+      let stateListenerSequence = 0
       const listeners = new Map<
         number,
         (event: OmiAdapterEvent) => void
       >()
+      const stateListeners = new Map<number, DeviceSessionStateListener>()
       let transportSubscription:
         | DeviceTransportNotificationSubscription
         | undefined
+      let transportStateSubscription: DeviceStateSubscription | undefined
       let closePromise: Promise<DeviceResult<void>> | undefined
+
+      const deliverState = (listener: DeviceSessionStateListener) => {
+        try {
+          listener(state)
+        } catch {
+          // Lifecycle observers cannot block adapter cleanup.
+        }
+      }
+      const transitionState = (next: DeviceSessionState) => {
+        if (state === next) return
+        state = next
+        for (const listener of [...stateListeners.values()]) deliverState(listener)
+      }
 
       const emit = (event: OmiAdapterEvent) => {
         for (const listener of [...listeners.values()]) {
@@ -256,13 +274,50 @@ export function createOmiAudioAdapter(
         return subscribed
       }
       transportSubscription = subscribed.value
-      state = 'open'
+      transportStateSubscription = transportSession.subscribeState?.((transportState) => {
+        if (state === 'closing' || state === 'closed') return
+        if (transportState === 'disconnected') {
+          acceptingFrames = false
+          transitionState('disconnected')
+        } else if (transportState === 'failed') {
+          acceptingFrames = false
+          transitionState('failed')
+        }
+      })
+      const transportStateAfterSubscription = transportSession.getState()
+      if (
+        transportStateAfterSubscription === 'disconnected' ||
+        transportStateAfterSubscription === 'failed'
+      ) {
+        await transportSubscription.unsubscribe()
+        transportStateSubscription?.unsubscribe()
+        activeTransportSessions.delete(transportSession)
+        return operationFailure(
+          'disconnected',
+          'The OMI transport disconnected while opening the adapter session.',
+          true,
+        )
+      }
+      transitionState('open')
 
       const session: DeviceSession<OmiAdapterEvent> = {
         sessionId: normalizedSessionId,
         device: normalizedDevice,
         capabilities,
         getState: () => state,
+        subscribeState(listener): DeviceStateSubscription {
+          const listenerId = ++stateListenerSequence
+          stateListeners.set(listenerId, listener)
+          deliverState(listener)
+          let unsubscribed = false
+          return {
+            unsubscribe() {
+              if (unsubscribed) return
+              unsubscribed = true
+              stateListeners.delete(listenerId)
+            },
+          }
+        },
         subscribe(listener): DeviceResult<DeviceSubscription> {
           if (state !== 'open') {
             return operationFailure(
@@ -293,8 +348,9 @@ export function createOmiAudioAdapter(
         },
         close() {
           if (closePromise !== undefined) return closePromise
-          state = 'closing'
+          transitionState('closing')
           acceptingFrames = false
+          transportStateSubscription?.unsubscribe()
           closePromise = (async () => {
             let firstFailure: DeviceResult<void> | undefined
             emitParserOutcomes(parser.finish())
@@ -306,7 +362,8 @@ export function createOmiAudioAdapter(
             if (!closed.ok && firstFailure === undefined) firstFailure = closed
             listeners.clear()
             activeTransportSessions.delete(transportSession)
-            state = firstFailure === undefined ? 'closed' : 'failed'
+            transitionState(firstFailure === undefined ? 'closed' : 'failed')
+            stateListeners.clear()
             return firstFailure ?? ok(undefined)
           })()
           return closePromise

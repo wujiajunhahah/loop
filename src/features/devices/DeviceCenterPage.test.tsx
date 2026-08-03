@@ -8,6 +8,7 @@ import type {
   RuntimeScanResult,
   RuntimeSnapshot,
 } from '../../devices/runtime'
+import { MockHardwareBridge } from '../../adapters/hardware'
 import { DeviceCenterPage } from './DeviceCenterPage'
 
 const capabilities: DeviceCapabilityReport = {
@@ -211,6 +212,58 @@ describe('DeviceCenterPage', () => {
     expect(screen.getByRole('heading', { name: '智能戒指' })).toBeInTheDocument()
   })
 
+  it('keeps a connected physical session visible until it is disconnected', async () => {
+    const physical = createRuntimeHarness(snapshot({
+      phase: 'connected',
+      devices: [device('ring', 'connected')],
+    }))
+    const simulated = createRuntimeHarness(snapshot({
+      devices: [device('ring', 'discovered', { simulated: true })],
+    }))
+
+    renderCenter({
+      runtime: physical.runtime,
+      environment: { physicalSupported: true, permission: 'granted' },
+      simulator: { runtime: simulated.runtime },
+    })
+
+    fireEvent.click(screen.getByRole('switch', { name: '使用演示数据' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('请先断开实体设备，再切换到演示数据。')
+    expect(screen.getByRole('switch', { name: '使用演示数据' })).not.toBeChecked()
+    expect(screen.getByRole('button', { name: '断开 Alloop Ring' })).toBeInTheDocument()
+    expect(simulated.scan).not.toHaveBeenCalled()
+  })
+
+  it('pauses foreground scanning while hidden and verifies state on resume', async () => {
+    const visibility = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible')
+    const harness = createRuntimeHarness(snapshot({ phase: 'scanning' }))
+    let finishResume: ((result: DeviceResult<void>) => void) | undefined
+    vi.mocked(harness.runtime.ready)
+      .mockResolvedValueOnce({ ok: true, value: undefined })
+      .mockImplementationOnce(() => new Promise((resolve) => {
+        finishResume = resolve
+      }))
+
+    renderCenter({
+      runtime: harness.runtime,
+      environment: { physicalSupported: true, permission: 'granted' },
+    })
+
+    visibility.mockReturnValue('hidden')
+    fireEvent(document, new Event('visibilitychange'))
+    expect(await screen.findByText('扫描已暂停')).toBeInTheDocument()
+    expect(harness.runtime.cancelScan).toHaveBeenCalledTimes(1)
+
+    visibility.mockReturnValue('visible')
+    fireEvent(document, new Event('visibilitychange'))
+    expect(await screen.findByText('正在恢复设备状态')).toBeInTheDocument()
+    await act(async () => {
+      finishResume?.({ ok: true, value: undefined })
+    })
+    expect(await screen.findByText('可以开始查找附近设备')).toBeInTheDocument()
+  })
+
   it('gates OMI connection on explicit audio consent', async () => {
     const omi = device('omi')
     const harness = createRuntimeHarness(snapshot({ devices: [omi], scanGeneration: 1 }))
@@ -257,7 +310,11 @@ describe('DeviceCenterPage', () => {
     fireEvent.click(within(ringSection).getByRole('button', { name: /断开 Alloop Ring/ }))
     await waitFor(() => expect(harness.disconnect).toHaveBeenCalled())
 
-    act(() => harness.publish(snapshot({ devices: [{ ...ring, phase: 'failed' }], phase: 'failed' })))
+    const failedWithLastValue = { ...device('ring', 'connected'), phase: 'failed' as const }
+    act(() => harness.publish(snapshot({ devices: [failedWithLastValue], phase: 'failed' })))
+    expect(within(ringSection).getByText('暂时无法恢复连接')).toBeInTheDocument()
+    expect(within(ringSection).getByText('72 bpm')).toBeInTheDocument()
+    expect(within(ringSection).getByText('数据已过期')).toBeInTheDocument()
     fireEvent.click(within(ringSection).getByRole('button', { name: /重新连接 Alloop Ring/ }))
     await waitFor(() => expect(harness.reconnect).toHaveBeenCalled())
     expect(within(ringSection).getByText('正在重新连接')).toBeInTheDocument()
@@ -328,8 +385,19 @@ describe('DeviceCenterPage', () => {
       consent: { audioCapture: false, sensitiveTelemetryExport: false, interactionEvents: true },
       devices: [device('ring', 'connected', { event: mark })],
     }))
+    const hardwareBridge = new MockHardwareBridge()
+    await hardwareBridge.bindDevice({
+      deviceId: mark.deviceId,
+      deviceType: 'ring',
+      ownerProof: {
+        identityId: 'person-mei',
+        method: 'mock_code',
+        value: 'LOOP-DEMO',
+      },
+    })
     renderCenter({
       runtime: harness.runtime,
+      hardwareBridge,
       environment: { physicalSupported: true, permission: 'granted' },
     })
 
@@ -339,6 +407,33 @@ describe('DeviceCenterPage', () => {
 
     fireEvent.click(screen.getByRole('button', { name: '进入记录引导' }))
     expect(window.location.hash).toBe('#/capture/new')
+  })
+
+  it('does not open a creator prompt for an unbound device event', async () => {
+    const mark = {
+      eventId: 'unbound-mark-event',
+      deviceId: 'unbound-ring-id',
+      sessionId: 'unbound-ring-session',
+      occurredAt: '2026-08-03T00:00:00.000Z',
+      source: 'physical' as const,
+      kind: 'interaction' as const,
+      interaction: 'mark_moment' as const,
+    }
+    const harness = createRuntimeHarness(snapshot({
+      phase: 'connected',
+      consent: { audioCapture: false, sensitiveTelemetryExport: false, interactionEvents: true },
+      devices: [device('ring', 'connected', { event: mark })],
+    }))
+
+    renderCenter({
+      runtime: harness.runtime,
+      hardwareBridge: new MockHardwareBridge(),
+      environment: { physicalSupported: true, permission: 'granted' },
+    })
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('设备尚未完成验证绑定')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(window.location.hash).toBe('#/devices')
   })
 
   it('keeps recipient companionship pending, sourced, and user controlled', async () => {
@@ -355,8 +450,32 @@ describe('DeviceCenterPage', () => {
       phase: 'connected',
       devices: [device('ring', 'connected')],
     }))
+    const hardwareBridge = new MockHardwareBridge()
+    await hardwareBridge.bindDevice({
+      deviceId: touch.deviceId,
+      deviceType: 'ring',
+      ownerProof: {
+        identityId: 'person-mei',
+        method: 'mock_code',
+        value: 'LOOP-DEMO',
+      },
+    })
+    await hardwareBridge.entrustDevice({
+      deviceId: touch.deviceId,
+      ownerProof: {
+        identityId: 'person-mei',
+        method: 'mock_code',
+        value: 'LOOP-DEMO',
+      },
+      recipientProof: {
+        identityId: 'person-lin',
+        method: 'mock_confirmation',
+        value: 'LOOP-DEMO',
+      },
+    })
     renderCenter({
       runtime: harness.runtime,
+      hardwareBridge,
       environment: { physicalSupported: true, permission: 'granted' },
     })
 
@@ -366,6 +485,7 @@ describe('DeviceCenterPage', () => {
 
     act(() => harness.publish(snapshot({
       phase: 'connected',
+      consent: { audioCapture: false, sensitiveTelemetryExport: false, interactionEvents: true },
       devices: [device('ring', 'connected', { event: touch })],
     })))
 
@@ -375,6 +495,50 @@ describe('DeviceCenterPage', () => {
     expect(window.location.hash).toBe('#/devices')
 
     fireEvent.click(screen.getByRole('button', { name: '确认这是给我的' }))
-    expect(window.location.hash).toBe('#/recipient')
+    expect(window.location.hash).toBe('#/recipient/verify')
+  })
+
+  it('does not open a recipient prompt when the entrusted identity is different', async () => {
+    const touch = {
+      eventId: 'wrong-recipient-touch-event',
+      deviceId: 'ring-normalized-private-id',
+      sessionId: 'ring-session-private-id',
+      occurredAt: '2026-08-03T00:00:00.000Z',
+      source: 'physical' as const,
+      kind: 'interaction' as const,
+      interaction: 'touch' as const,
+    }
+    const harness = createRuntimeHarness(snapshot({
+      phase: 'connected',
+      devices: [device('ring', 'connected')],
+    }))
+    const hardwareBridge = new MockHardwareBridge()
+    await hardwareBridge.bindDevice({
+      deviceId: touch.deviceId,
+      deviceType: 'ring',
+      ownerProof: { identityId: 'person-mei', method: 'mock_code', value: 'LOOP-DEMO' },
+    })
+    await hardwareBridge.entrustDevice({
+      deviceId: touch.deviceId,
+      ownerProof: { identityId: 'person-mei', method: 'mock_code', value: 'LOOP-DEMO' },
+      recipientProof: { identityId: 'person-other', method: 'mock_confirmation', value: 'LOOP-DEMO' },
+    })
+    renderCenter({
+      runtime: harness.runtime,
+      hardwareBridge,
+      recipientId: 'person-lin',
+      environment: { physicalSupported: true, permission: 'granted' },
+    })
+
+    fireEvent.click(screen.getByRole('radio', { name: '接收陪伴' }))
+    act(() => harness.publish(snapshot({
+      phase: 'connected',
+      consent: { audioCapture: false, sensitiveTelemetryExport: false, interactionEvents: true },
+      devices: [device('ring', 'connected', { event: touch })],
+    })))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('未通过设备托付与接收者身份验证')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(window.location.hash).toBe('#/devices')
   })
 })

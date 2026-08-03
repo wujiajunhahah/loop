@@ -35,6 +35,17 @@ export interface OrganizedContent {
   reviewedByOwner: boolean
 }
 
+export interface MemoryTriggerProvenance {
+  kind: 'device_interaction'
+  eventId: string
+  interaction: 'mark_moment' | 'touch'
+  deviceId: string
+  deviceName: string
+  source: 'physical' | 'simulated'
+  occurredAt: string
+  verification: 'binding_verified' | 'entrustment_verified'
+}
+
 export interface Memory {
   id: EntityId
   ownerId: EntityId
@@ -44,6 +55,7 @@ export interface Memory {
   meaning: string
   visibility: MemoryVisibility
   original: OriginalContent
+  trigger?: MemoryTriggerProvenance
   organized?: OrganizedContent
   createdAt: string
 }
@@ -92,6 +104,7 @@ export interface RecipientSession {
   initiatedByRecipient: boolean
   status: 'active' | 'postponed' | 'skipped' | 'closed'
   startedAt: string
+  trigger?: MemoryTriggerProvenance
   lastChoice?: RecipientChoice
 }
 

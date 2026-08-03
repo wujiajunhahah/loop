@@ -5,11 +5,13 @@ import type {
   DeviceOperationOptions,
   DeviceOperationErrorCode,
   DeviceResult,
+  DeviceStateSubscription,
   DeviceTransport,
   DeviceTransportFrame,
   DeviceTransportFrameListener,
   DeviceTransportNotificationSubscription,
   DeviceTransportSession,
+  DeviceTransportSessionStateListener,
   DeviceTransportSessionState,
   DeviceTransportState,
   DeviceWriteRequest,
@@ -115,6 +117,11 @@ interface NotificationStream {
 
 class CapacitorBleSession implements DeviceTransportSession {
   private state: DeviceTransportSessionState = 'connected'
+  private readonly stateListeners = new Map<
+    number,
+    DeviceTransportSessionStateListener
+  >()
+  private stateListenerSequence = 0
   private closePromise?: Promise<DeviceResult<void>>
   private readonly frameSequencer = createDeviceTransportFrameSequencer()
   private readonly notifications = new Map<string, NotificationStream>()
@@ -134,9 +141,25 @@ class CapacitorBleSession implements DeviceTransportSession {
     return this.state
   }
 
+  subscribeState(
+    listener: DeviceTransportSessionStateListener,
+  ): DeviceStateSubscription {
+    const listenerId = ++this.stateListenerSequence
+    this.stateListeners.set(listenerId, listener)
+    this.deliverState(listener)
+    let unsubscribed = false
+    return {
+      unsubscribe: () => {
+        if (unsubscribed) return
+        unsubscribed = true
+        this.stateListeners.delete(listenerId)
+      },
+    }
+  }
+
   handleDisconnected(): Promise<DeviceResult<void>> {
     if (this.disconnectCleanup !== undefined) return this.disconnectCleanup
-    this.state = 'disconnected'
+    this.transitionState('disconnected')
     const streams = [...this.notifications.values()]
     this.disconnectCleanup = (async () => {
       let cleanupFailure: DeviceResult<void> | undefined
@@ -337,7 +360,7 @@ class CapacitorBleSession implements DeviceTransportSession {
       return this.disconnectCleanup ?? Promise.resolve(ok(undefined))
     }
     if (this.closePromise !== undefined) return this.closePromise
-    this.state = 'disconnecting'
+    this.transitionState('disconnecting')
     this.closePromise = (async () => {
       let cleanupFailure: DeviceResult<void> | undefined
       for (const stream of [...this.notifications.values()]) {
@@ -355,11 +378,27 @@ class CapacitorBleSession implements DeviceTransportSession {
         if (normalized.code === 'disconnected') return ok(undefined)
         return { ok: false, error: normalized }
       } finally {
-        this.state = 'disconnected'
+        this.transitionState('disconnected')
         this.onClosed()
       }
     })()
     return this.closePromise
+  }
+
+  private transitionState(state: DeviceTransportSessionState) {
+    if (this.state === state) return
+    this.state = state
+    for (const listener of [...this.stateListeners.values()]) {
+      this.deliverState(listener)
+    }
+  }
+
+  private deliverState(listener: DeviceTransportSessionStateListener) {
+    try {
+      listener(this.state)
+    } catch {
+      // Lifecycle observers cannot block transport cleanup.
+    }
   }
 
   private findCharacteristic(characteristic: DeviceCharacteristicRef) {

@@ -26,7 +26,8 @@ describe('hardware simulator pages', () => {
 
     expect(screen.getByRole('button', { name: 'Verify and bind' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Verify and entrust' })).toBeInTheDocument()
-    expect(screen.getByLabelText('Device type')).toHaveValue('keepsake-token')
+    expect(screen.getByLabelText('Device ID')).toHaveValue('simulator-ring-normalized-device')
+    expect(screen.getByLabelText('Device type')).toHaveValue('ring')
   })
 
   it('offers every standard event type in the trigger lab', () => {

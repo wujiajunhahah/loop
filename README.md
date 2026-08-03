@@ -89,7 +89,7 @@ Relationship Agent 加载授权 Context
 
 ### 环境要求
 
-- Node.js 20 或更高版本
+- Node.js 22 或更高版本（Capacitor CLI 8.5 要求）
 - npm 10 或更高版本
 
 ### 安装和启动
@@ -106,6 +106,42 @@ http://localhost:5173
 ```
 
 项目使用 hash router，因此页面地址会显示为 `/#/capture`、`/#/recipient` 等形式。
+
+### 设备中心与演示数据
+
+打开 `/#/devices`。浏览器中实体蓝牙会明确显示为不支持；开启 **使用演示数据** 后可以扫描并分别连接 OMI 与戒指模拟器。戒指场景按顺序产生心率、`mark_moment` 和 `touch`。触碰事件默认关闭，只有显式开启同意、完成绑定/托付验证后才会进入待确认流程。
+
+设备事件只创建 pending handoff。它不会请求手机麦克风、开始录音、拍照、播放、分享或授予内容权限。Creator handoff 会在记录页保留设备、来源、时间和验证状态；recipient handoff 仍需身份确认。
+
+### iOS 工程
+
+```bash
+npm ci
+npm run build
+npx cap sync ios
+npx cap open ios
+```
+
+原生工程位于 `ios/App/App.xcodeproj`，使用 iOS 15、Capacitor 8.5、Swift Package Manager 和 Bluetooth LE 8.2。签名团队、证书、设备标识和 provisioning profile 只在本机 Xcode 配置，不提交仓库。Simulator 可验证编译和页面，不能验证 BLE 射频、OMI 固件、戒指协议或物理麦克风。
+
+### 实体设备配置
+
+OMI 内置官方 service/characteristic 与 codec 边界，但分帧长度依赖固件和协商后的 MTU。只有拿到审查后的值才配置：
+
+```dotenv
+VITE_OMI_FRAGMENT_LAYOUT={"0":160,"1":80}
+VITE_OMI_FIRMWARE_MODEL=Omi
+VITE_OMI_FIRMWARE_VERSION=1.0.3
+```
+
+缺少任一项时，App 只识别 OMI 并报告待配置，不会猜测 frame size。戒指 discovery hints 也必须显式提供：
+
+```dotenv
+VITE_RING_DISCOVERY_NAMES=Reviewed Ring Name
+VITE_RING_DISCOVERY_SERVICE_IDS=reviewed-service-uuid
+```
+
+这些 hints 只用于发现与连接边界，不会启用字节解析。真实 telemetry、touch、命令和反馈仍需要在源码中加入带来源的 vendor profile/parser。不要把 UUID、opcode 或 MTU 猜测写入生产配置。
 
 ## 完整 Demo 操作
 
@@ -176,6 +212,7 @@ Recipient identity: person-lin
 | `#/hardware-simulator` | 模拟器总览 |
 | `#/hardware-simulator/bind` | 设备绑定和托付 |
 | `#/hardware-simulator/trigger` | 事件触发和生命周期检查 |
+| `#/devices` | OMI/戒指扫描、连接、同意、能力、诊断与演示场景 |
 | `#/recipient` | 接收者入口 |
 | `#/recipient/verify` | 接收者身份确认 |
 | `#/recipient/memory/:id` | 回忆与 provenance 展示 |
@@ -207,6 +244,8 @@ src/domain          │ 领域实体、不变量和权限规则
 - Vite 8
 - Vitest 4
 - Testing Library
+- Capacitor 8.5 / iOS 15 / Swift Package Manager
+- Capacitor Community Bluetooth LE 8.2
 - 原生 hash router
 - 原生 CSS，无 UI 框架依赖
 
@@ -220,6 +259,29 @@ src/domain          │ 领域实体、不变量和权限规则
 6. `MockHardwareBridge` 验证绑定、托付、事件身份和重复事件。
 7. `HardwareFlowController` 只把 verified 事件交给 recipient flow。
 8. `RecipientExperience` 保留最终选择权，并通过 capture service 保存回应。
+9. `DeviceTransport` 将 Capacitor BLE 或确定性模拟器交给 OMI/ring adapter；`DeviceRuntime` 统一处理同意、诊断、断线和重连。
+10. normalized interaction 必须再次通过 `HardwareBridge` 的绑定、托付、身份与去重验证，之后才写入 session handoff。
+
+## 支持状态
+
+完整矩阵见 `docs/hardware/support-matrix.md`。关键结论：
+
+| 能力 | 当前证据 |
+| --- | --- |
+| contracts、protocol、runtime、OMI/ring adapter | 自动化测试通过 |
+| OMI metadata、戒指心率、mark/touch、可信 handoff | 确定性 simulator 验证 |
+| Capacitor sync、SPM 解析、iOS unsigned simulator build | 本机 Xcode 验证 |
+| 实体 iPhone BLE、OMI 固件音频、Alloop byte protocol | 未验证 / 需要硬件或 vendor profile |
+| 背景 BLE、HealthKit、手机麦克风录制 | 未实现，不作支持承诺 |
+
+## 设备故障排查
+
+- 浏览器或 iOS Simulator 显示“不支持”是预期结果；用演示数据检查 UI，用实体 iPhone 检查 BLE。
+- iPhone 首次扫描时拒绝蓝牙后，需要前往系统 App 设置重新开启；App 不会循环弹权限。
+- 能发现 OMI 但没有 audio metadata：核对固件版本、codec、MTU 与 `VITE_OMI_FRAGMENT_LAYOUT`，不要用猜测值。
+- 能发现戒指但能力显示“等待设备协议”：discovery hints 不等于 vendor profile，需要经审查的 GATT、parser 和 firmware 约束。
+- 意外断线会变成失败/重连状态，最后观察值保留并标记 freshness；主动断开不会自动重连。
+- 诊断只显示固定错误码，不包含原始 BLE payload、音频、生理值或完整设备标识。
 
 ## 项目文件说明
 
@@ -376,8 +438,9 @@ npm run build
 当前集成基线：
 
 - TypeScript 类型检查通过
-- 11 个测试文件、45 个测试通过
+- 25 个测试文件、166 个测试通过
 - Vite 生产构建通过
+- Capacitor iOS sync、SPM dependency resolution 与 unsigned iOS Simulator build 通过
 - 不需要 API key、网络、后端或真实硬件
 
 ## 当前限制

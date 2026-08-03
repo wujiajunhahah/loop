@@ -9,6 +9,8 @@ import type {
   DeviceOperationErrorCode,
   DeviceResult,
   DeviceSession,
+  DeviceSessionState,
+  DeviceStateSubscription,
   DeviceSubscription,
   DeviceTransport,
   DeviceTransportSession,
@@ -315,6 +317,22 @@ function normalizedEvent(event: NormalizedDeviceEventBase): NormalizedDeviceEven
   return normalized as unknown as NormalizedDeviceEventBase
 }
 
+function eventKind(event: NormalizedDeviceEventBase): unknown {
+  return (event as unknown as { kind?: unknown }).kind
+}
+
+function isInteractionEvent(event: NormalizedDeviceEventBase): boolean {
+  return eventKind(event) === 'interaction'
+}
+
+function parseFailureCode(
+  event: NormalizedDeviceEventBase,
+): Extract<DeviceOperationErrorCode, 'invalid_data' | 'protocol_error'> | undefined {
+  if (eventKind(event) !== 'parse_failure') return undefined
+  const code = (event as unknown as { errorCode?: unknown }).errorCode
+  return code === 'protocol_error' ? 'protocol_error' : 'invalid_data'
+}
+
 function eventValue(event: NormalizedDeviceEventBase): RuntimeLatestValue | undefined {
   const metricEvent = event as unknown as {
     kind?: unknown
@@ -374,6 +392,7 @@ interface InternalSession {
   adapterId: string
   session: DeviceSession
   subscription: DeviceSubscription
+  stateSubscription?: DeviceStateSubscription
   phase: RuntimeSessionSnapshot['phase']
   latestEvent?: NormalizedDeviceEventBase
   latestValues: Map<string, RuntimeLatestValue>
@@ -790,6 +809,7 @@ export function createDeviceRuntime(options: DeviceRuntimeOptions): DeviceRuntim
 
   const clearSession = (key: string, session: InternalSession) => {
     if (sessions.get(key) !== session) return
+    session.stateSubscription?.unsubscribe()
     unsubscribeSafely(session.subscription)
     sessions.delete(key)
     const device = devices.get(key)
@@ -797,6 +817,39 @@ export function createDeviceRuntime(options: DeviceRuntimeOptions): DeviceRuntim
       device.sessionId = undefined
       device.phase = 'disconnected'
     }
+  }
+
+  const acceptsEvent = (event: NormalizedDeviceEventBase) =>
+    !isInteractionEvent(event) || consent.interactionEvents
+
+  const handleUnexpectedSessionEnd = (
+    key: string,
+    session: InternalSession,
+    state: DeviceSessionState,
+  ) => {
+    if (
+      (state !== 'disconnected' && state !== 'failed') ||
+      sessions.get(key) !== session ||
+      closed
+    ) return
+    session.stateSubscription?.unsubscribe()
+    unsubscribeSafely(session.subscription)
+    sessions.delete(key)
+    session.phase = 'failed'
+    const device = devices.get(key)
+    if (device?.sessionId === session.session.sessionId) {
+      device.sessionId = undefined
+      device.phase = 'failed'
+    }
+    phase = steadyPhase('failed')
+    addDiagnostic(
+      'disconnect',
+      'failed',
+      'The device session ended unexpectedly.',
+      { code: 'disconnected' },
+    )
+    publish()
+    void closeDeviceSession(session.session)
   }
 
   const handleEvent = (
@@ -813,6 +866,7 @@ export function createDeviceRuntime(options: DeviceRuntimeOptions): DeviceRuntim
       closed
     ) return
     const safeEvent = normalizedEvent(event)
+    if (!acceptsEvent(safeEvent)) return
     entry.latestEvent = safeEvent
     entry.history.push(safeEvent)
     while (entry.history.length > historyLimit) entry.history.shift()
@@ -823,10 +877,17 @@ export function createDeviceRuntime(options: DeviceRuntimeOptions): DeviceRuntim
       device.latestEvent = safeEvent
       if (value !== undefined) device.latestValues.set(value.name, value)
     }
-    addDiagnostic('event', 'connected', 'Normalized device event received.', {
-      deviceKey: key,
-      adapterId: entry.adapterId,
-    })
+    const safeParseCode = parseFailureCode(safeEvent)
+    if (safeParseCode === undefined) {
+      addDiagnostic('event', 'connected', 'Normalized device event received.', {
+        deviceKey: key,
+        adapterId: entry.adapterId,
+      })
+    } else {
+      addDiagnostic('event', 'connected', 'Device data could not be parsed.', {
+        code: safeParseCode,
+      })
+    }
     publish()
   }
 
@@ -838,7 +899,10 @@ export function createDeviceRuntime(options: DeviceRuntimeOptions): DeviceRuntim
     capabilities: copyCapabilities(entry.session.capabilities),
     execute: (command: DeviceCommand): Promise<DeviceResult<CommandAcknowledgement>> =>
       entry.session.execute(command),
-    subscribe: (listener) => entry.session.subscribe(listener),
+    subscribe: (listener) => entry.session.subscribe((event) => {
+      const safeEvent = normalizedEvent(event)
+      if (acceptsEvent(safeEvent)) listener(safeEvent)
+    }),
     close: () =>
       sessions.get(key) === entry ? disconnect(key) : Promise.resolve(ok(undefined)),
   })
@@ -901,6 +965,7 @@ export function createDeviceRuntime(options: DeviceRuntimeOptions): DeviceRuntim
     let subscribed: DeviceResult<DeviceSubscription>
     try {
       subscribed = deviceSession.subscribe((event) => {
+        if (!acceptsEvent(event)) return
         if (sessionRegistered) {
           handleEvent(entry.deviceKey, operation, deviceSession.sessionId, event)
           return
@@ -923,6 +988,7 @@ export function createDeviceRuntime(options: DeviceRuntimeOptions): DeviceRuntim
     }
     const existing = sessions.get(entry.deviceKey)
     if (existing !== undefined) {
+      existing.stateSubscription?.unsubscribe()
       const unsubscribed = unsubscribeSafely(existing.subscription)
       const closedExisting = await closeDeviceSession(existing.session)
       clearSession(entry.deviceKey, existing)
@@ -950,6 +1016,14 @@ export function createDeviceRuntime(options: DeviceRuntimeOptions): DeviceRuntim
     entry.capabilities = copyCapabilities(deviceSession.capabilities)
     entry.sessionId = deviceSession.sessionId
     phase = 'connected'
+    internal.stateSubscription = deviceSession.subscribeState?.((state) => {
+      handleUnexpectedSessionEnd(entry.deviceKey, internal, state)
+    })
+    if (sessions.get(entry.deviceKey) !== internal) {
+      internal.stateSubscription?.unsubscribe()
+      operation.removeAbort()
+      return failure('disconnected', 'The device session ended while connecting.', true)
+    }
     addDiagnostic('connect', phase, 'Device session connected.', {
       deviceKey: entry.deviceKey,
       adapterId: adapter.adapterId,
@@ -1030,6 +1104,7 @@ export function createDeviceRuntime(options: DeviceRuntimeOptions): DeviceRuntim
       return ok(undefined)
     }
     current.phase = 'disconnecting'
+    current.stateSubscription?.unsubscribe()
     publish()
     const unsubscribed = unsubscribeSafely(current.subscription)
     const closedSession = await closeDeviceSession(current.session)
@@ -1074,6 +1149,7 @@ export function createDeviceRuntime(options: DeviceRuntimeOptions): DeviceRuntim
     }
     const existing = sessions.get(entry.deviceKey)
     if (existing !== undefined) {
+      existing.stateSubscription?.unsubscribe()
       const unsubscribed = unsubscribeSafely(existing.subscription)
       const closedExisting = await closeDeviceSession(existing.session)
       clearSession(entry.deviceKey, existing)
@@ -1152,6 +1228,7 @@ export function createDeviceRuntime(options: DeviceRuntimeOptions): DeviceRuntim
     const mutable = await readyForMutation()
     if (!mutable.ok) return mutable
     const revokeAudio = next.audioCapture === false
+    const revokeInteractions = next.interactionEvents === false
     applySafeConsent(consent, next)
     let firstFailure: DeviceError | undefined
     if (revokeAudio) {
@@ -1161,6 +1238,16 @@ export function createDeviceRuntime(options: DeviceRuntimeOptions): DeviceRuntim
       for (const key of audioSessions) {
         const result = await disconnect(key)
         if (!result.ok && firstFailure === undefined) firstFailure = result.error
+      }
+    }
+    if (revokeInteractions) {
+      for (const [key, session] of sessions) {
+        session.history = session.history.filter((event) => !isInteractionEvent(event))
+        session.latestEvent = session.history.at(-1)
+        const device = devices.get(key)
+        if (device?.sessionId === session.session.sessionId) {
+          device.latestEvent = session.latestEvent
+        }
       }
     }
     await persist()
@@ -1220,6 +1307,7 @@ export function createDeviceRuntime(options: DeviceRuntimeOptions): DeviceRuntim
       }
       const failures: DeviceError[] = []
       for (const [key, session] of sessions) {
+        session.stateSubscription?.unsubscribe()
         const unsubscribed = unsubscribeSafely(session.subscription)
         if (!unsubscribed.ok) failures.push(unsubscribed.error)
         const result = await closeDeviceSession(session.session)

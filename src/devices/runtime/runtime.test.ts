@@ -728,6 +728,69 @@ describe('device runtime', () => {
     })
   })
 
+  it('maps parse failures to typed diagnostics without retaining sensitive details', async () => {
+    const clock = createClock()
+    const device: DiscoveredDevice = {
+      discoveryId: 'private-ring-discovery-id',
+      transportId: 'fixture-transport',
+      transportKind: 'bluetooth_low_energy',
+      displayName: 'ring',
+      connectable: true,
+      discoveredAt: clock.now(),
+    }
+    const parseFailure = {
+      eventId: 'private-parse-event-id',
+      deviceId: 'private-normalized-device-id',
+      sessionId: 'private-session-id',
+      occurredAt: clock.now(),
+      source: 'physical',
+      kind: 'parse_failure',
+      errorCode: 'invalid_data',
+      failure: {
+        code: 'value_out_of_bounds',
+        message: 'private-ring-discovery-id returned physiological value 187',
+        payload: 'deadbeef',
+        rawSample: 187,
+      },
+    } as const
+    const runtime = createDeviceRuntime({
+      transports: [
+        createTransport(
+          [device],
+          [ok(createTransportSession(device, 'private-transport-session'))],
+        ),
+      ],
+      adapters: [
+        createAdapter(
+          'ring',
+          undefined,
+          new Map([[device.discoveryId, [parseFailure]]]),
+        ),
+      ],
+      clock,
+    })
+    await runtime.ready()
+    await runtime.scan()
+    await runtime.connect(device.discoveryId)
+
+    const diagnostic = runtime.getSnapshot().diagnostics.find(
+      (entry) => entry.message === 'Device data could not be parsed.',
+    )
+    expect(diagnostic).toEqual({
+      diagnosticId: expect.stringMatching(/^runtime-diagnostic-/),
+      occurredAt: clock.now(),
+      operation: 'event',
+      phase: 'connected',
+      code: 'invalid_data',
+      message: 'Device data could not be parsed.',
+    })
+    const serialized = JSON.stringify(diagnostic)
+    expect(serialized).not.toContain('private-ring-discovery-id')
+    expect(serialized).not.toContain('private-normalized-device-id')
+    expect(serialized).not.toContain('deadbeef')
+    expect(serialized).not.toContain('187')
+  })
+
   it('publishes frozen snapshots detached from producer event objects', async () => {
     const device: DiscoveredDevice = {
       discoveryId: 'ring-discovery',

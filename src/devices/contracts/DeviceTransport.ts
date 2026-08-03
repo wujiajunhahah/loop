@@ -64,6 +64,15 @@ export type DeviceTransportSessionState =
   | 'disconnected'
   | 'failed'
 
+export type DeviceTransportSessionStateListener = (
+  state: DeviceTransportSessionState,
+) => void
+
+export interface DeviceStateSubscription {
+  /** Stops lifecycle delivery; safe to repeat. */
+  unsubscribe(): void
+}
+
 /** Raw service and characteristic identifiers stay below DeviceAdapter. */
 export interface DeviceCharacteristicRef {
   serviceId: string
@@ -134,6 +143,13 @@ export interface DeviceTransportSession {
   sessionId: string
   device: DiscoveredDevice
   getState(): DeviceTransportSessionState
+  /**
+   * Reports lifecycle changes without exposing native identifiers or errors.
+   * Implementations call the listener once with the current state on subscribe.
+   */
+  subscribeState?(
+    listener: DeviceTransportSessionStateListener,
+  ): DeviceStateSubscription
   read(
     characteristic: DeviceCharacteristicRef,
     options?: DeviceOperationOptions,

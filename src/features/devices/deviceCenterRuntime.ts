@@ -1,9 +1,18 @@
 import { createDeviceRuntime, type DeviceRuntime } from '../../devices/runtime'
 import { createOmiSimulator, createRingSimulator } from '../../devices/simulators'
+import { createCapacitorBleTransport } from '../../devices/transports'
 import type { SimulatorRuntime } from '../../devices/simulators/types'
 import type { NormalizedDeviceEventBase } from '../../devices/contracts'
+import {
+  createConfiguredPhysicalAdapters,
+  readDeviceNativeConfiguration,
+  type DeviceNativeConfiguration,
+  type DeviceNativeEnvironment,
+} from './deviceNativeConfiguration'
+import { Capacitor } from '@capacitor/core'
 
 let fallbackRuntime: DeviceRuntime | undefined
+let physicalRuntime: DeviceRuntime | undefined
 let simulatorRuntime: DeviceRuntime | undefined
 let simulatorSources:
   | Readonly<{
@@ -15,6 +24,43 @@ let simulatorSources:
 export function getFallbackDeviceRuntime() {
   fallbackRuntime ??= createDeviceRuntime({ transports: [], adapters: [] })
   return fallbackRuntime
+}
+
+export function createPhysicalDeviceRuntime(
+  configuration: DeviceNativeConfiguration,
+) {
+  return createDeviceRuntime({
+    transports: [createCapacitorBleTransport()],
+    adapters: createConfiguredPhysicalAdapters(configuration),
+  })
+}
+
+export function getPhysicalDeviceRuntime(
+  environment: DeviceNativeEnvironment = import.meta.env,
+) {
+  if (!Capacitor.isNativePlatform()) return getFallbackDeviceRuntime()
+  physicalRuntime ??= createPhysicalDeviceRuntime(
+    readDeviceNativeConfiguration(environment),
+  )
+  return physicalRuntime
+}
+
+export function getDefaultDeviceCenterEnvironment() {
+  if (!Capacitor.isNativePlatform()) {
+    return { physicalSupported: false, permission: 'unsupported' as const }
+  }
+  return {
+    physicalSupported: true,
+    permission: 'prompt' as const,
+    appState: typeof document !== 'undefined' && document.visibilityState === 'hidden'
+      ? 'background' as const
+      : 'foreground' as const,
+    openSettings: () => {
+      void import('@capacitor-community/bluetooth-le').then(({ BleClient }) =>
+        BleClient.openAppSettings(),
+      )
+    },
+  }
 }
 
 export function getDeterministicSimulatorRuntime() {

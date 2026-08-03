@@ -1,11 +1,13 @@
 import {
   useEffect,
+  useId,
   useRef,
   useState,
   useSyncExternalStore,
   type KeyboardEvent,
 } from 'react'
 import type { DeviceCapabilityReport } from '../../devices/contracts'
+import type { HardwareBridge } from '../../adapters/hardware'
 import type {
   DeviceRuntime,
   RuntimeDeviceSnapshot,
@@ -28,9 +30,12 @@ import {
 } from './deviceCenterSelectors'
 import {
   advanceDeterministicSimulator,
+  getDefaultDeviceCenterEnvironment,
   getDeterministicSimulatorRuntime,
-  getFallbackDeviceRuntime,
+  getPhysicalDeviceRuntime,
 } from './deviceCenterRuntime'
+import { simulatorBridge } from '../hardware/simulatorStore'
+import { writeDeviceInteractionHandoff } from './deviceInteractionHandoff'
 import './deviceCenter.css'
 
 type PermissionState =
@@ -52,15 +57,20 @@ export interface DeviceCenterEnvironment {
 export interface DeviceCenterPageProps {
   runtime?: DeviceRuntime
   environment?: DeviceCenterEnvironment
-  simulator?: { runtime: DeviceRuntime }
+  simulator?: {
+    runtime: DeviceRuntime
+    advance?(kind: 'omi' | 'ring'): void
+  }
+  hardwareBridge?: HardwareBridge
+  recipientId?: string
   now?: () => number
 }
 
 type RoleMode = 'creator' | 'recipient'
+type DeviceCenterAppState = NonNullable<DeviceCenterEnvironment['appState']>
 
-const defaultEnvironment: DeviceCenterEnvironment = {
-  physicalSupported: false,
-  permission: 'unsupported',
+function documentIsHidden() {
+  return document.visibilityState === 'hidden'
 }
 
 const metricLabels: Readonly<Record<string, string>> = {
@@ -370,6 +380,7 @@ interface DeviceCardProps {
   now: number
   onError(message?: string): void
   onConnected?(): void
+  onAdvance?(): void
 }
 
 function DeviceCard({
@@ -380,7 +391,9 @@ function DeviceCard({
   now,
   onError,
   onConnected,
+  onAdvance,
 }: DeviceCardProps) {
+  const headingId = useId()
   const name = device.discovered.displayName ?? (kind === 'omi' ? '未命名 OMI' : '未命名戒指')
   const simulated = device.discovered.transportKind === 'simulated'
   const connect = async () => {
@@ -470,21 +483,21 @@ function DeviceCard({
         {action}
       </div>
 
-      {device.phase === 'connected' && device.capabilities !== undefined && (
+      {device.capabilities !== undefined && (
         <div className="device-card__detail">
-          <section aria-labelledby={`${kind}-capabilities-heading`}>
+          <section aria-labelledby={`${headingId}-capabilities`}>
             <p className="device-kicker">设备能力</p>
-            <h4 id={`${kind}-capabilities-heading`}>已观察到的支持范围</h4>
+            <h4 id={`${headingId}-capabilities`}>已观察到的支持范围</h4>
             <CapabilityList capabilities={device.capabilities} />
           </section>
-          <section aria-labelledby={`${kind}-live-heading`}>
+          <section aria-labelledby={`${headingId}-live`}>
             <p className="device-kicker">实时数据</p>
-            <h4 id={`${kind}-live-heading`}>{kind === 'omi' ? '音频状态' : '最近观察值'}</h4>
+            <h4 id={`${headingId}-live`}>{kind === 'omi' ? '音频状态' : '最近观察值'}</h4>
             <LiveData device={device} kind={kind} now={now} />
           </section>
-          <section aria-labelledby={`${kind}-status-heading`}>
+          <section aria-labelledby={`${headingId}-status`}>
             <p className="device-kicker">连接信息</p>
-            <h4 id={`${kind}-status-heading`}>设备状态</h4>
+            <h4 id={`${headingId}-status`}>设备状态</h4>
             <dl className="device-status-list">
               <div>
                 <dt>来源</dt>
@@ -506,6 +519,15 @@ function DeviceCard({
           </section>
         </div>
       )}
+      {simulated && device.phase === 'connected' && onAdvance !== undefined && (
+        <button
+          className="text-button device-card__demo-action"
+          onClick={onAdvance}
+          type="button"
+        >
+          发送下一个演示事件
+        </button>
+      )}
     </article>
   )
 }
@@ -517,9 +539,10 @@ interface DeviceSlotProps {
   now: number
   onError(message?: string): void
   onConnected?(): void
+  onAdvance?(): void
 }
 
-function DeviceSlot({ kind, snapshot, runtime, now, onError, onConnected }: DeviceSlotProps) {
+function DeviceSlot({ kind, snapshot, runtime, now, onError, onConnected, onAdvance }: DeviceSlotProps) {
   const heading = kind === 'omi' ? 'OMI' : '智能戒指'
   const devices = devicesByKind(snapshot, kind)
   return (
@@ -545,6 +568,7 @@ function DeviceSlot({ kind, snapshot, runtime, now, onError, onConnected }: Devi
           now={now}
           onError={onError}
           onConnected={onConnected}
+          onAdvance={onAdvance}
           runtime={runtime}
         />
       ))}
@@ -554,19 +578,26 @@ function DeviceSlot({ kind, snapshot, runtime, now, onError, onConnected }: Devi
 
 function ConsentSummary({
   audioConsent,
+  interactionConsent,
   mode,
   runtime,
   onError,
 }: {
   audioConsent: boolean
+  interactionConsent: boolean
   mode: RoleMode
   runtime: DeviceRuntime
   onError(message?: string): void
 }) {
-  const changeConsent = async (checked: boolean) => {
+  const changeAudioConsent = async (checked: boolean) => {
     onError(undefined)
     const result = await runtime.setConsent({ audioCapture: checked })
     if (!result.ok) onError('音频连接同意状态未能保存，请重试。')
+  }
+  const changeInteractionConsent = async (checked: boolean) => {
+    onError(undefined)
+    const result = await runtime.setConsent({ interactionEvents: checked })
+    if (!result.ok) onError('触碰事件同意状态未能保存，请重试。')
   }
   return (
     <section className="consent-summary" aria-labelledby="consent-heading">
@@ -579,12 +610,24 @@ function ConsentSummary({
         <input
           aria-label="允许 OMI 音频连接"
           checked={audioConsent}
-          onChange={(event) => void changeConsent(event.currentTarget.checked)}
+          onChange={(event) => void changeAudioConsent(event.currentTarget.checked)}
           type="checkbox"
         />
         <span>
           <strong>允许 OMI 音频连接</strong>
           <small>这只允许建立音频能力连接，不会开始录音或保存内容。</small>
+        </span>
+      </label>
+      <label className="consent-check">
+        <input
+          aria-label="允许设备触碰事件"
+          checked={interactionConsent}
+          onChange={(event) => void changeInteractionConsent(event.currentTarget.checked)}
+          type="checkbox"
+        />
+        <span>
+          <strong>允许设备触碰事件</strong>
+          <small>事件只能创建待确认入口，不能授予录音、播放、拍摄或内容访问权限。</small>
         </span>
       </label>
       <dl className="consent-policies">
@@ -637,10 +680,12 @@ function PendingHardwarePrompt({
   pending,
   mode,
   onClose,
+  onEnter,
 }: {
   pending: PendingDeviceEvent
   mode: RoleMode
   onClose(): void
+  onEnter(): void
 }) {
   const dialogRef = useRef<HTMLDivElement>(null)
   const closeRef = useRef<HTMLButtonElement>(null)
@@ -680,10 +725,6 @@ function PendingHardwarePrompt({
     }
   }
 
-  const enter = () => {
-    window.location.hash = creator ? '#/capture/new' : '#/recipient'
-  }
-
   return (
     <div className="pending-prompt" role="presentation">
       <div
@@ -713,7 +754,7 @@ function PendingHardwarePrompt({
         </p>
         <p className="pending-prompt__safety">没有录音、拍摄、播放或分享会自动开始。</p>
         <div className="pending-prompt__actions">
-          <button className="button button--primary" onClick={enter} type="button">
+          <button className="button button--primary" onClick={onEnter} type="button">
             {creator ? '进入记录引导' : '确认这是给我的'}
           </button>
           <button className="button button--secondary" onClick={onClose} type="button">稍后</button>
@@ -726,22 +767,35 @@ function PendingHardwarePrompt({
 
 export function DeviceCenterPage({
   runtime: injectedRuntime,
-  environment = defaultEnvironment,
+  environment = getDefaultDeviceCenterEnvironment(),
   simulator,
+  hardwareBridge = simulatorBridge,
+  recipientId = 'person-lin',
   now = Date.now,
 }: DeviceCenterPageProps = {}) {
-  const physicalRuntime = injectedRuntime ?? getFallbackDeviceRuntime()
+  const physicalRuntime = injectedRuntime ?? getPhysicalDeviceRuntime()
   const demoRuntime = simulator?.runtime ?? getDeterministicSimulatorRuntime()
+  const advanceSimulator = simulator?.advance ?? advanceDeterministicSimulator
   const [simulationEnabled, setSimulationEnabled] = useState(false)
   const [permission, setPermission] = useState<PermissionState>(environment.permission)
   const [mode, setMode] = useState<RoleMode>('creator')
   const [handledEventId, setHandledEventId] = useState<string>()
+  const [verifiedPending, setVerifiedPending] = useState<{
+    pending: PendingDeviceEvent
+    verification: 'binding_verified' | 'entrustment_verified'
+  }>()
   const [actionError, setActionError] = useState<string>()
+  const [currentTime, setCurrentTime] = useState(() => now())
+  const [appState, setAppState] = useState<DeviceCenterAppState>(() =>
+    environment.appState ?? (documentIsHidden() ? 'background' : 'foreground'),
+  )
   const headingRef = useRef<HTMLHeadingElement>(null)
   const runtime = simulationEnabled ? demoRuntime : physicalRuntime
   const snapshot = useRuntimeSnapshot(runtime)
   const pending = findPendingDeviceEvent(snapshot)
-  const visiblePending = pending?.event.eventId === handledEventId ? undefined : pending
+  const visiblePending = verifiedPending?.pending.event.eventId === handledEventId
+    ? undefined
+    : verifiedPending
   const connectedCount = snapshot.devices.filter((device) => device.phase === 'connected').length
 
   useEffect(() => {
@@ -749,16 +803,116 @@ export function DeviceCenterPage({
   }, [environment.permission])
 
   useEffect(() => {
+    setAppState(
+      environment.appState ?? (documentIsHidden() ? 'background' : 'foreground'),
+    )
+  }, [environment.appState])
+
+  useEffect(() => {
+    let active = true
+    const syncVisibility = async () => {
+      if (documentIsHidden()) {
+        setAppState('background')
+        if (runtime.getSnapshot().phase === 'scanning') await runtime.cancelScan()
+        return
+      }
+
+      setAppState('resuming')
+      await runtime.ready()
+      if (active && !documentIsHidden()) setAppState('foreground')
+    }
+    const handleVisibilityChange = () => {
+      void syncVisibility()
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    if (documentIsHidden()) void syncVisibility()
+    return () => {
+      active = false
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [runtime])
+
+  useEffect(() => {
     document.title = '设备 | Loop'
     headingRef.current?.focus()
   }, [])
 
+  useEffect(() => {
+    setCurrentTime(now())
+    const timer = window.setInterval(() => setCurrentTime(now()), 5_000)
+    return () => window.clearInterval(timer)
+  }, [now])
+
+  useEffect(() => {
+    if (
+      pending === undefined ||
+      pending.event.eventId === handledEventId ||
+      !snapshot.consent.interactionEvents
+    ) {
+      setVerifiedPending(undefined)
+      return
+    }
+
+    let active = true
+    const verify = async () => {
+      const binding = hardwareBridge.getBindings().find(
+        (candidate) => candidate.deviceId === pending.event.deviceId,
+      )
+      if (mode === 'creator') {
+        if (binding === undefined) {
+          if (active) {
+            setVerifiedPending(undefined)
+            setActionError('触碰事件已收到，但设备尚未完成验证绑定。')
+          }
+          return
+        }
+        if (active) {
+          setActionError(undefined)
+          setVerifiedPending({ pending, verification: 'binding_verified' })
+        }
+        return
+      }
+
+      const result = await hardwareBridge.trigger({
+        eventId: pending.event.eventId,
+        deviceId: pending.event.deviceId,
+        eventType: 'touch',
+        recipientId,
+        occurredAt: pending.event.occurredAt,
+        allowFallback: pending.event.source === 'simulated',
+        payload: { interaction: pending.event.interaction },
+      })
+      if (!active) return
+      if (result.outcome !== 'accepted' || result.event.verificationStatus !== 'verified') {
+        setVerifiedPending(undefined)
+        setHandledEventId(pending.event.eventId)
+        setActionError('触碰事件未通过设备托付与接收者身份验证。')
+        return
+      }
+      setActionError(undefined)
+      setVerifiedPending({ pending, verification: 'entrustment_verified' })
+    }
+    void verify()
+    return () => {
+      active = false
+    }
+  }, [
+    hardwareBridge,
+    handledEventId,
+    mode,
+    pending?.event.eventId,
+    recipientId,
+    snapshot.consent.interactionEvents,
+  ])
+
   const toggleSimulation = async (enabled: boolean) => {
     if (
       enabled &&
-      physicalRuntime.getSnapshot().devices.some((device) => device.phase === 'connected') &&
-      !window.confirm('实体设备仍保持连接。切换后只会隐藏其界面，不会把演示数据当作实体数据。继续吗？')
-    ) return
+      physicalRuntime.getSnapshot().devices.some((device) => device.phase === 'connected')
+    ) {
+      setActionError('请先断开实体设备，再切换到演示数据。')
+      return
+    }
 
     setActionError(undefined)
     setHandledEventId(undefined)
@@ -770,7 +924,34 @@ export function DeviceCenterPage({
   }
 
   const dismissPending = () => {
-    if (visiblePending !== undefined) setHandledEventId(visiblePending.event.eventId)
+    if (visiblePending !== undefined) {
+      if (visiblePending.verification === 'entrustment_verified') {
+        void hardwareBridge.consume(visiblePending.pending.event.eventId)
+      }
+      setHandledEventId(visiblePending.pending.event.eventId)
+      setVerifiedPending(undefined)
+    }
+  }
+
+  const enterPending = () => {
+    if (visiblePending === undefined) return
+    const { pending: verified, verification } = visiblePending
+    writeDeviceInteractionHandoff({
+      version: 1,
+      purpose: mode === 'creator' ? 'creator_capture' : 'recipient_entry',
+      eventId: verified.event.eventId,
+      interaction: verified.event.interaction,
+      deviceId: verified.event.deviceId,
+      deviceName: verified.device.discovered.displayName ?? '已验证设备',
+      source: verified.event.source,
+      occurredAt: verified.event.occurredAt,
+      verification,
+      ...(mode === 'recipient' ? { recipientId } : {}),
+    })
+    setHandledEventId(verified.event.eventId)
+    setVerifiedPending(undefined)
+    if (mode === 'recipient') void hardwareBridge.consume(verified.event.eventId)
+    window.location.hash = mode === 'creator' ? '#/capture/new' : '#/recipient/verify'
   }
 
   return (
@@ -813,7 +994,7 @@ export function DeviceCenterPage({
       {actionError !== undefined && <p className="device-center__alert" role="alert">{actionError}</p>}
 
       <BluetoothGate
-        environment={environment}
+        environment={{ ...environment, appState }}
         onError={setActionError}
         onPermissionChange={setPermission}
         permission={permission}
@@ -825,16 +1006,18 @@ export function DeviceCenterPage({
       <div className="device-slots" aria-label="可连接设备">
         <DeviceSlot
           kind="omi"
-          now={now()}
-          onConnected={simulationEnabled ? () => advanceDeterministicSimulator('omi') : undefined}
+          now={currentTime}
+          onConnected={simulationEnabled ? () => advanceSimulator('omi') : undefined}
+          onAdvance={simulationEnabled ? () => advanceSimulator('omi') : undefined}
           onError={setActionError}
           runtime={runtime}
           snapshot={snapshot}
         />
         <DeviceSlot
           kind="ring"
-          now={now()}
-          onConnected={simulationEnabled ? () => advanceDeterministicSimulator('ring') : undefined}
+          now={currentTime}
+          onConnected={simulationEnabled ? () => advanceSimulator('ring') : undefined}
+          onAdvance={simulationEnabled ? () => advanceSimulator('ring') : undefined}
           onError={setActionError}
           runtime={runtime}
           snapshot={snapshot}
@@ -843,6 +1026,7 @@ export function DeviceCenterPage({
 
       <ConsentSummary
         audioConsent={snapshot.consent.audioCapture}
+        interactionConsent={snapshot.consent.interactionEvents}
         mode={mode}
         onError={setActionError}
         runtime={runtime}
@@ -850,7 +1034,12 @@ export function DeviceCenterPage({
       <DiagnosticsDisclosure simulated={simulationEnabled} snapshot={snapshot} />
 
       {visiblePending !== undefined && (
-        <PendingHardwarePrompt mode={mode} onClose={dismissPending} pending={visiblePending} />
+        <PendingHardwarePrompt
+          mode={mode}
+          onClose={dismissPending}
+          onEnter={enterPending}
+          pending={visiblePending.pending}
+        />
       )}
     </div>
   )

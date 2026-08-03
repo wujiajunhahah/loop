@@ -376,6 +376,10 @@
   max-width: 190px;
 }
 
+.device-card__demo-action {
+  margin-top: 16px;
+}
+
 .device-card__detail {
   border-top: 1px solid var(--line);
 }

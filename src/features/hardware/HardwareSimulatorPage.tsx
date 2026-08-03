@@ -13,6 +13,8 @@ export const hardwareSimulatorRoutes = {
   trigger: '/hardware-simulator/trigger',
 } as const
 
+const DEFAULT_SIMULATED_RING_DEVICE_ID = 'simulator-ring-normalized-device'
+
 function SimulatorNav() {
   return (
     <nav className="sim-nav" aria-label="Hardware simulator">
@@ -71,8 +73,8 @@ export function HardwareSimulatorPage() {
 }
 
 export function HardwareBindPage() {
-  const [deviceId, setDeviceId] = useState('loop-demo-device')
-  const [deviceType, setDeviceType] = useState('keepsake-token')
+  const [deviceId, setDeviceId] = useState(DEFAULT_SIMULATED_RING_DEVICE_ID)
+  const [deviceType, setDeviceType] = useState('ring')
   const [ownerId, setOwnerId] = useState('person-mei')
   const [recipientId, setRecipientId] = useState('person-lin')
   const [message, setMessage] = useState('Waiting for verified binding.')
@@ -122,7 +124,7 @@ export function HardwareBindPage() {
 export function HardwareTriggerPage() {
   const binding = simulatorBridge.getBindings().find((item) => item.recipientId)
   const [eventType, setEventType] = useState<HardwareEventType>('touch')
-  const [deviceId, setDeviceId] = useState(binding?.deviceId ?? 'loop-demo-device')
+  const [deviceId, setDeviceId] = useState(binding?.deviceId ?? DEFAULT_SIMULATED_RING_DEVICE_ID)
   const [recipientId, setRecipientId] = useState(binding?.recipientId ?? 'person-lin')
   const [transitions, setTransitions] = useState<HardwareEventTransition[]>([])
   const [message, setMessage] = useState('Ready to produce an event.')

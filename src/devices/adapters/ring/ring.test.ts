@@ -103,6 +103,7 @@ interface FakeTransportSession {
   closeCount(): number
   writeCount(): number
   writtenPayloads(): readonly Uint8Array[]
+  disconnectUnexpectedly(): void
 }
 
 function createFakeTransportSession(
@@ -118,6 +119,13 @@ function createFakeTransportSession(
   let writes = 0
   const writtenPayloads: Uint8Array[] = []
   let state: ReturnType<DeviceTransportSession['getState']> = 'connected'
+  const stateListeners = new Set<
+    Parameters<NonNullable<DeviceTransportSession['subscribeState']>>[0]
+  >()
+  const transitionState = (next: ReturnType<DeviceTransportSession['getState']>) => {
+    state = next
+    for (const stateListener of [...stateListeners]) stateListener(state)
+  }
   const configuredCharacteristic = Object.values(profile.roles).find(
     (definition) => definition?.gatt !== undefined,
   )?.gatt ?? {
@@ -143,6 +151,18 @@ function createFakeTransportSession(
     sessionId: options.sessionId ?? 'ring-transport-session',
     device,
     getState: () => state,
+    subscribeState: (stateListener) => {
+      stateListeners.add(stateListener)
+      stateListener(state)
+      let stopped = false
+      return {
+        unsubscribe() {
+          if (stopped) return
+          stopped = true
+          stateListeners.delete(stateListener)
+        },
+      }
+    },
     read: async () => ({
       ok: false,
       error: {
@@ -197,7 +217,7 @@ function createFakeTransportSession(
     },
     close: async () => {
       if (state !== 'disconnected') {
-        state = 'disconnected'
+        transitionState('disconnected')
         closes += 1
       }
       return ok(undefined)
@@ -221,10 +241,28 @@ function createFakeTransportSession(
     closeCount: () => closes,
     writeCount: () => writes,
     writtenPayloads: () => writtenPayloads,
+    disconnectUnexpectedly() {
+      transitionState('disconnected')
+    },
   }
 }
 
 describe('ring profile foundation', () => {
+  it('forwards an unexpected transport disconnect as a normalized session state', async () => {
+    const profile = createFixtureProfile()
+    const transport = createFakeTransportSession(profile)
+    const opened = await createRingAdapter(profile).openSession(transport.session)
+    expect(opened.ok).toBe(true)
+    if (!opened.ok) return
+    const states: string[] = []
+    opened.value.subscribeState?.((state) => states.push(state))
+
+    transport.disconnectUnexpectedly()
+
+    expect(states).toEqual(['open', 'disconnected'])
+    expect(opened.value.getState()).toBe('disconnected')
+  })
+
   it('has no enabled roles or native subscriptions without a configured profile', async () => {
     const profile = createEmptyRingProfile()
     const adapter = createRingAdapter(profile)

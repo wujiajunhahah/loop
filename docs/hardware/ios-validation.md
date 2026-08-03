@@ -12,12 +12,15 @@ project structure. They cannot validate Bluetooth radio behavior, microphone
 consent, OMI firmware framing, or a ring vendor profile. Those claims require
 the named physical-device checks below.
 
-The current product runtime also has two important limits:
+The production device center now creates a Capacitor BLE transport on native
+iOS. OMI uses its official discovery boundary and enables metadata parsing only
+when firmware model, version, and reviewed fragment sizes are all configured.
+Ring discovery requires explicit reviewed name/service hints and still reports
+vendor-profile-required capabilities. Two important limits remain:
 
-- the production device-center fallback has no physical transport attached;
-  the native BLE plugin is packaged, but the product cannot run a physical BLE
-  flow until a separately authorized integration task wires that transport;
-- there is no microphone recording implementation, so Loop does not currently
+- the native runtime and disconnect propagation are build/simulator tested, not
+  physical-radio tested;
+- there is no phone-microphone recording implementation, so Loop does not currently
   request microphone permission. The positive microphone flow below remains a
   release gate for the task that implements explicit creator recording.
 
@@ -182,7 +185,7 @@ Run and retain a redacted result for each check:
 
 | ID | Physical check on the iPhone 17 test target | Pass condition | Current status |
 | --- | --- | --- | --- |
-| `IOS-BLE-01` | Install fresh, leave Bluetooth permission undetermined, open the physical-device flow, and explicitly start discovery. Repeat once denied and once allowed. | The system prompt uses the committed description; denial is visible and causes no crash; allowance discovers only after the user action. | Blocked: physical transport is not wired and the phone was unreachable. |
+| `IOS-BLE-01` | Install fresh, leave Bluetooth permission undetermined, open the physical-device flow, and explicitly start discovery. Repeat once denied and once allowed. | The system prompt uses the committed description; denial is visible and causes no crash; allowance discovers only after the user action. | Not run: native transport is wired; the paired phone was unreachable. |
 | `IOS-BLE-02` | With OMI `Omi` firmware v1.0.3 in range, scan, connect, discover the official service, read the codec characteristic, and start the audio notification. | One connection and one notification subscription exist; codec/profile mismatches fail visibly without packet or audio logging. | Not run: named OMI unit unavailable. |
 | `IOS-BLE-03` | While connected in the foreground, power-cycle the OMI unit and toggle iPhone Bluetooth. | Disconnect, powered-off, and reconnect states are distinguishable; cleanup is idempotent; no stale callback attaches to the new session. | Not run. |
 | `IOS-BLE-04` | Move Loop to the background and lock the phone during an active OMI session, then return to the foreground. | The app makes no background-delivery claim, starts no media, and shows the actual state or a visible reconnect path on resume. | Not run. |

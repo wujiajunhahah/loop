@@ -6,6 +6,8 @@ import {
   type DeviceResult,
   type DeviceSession,
   type DeviceSessionState,
+  type DeviceSessionStateListener,
+  type DeviceStateSubscription,
   type DeviceSubscription,
   type DeviceTransportSession,
   type NormalizedDevice,
@@ -82,12 +84,38 @@ export function createSimulatorAdapter<
       const sessionId = `${options.adapterId}-session-${++sessionSequence}`
       let state: DeviceSessionState = 'open'
       const listeners = new Set<(event: Event) => void>()
+      const stateListeners = new Set<DeviceSessionStateListener>()
+      let transportStateSubscription: DeviceStateSubscription | undefined
       let closePromise: Promise<DeviceResult<void>> | undefined
+      const deliverState = (listener: DeviceSessionStateListener) => {
+        try {
+          listener(state)
+        } catch {
+          // Lifecycle observers cannot block simulator cleanup.
+        }
+      }
+      const transitionState = (next: DeviceSessionState) => {
+        if (state === next) return
+        state = next
+        for (const listener of [...stateListeners]) deliverState(listener)
+      }
       const session: DeviceSession<Event> = {
         sessionId,
         device: { ...options.normalizedDevice },
         capabilities: { ...options.capabilities },
         getState: () => state,
+        subscribeState(listener): DeviceStateSubscription {
+          stateListeners.add(listener)
+          deliverState(listener)
+          let unsubscribed = false
+          return {
+            unsubscribe() {
+              if (unsubscribed) return
+              unsubscribed = true
+              stateListeners.delete(listener)
+            },
+          }
+        },
         subscribe(listener): DeviceResult<DeviceSubscription> {
           if (state !== 'open') {
             return failure('session_closed', 'The simulator session is closed.', false)
@@ -114,17 +142,33 @@ export function createSimulatorAdapter<
         },
         close() {
           if (closePromise !== undefined) return closePromise
-          state = 'closing'
+          transitionState('closing')
+          transportStateSubscription?.unsubscribe()
           closePromise = (async () => {
             const closed = await transportSession.close()
             listeners.clear()
             sessions.delete(sessionId)
             activeTransportSessions.delete(transportSession)
-            state = closed.ok ? 'closed' : 'failed'
+            transitionState(closed.ok ? 'closed' : 'failed')
+            stateListeners.clear()
             return closed
           })()
           return closePromise
         },
+      }
+      transportStateSubscription = transportSession.subscribeState?.((transportState) => {
+        if (state === 'closing' || state === 'closed') return
+        if (transportState === 'disconnected') transitionState('disconnected')
+        else if (transportState === 'failed') transitionState('failed')
+      })
+      const transportStateAfterSubscription = transportSession.getState()
+      if (
+        transportStateAfterSubscription === 'disconnected' ||
+        transportStateAfterSubscription === 'failed'
+      ) {
+        transportStateSubscription?.unsubscribe()
+        activeTransportSessions.delete(transportSession)
+        return failure('disconnected', 'The simulator transport disconnected.', true)
       }
       sessions.set(sessionId, { session, listeners })
       return ok(session)

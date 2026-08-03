@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react'
 import type { AgentPolicy, MemoryModality, Relationship } from '../../domain'
 import { contextCaptureService, demoPlans, demoPolicies, relationshipStore } from '../../data/services'
+import {
+  clearDeviceInteractionHandoff,
+  readDeviceInteractionHandoff,
+} from '../devices/deviceInteractionHandoff'
 
 type CaptureKind = 'memory' | 'blessing' | 'plan' | 'original-only' | 'ai-organized'
 type InputMode = 'text' | 'audio' | 'image'
@@ -45,6 +49,9 @@ export function CaptureFlow({ route }: { route: string }) {
   const [errors, setErrors] = useState<string[]>([])
   const [savedId, setSavedId] = useState('')
   const [saving, setSaving] = useState(false)
+  const [deviceHandoff] = useState(() =>
+    readDeviceInteractionHandoff('creator_capture'),
+  )
 
   useEffect(() => {
     let active = true
@@ -103,6 +110,20 @@ export function CaptureFlow({ route }: { route: string }) {
         uri: draft.inputMode === 'text' ? `memory://text/${draft.topic.trim()}` : `memory://${draft.inputMode}-demo/${draft.topic.trim()}`,
         capturedAt: new Date().toISOString(),
       },
+      ...(deviceHandoff === undefined
+        ? {}
+        : {
+            trigger: {
+              kind: 'device_interaction' as const,
+              eventId: deviceHandoff.eventId,
+              interaction: deviceHandoff.interaction,
+              deviceId: deviceHandoff.deviceId,
+              deviceName: deviceHandoff.deviceName,
+              source: deviceHandoff.source,
+              occurredAt: deviceHandoff.occurredAt,
+              verification: deviceHandoff.verification,
+            },
+          }),
     })
     const policy = demoPolicies.find((item) => item.relationshipId === relationship?.id)
     if (policy) {
@@ -128,6 +149,7 @@ export function CaptureFlow({ route }: { route: string }) {
       }
     }
     setSavedId(memory.id)
+    clearDeviceInteractionHandoff(deviceHandoff?.eventId)
     setSaving(false)
     window.location.hash = '#/capture/success'
   }
@@ -138,7 +160,7 @@ export function CaptureFlow({ route }: { route: string }) {
         <p className="eyebrow">Record saved</p>
         <h1>This moment has a place.</h1>
         <p className="page-header__description">The original record is saved only for {relationship?.label ?? 'this relationship'}. {draft.kind === 'plan' && draft.planTitle ? `${draft.planTitle} is ready as a future invitation.` : 'The recipient can decide when to open it.'}</p>
-        <p className="capture-meta">Memory ID: {savedId || 'saved locally'}</p>
+        <p className="capture-meta">Memory ID: {savedId || 'saved locally'}{deviceHandoff ? ` · 来自 ${deviceHandoff.deviceName} 的已验证标记` : ''}</p>
         <div className="capture-actions"><a className="button button--primary" href="#/capture/new">Capture another</a><a className="button button--secondary" href="#/">Return home</a></div>
       </section>
     )
@@ -156,6 +178,7 @@ export function CaptureFlow({ route }: { route: string }) {
     return (
       <div className="capture-page">
         <header className="page-header"><div><p className="eyebrow">Step 3 / Review</p><h1>Review before it travels.</h1><p className="page-header__description">先看原始内容，再确认整理边界。记录只会留给 {relationship?.label ?? '选定的关系'}。</p></div><span className="step-count">03 / 03</span></header>
+        {deviceHandoff && <DeviceHandoffSummary handoff={deviceHandoff} />}
         <div className="review-grid">
           <section className="review-panel"><div className="panel-heading"><span>Original</span><strong>{kindLabels[draft.kind]}</strong></div><h2>{draft.topic}</h2><p>{draft.text}</p><p className="capture-meta">输入方式：{draft.inputMode === 'audio' ? '模拟语音' : draft.inputMode === 'image' ? '图片占位' : '文字'}</p></section>
           <section className="review-panel review-panel--organized"><div className="panel-heading"><span>AI organized</span><strong>{draft.allowAiOrganization ? '可审核' : '未授权'}</strong></div><p>{draft.allowAiOrganization ? organizedPreview : '这条记录不会被 AI 整理。启用后才会生成整理预览。'}</p><p className="capture-meta">整理内容不会替代原始记录。</p></section>
@@ -170,14 +193,37 @@ export function CaptureFlow({ route }: { route: string }) {
   return (
     <div className="capture-page">
       <header className="page-header"><div><p className="eyebrow">Recorder / Capture</p><h1>Leave something true.</h1><p className="page-header__description">给一个具体的人，留下一段以后仍然能被触碰的真实内容。</p></div><span className="step-count">01 / 03</span></header>
+      {deviceHandoff && <DeviceHandoffSummary handoff={deviceHandoff} />}
       <form className="capture-form" onSubmit={goToReview}>
         <fieldset><legend>1. Choose an input</legend><div className="mode-grid">{([['text', '文字', '直接写下这一刻'], ['audio', '模拟语音', '用文字模拟一段声音'], ['image', '图片占位', '先留下图片位置']] as const).map(([value, label, description]) => <label className={`mode-option ${draft.inputMode === value ? 'mode-option--selected' : ''}`} key={value}><input type="radio" name="inputMode" value={value} checked={draft.inputMode === value} onChange={() => setField('inputMode', value)} /><strong>{label}</strong><span>{description}</span></label>)}</div><label className="field"><span>内容</span><textarea value={draft.text} onChange={(event) => setField('text', event.target.value)} placeholder={draft.inputMode === 'audio' ? '例如：今天想录下我第一次教你做番茄炒蛋的声音...' : '写下想留给对方的内容...'} rows={6} /></label></fieldset>
         <fieldset><legend>2. Give it a relationship</legend><label className="field"><span>留给谁</span><select value={draft.recipientId} onChange={(event) => setField('recipientId', event.target.value)}><option value="">请选择一个关系</option>{relationship && <option value={relationship.recipientId}>Lin · {relationship.label}</option>}</select></label><label className="field"><span>主题</span><input value={draft.topic} onChange={(event) => setField('topic', event.target.value)} placeholder="例如：五道家庭菜的第一道" /></label><label className="field"><span>为什么要留给这个人</span><textarea value={draft.meaning} onChange={(event) => setField('meaning', event.target.value)} placeholder="这段内容和你们的关系有什么特别之处？" rows={4} /></label></fieldset>
         <fieldset><legend>3. Mark the content</legend><div className="kind-grid">{(Object.keys(kindLabels) as CaptureKind[]).map((kind) => <label className={`kind-option ${draft.kind === kind ? 'kind-option--selected' : ''}`} key={kind}><input type="radio" name="kind" value={kind} checked={draft.kind === kind} onChange={() => { setField('kind', kind); if (kind === 'original-only') setField('allowAiOrganization', false) }} /><span>{kindLabels[kind]}</span></label>)}</div>{draft.kind === 'plan' && <div className="plan-fields"><label className="field"><span>计划名称</span><input value={draft.planTitle} onChange={(event) => setField('planTitle', event.target.value)} placeholder="例如：一起完成五道菜" /></label><label className="field"><span>未来邀请</span><textarea value={draft.planInvitation} onChange={(event) => setField('planInvitation', event.target.value)} placeholder="例如：等你准备好时，我们一起做下一道。" rows={3} /></label></div>}</fieldset>
         {errors.length > 0 && <ErrorList errors={errors} />}
-        <div className="capture-actions"><a className="button button--secondary" href="#/capture">取消</a><button className="button button--primary" type="submit">查看审核内容</button></div>
+        <div className="capture-actions"><a className="button button--secondary" href="#/capture" onClick={() => clearDeviceInteractionHandoff(deviceHandoff?.eventId)}>取消</a><button className="button button--primary" type="submit">查看审核内容</button></div>
       </form>
     </div>
+  )
+}
+
+function DeviceHandoffSummary({
+  handoff,
+}: {
+  handoff: NonNullable<ReturnType<typeof readDeviceInteractionHandoff>>
+}) {
+  return (
+    <section className="capture-trigger" aria-label="设备标记来源">
+      <div>
+        <p className="eyebrow">Verified device mark</p>
+        <h2>从这一刻开始一段有边界的记录</h2>
+        <p>先写发生了什么、为什么值得留下，以及希望对方将来如何理解。设备标记不会启动麦克风、相机、播放或分享。</p>
+      </div>
+      <dl>
+        <div><dt>设备</dt><dd>{handoff.deviceName}</dd></div>
+        <div><dt>来源</dt><dd>{handoff.source === 'simulated' ? '演示数据' : '实体设备'}</dd></div>
+        <div><dt>时间</dt><dd><time dateTime={handoff.occurredAt}>{new Date(handoff.occurredAt).toLocaleString('zh-CN')}</time></dd></div>
+        <div><dt>验证</dt><dd>{handoff.verification === 'binding_verified' ? '设备绑定已验证' : '托付与身份已验证'}</dd></div>
+      </dl>
+    </section>
   )
 }
 

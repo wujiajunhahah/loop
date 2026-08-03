@@ -500,6 +500,11 @@ describe('Capacitor BLE transport lifecycle', () => {
     })
     expect(connection.ok).toBe(true)
     if (!connection.ok) return
+    const states: string[] = []
+    const stateSubscription = connection.value.subscribeState?.((state) => {
+      states.push(state)
+    })
+    expect(states).toEqual(['connected'])
     const frames = vi.fn()
     await connection.value.subscribe(
       { serviceId: 'service-a', characteristicId: 'characteristic-a' },
@@ -515,11 +520,14 @@ describe('Capacitor BLE transport lifecycle', () => {
     )
 
     expect(connection.value.getState()).toBe('disconnected')
+    expect(states).toEqual(['connected', 'disconnected'])
     expect(frames).not.toHaveBeenCalled()
     await vi.waitFor(() => expect(client.stopNotifications).toHaveBeenCalledTimes(1))
     await connection.value.close()
     expect(client.disconnect).not.toHaveBeenCalled()
     expect(client.stopNotifications).toHaveBeenCalledTimes(1)
+    stateSubscription?.unsubscribe()
+    stateSubscription?.unsubscribe()
   })
 
   it('disconnects sessions when Bluetooth is powered off', async () => {
