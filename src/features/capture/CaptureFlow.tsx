@@ -22,17 +22,19 @@ interface CaptureDraft {
   planInvitation: string
 }
 
-const emptyDraft: CaptureDraft = {
-  inputMode: 'text',
-  text: '',
-  topic: '',
-  recipientId: '',
-  meaning: '',
-  kind: 'memory',
-  allowAiOrganization: false,
-  confirmed: false,
-  planTitle: '',
-  planInvitation: '',
+function createEmptyDraft(recipientId = ''): CaptureDraft {
+  return {
+    inputMode: 'text',
+    text: '',
+    topic: '',
+    recipientId,
+    meaning: '',
+    kind: 'memory',
+    allowAiOrganization: false,
+    confirmed: false,
+    planTitle: '',
+    planInvitation: '',
+  }
 }
 
 const kindLabels: Record<CaptureKind, string> = {
@@ -44,13 +46,13 @@ const kindLabels: Record<CaptureKind, string> = {
 }
 
 export function CaptureFlow({ route }: { route: string }) {
-  const [draft, setDraft] = useState<CaptureDraft>(emptyDraft)
+  const [draft, setDraft] = useState<CaptureDraft>(() => createEmptyDraft())
   const [relationship, setRelationship] = useState<Relationship>()
   const [errors, setErrors] = useState<string[]>([])
   const [savedId, setSavedId] = useState('')
   const [saving, setSaving] = useState(false)
-  const [deviceHandoff] = useState(() =>
-    readDeviceInteractionHandoff('creator_capture'),
+  const [deviceHandoff, setDeviceHandoff] = useState(() =>
+    readDeviceInteractionHandoff('creator_capture', { ownerId: 'person-mei' }),
   )
 
   useEffect(() => {
@@ -78,6 +80,12 @@ export function CaptureFlow({ route }: { route: string }) {
     if (!draft.recipientId) nextErrors.push('请选择这条记录留给谁。')
     if (!draft.meaning.trim()) nextErrors.push('请说明为什么要留给这个人。')
     if (draft.kind === 'plan' && !draft.planTitle.trim()) nextErrors.push('请填写共同计划的名称。')
+    const relationshipPolicy = demoPolicies.find(
+      (item) => item.relationshipId === relationship?.id,
+    )
+    if (draft.allowAiOrganization && relationshipPolicy?.allowAiOrganization !== true) {
+      nextErrors.push('这段关系尚未允许 AI 整理，当前记录只能保存原始内容。')
+    }
     return nextErrors
   }
 
@@ -92,66 +100,97 @@ export function CaptureFlow({ route }: { route: string }) {
   }
 
   const save = async () => {
+    if (saving) return
     if (!draft.confirmed) {
       setErrors(['请确认 AI 使用边界后再保存。'])
       return
     }
+    const nextErrors = validateDraft()
+    if (nextErrors.length > 0) {
+      setErrors(nextErrors)
+      return
+    }
+    if (relationship === undefined) {
+      setErrors(['关系信息尚未载入，请稍后重试。'])
+      return
+    }
     setSaving(true)
-    const memory = await contextCaptureService.capture({
-      ownerId: relationship?.ownerId ?? 'person-mei',
-      relationshipId: relationship?.id,
-      recipientId: draft.recipientId,
-      topic: `[${kindLabels[draft.kind]}] ${draft.topic.trim()}`,
-      meaning: draft.meaning.trim(),
-      visibility: 'relationship_specific',
-      original: {
-        kind: 'original',
-        modality: draft.inputMode as MemoryModality,
-        uri: draft.inputMode === 'text' ? `memory://text/${draft.topic.trim()}` : `memory://${draft.inputMode}-demo/${draft.topic.trim()}`,
-        capturedAt: new Date().toISOString(),
-      },
-      ...(deviceHandoff === undefined
-        ? {}
-        : {
-            trigger: {
-              kind: 'device_interaction' as const,
-              eventId: deviceHandoff.eventId,
-              interaction: deviceHandoff.interaction,
-              deviceId: deviceHandoff.deviceId,
-              deviceName: deviceHandoff.deviceName,
-              source: deviceHandoff.source,
-              occurredAt: deviceHandoff.occurredAt,
-              verification: deviceHandoff.verification,
-            },
-          }),
-    })
-    const policy = demoPolicies.find((item) => item.relationshipId === relationship?.id)
-    if (policy) {
-      policy.allowAiOrganization = draft.allowAiOrganization
-      policy.allowParaphrase = draft.allowAiOrganization
-      if (!policy.allowedMemoryIds.includes(memory.id)) policy.allowedMemoryIds.push(memory.id)
-    }
-    if (draft.allowAiOrganization) {
-      memory.organized = {
-        kind: 'ai_organized',
-        text: `整理入口：${draft.topic.trim()}。${draft.meaning.trim()}`,
-        sourceMemoryIds: [memory.id],
-        reviewedByOwner: true,
+    try {
+      const memory = await contextCaptureService.capture({
+        ownerId: relationship.ownerId,
+        relationshipId: relationship.id,
+        recipientId: draft.recipientId,
+        topic: `[${kindLabels[draft.kind]}] ${draft.topic.trim()}`,
+        meaning: draft.meaning.trim(),
+        visibility: 'relationship_specific',
+        original: {
+          kind: 'original',
+          modality: draft.inputMode as MemoryModality,
+          uri: draft.inputMode === 'text' ? `memory://text/${draft.topic.trim()}` : `memory://${draft.inputMode}-demo/${draft.topic.trim()}`,
+          capturedAt: new Date().toISOString(),
+          text: draft.text.trim(),
+        },
+        ...(deviceHandoff === undefined
+          ? {}
+          : {
+              trigger: {
+                kind: 'device_interaction' as const,
+                eventId: deviceHandoff.eventId,
+                interaction: deviceHandoff.interaction,
+                deviceId: deviceHandoff.deviceId,
+                deviceName: deviceHandoff.deviceName,
+                source: deviceHandoff.source,
+                occurredAt: deviceHandoff.occurredAt,
+                verification: deviceHandoff.verification,
+                ownerId: deviceHandoff.ownerId,
+                sessionId: deviceHandoff.sessionId,
+                ...(deviceHandoff.sessionSequence === undefined
+                  ? {}
+                  : { sessionSequence: deviceHandoff.sessionSequence }),
+                ...(deviceHandoff.profile === undefined
+                  ? {}
+                  : { profile: { ...deviceHandoff.profile } }),
+              },
+            }),
+      })
+      const policy = demoPolicies.find((item) => item.relationshipId === relationship.id)
+      if (policy && !policy.allowedMemoryIds.includes(memory.id)) {
+        policy.allowedMemoryIds.push(memory.id)
       }
-    }
-    if (draft.kind === 'plan' && draft.planTitle.trim() && relationship) {
-      const plan = demoPlans.find((item) => item.relationshipId === relationship.id)
-      if (plan) {
-        plan.title = draft.planTitle.trim()
-        plan.invitation = draft.planInvitation.trim() || '等你准备好时，和我一起继续这项计划。'
-        plan.memoryIds = [memory.id]
-        plan.status = 'available'
+      if (draft.allowAiOrganization && policy?.allowAiOrganization === true) {
+        memory.organized = {
+          kind: 'ai_organized',
+          text: `整理入口：${draft.topic.trim()}。${draft.meaning.trim()}`,
+          sourceMemoryIds: [memory.id],
+          reviewedByOwner: true,
+        }
       }
+      if (draft.kind === 'plan' && draft.planTitle.trim()) {
+        const plan = demoPlans.find((item) => item.relationshipId === relationship.id)
+        if (plan) {
+          plan.title = draft.planTitle.trim()
+          plan.invitation = draft.planInvitation.trim() || '等你准备好时，和我一起继续这项计划。'
+          plan.memoryIds = [memory.id]
+          plan.status = 'available'
+        }
+      }
+      setSavedId(memory.id)
+      clearDeviceInteractionHandoff(deviceHandoff?.eventId)
+      window.location.hash = '#/capture/success'
+    } catch {
+      setErrors(['记录未能保存，请重试。'])
+    } finally {
+      setSaving(false)
     }
-    setSavedId(memory.id)
+  }
+
+  const resetForAnotherCapture = () => {
     clearDeviceInteractionHandoff(deviceHandoff?.eventId)
+    setDeviceHandoff(undefined)
+    setDraft(createEmptyDraft(relationship?.recipientId))
+    setErrors([])
+    setSavedId('')
     setSaving(false)
-    window.location.hash = '#/capture/success'
   }
 
   if (route === '/capture/success') {
@@ -161,7 +200,7 @@ export function CaptureFlow({ route }: { route: string }) {
         <h1>This moment has a place.</h1>
         <p className="page-header__description">The original record is saved only for {relationship?.label ?? 'this relationship'}. {draft.kind === 'plan' && draft.planTitle ? `${draft.planTitle} is ready as a future invitation.` : 'The recipient can decide when to open it.'}</p>
         <p className="capture-meta">Memory ID: {savedId || 'saved locally'}{deviceHandoff ? ` · 来自 ${deviceHandoff.deviceName} 的已验证标记` : ''}</p>
-        <div className="capture-actions"><a className="button button--primary" href="#/capture/new">Capture another</a><a className="button button--secondary" href="#/">Return home</a></div>
+        <div className="capture-actions"><a className="button button--primary" href="#/capture/new" onClick={resetForAnotherCapture}>Capture another</a><a className="button button--secondary" href="#/">Return home</a></div>
       </section>
     )
   }

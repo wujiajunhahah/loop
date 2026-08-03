@@ -1,6 +1,6 @@
 import { applyRecipientChoice } from '../../domain'
 import type { RecipientChoice, RecipientSession } from '../../domain'
-import type { VerifiedDeviceInteractionHandoff } from '../devices/deviceInteractionHandoff'
+import type { RecipientDeviceInteractionHandoff } from '../devices/deviceInteractionHandoff'
 
 export const demoRecipient = {
   id: 'person-lin',
@@ -19,10 +19,11 @@ export const demoPlan = {
 const PERMANENT_CLOSE_KEY = 'loop:recipient-entry-closed:relationship-mei-lin'
 
 export function createRecipientSession(
-  handoff?: VerifiedDeviceInteractionHandoff,
+  handoff?: RecipientDeviceInteractionHandoff,
+  createId: () => string = () => crypto.randomUUID(),
 ): RecipientSession {
   return {
-    id: 'session-demo',
+    id: createId(),
     relationshipId: demoRecipient.relationshipId,
     recipientId: demoRecipient.id,
     initiatedByRecipient: handoff === undefined,
@@ -40,8 +41,25 @@ export function createRecipientSession(
             source: handoff.source,
             occurredAt: handoff.occurredAt,
             verification: handoff.verification,
+            ownerId: handoff.ownerId,
+            recipientId: handoff.recipientId,
+            sessionId: handoff.sessionId,
+            ...(handoff.sessionSequence === undefined
+              ? {}
+              : { sessionSequence: handoff.sessionSequence }),
+            ...(handoff.profile === undefined
+              ? {}
+              : { profile: { ...handoff.profile } }),
           },
         }),
+  }
+}
+
+export function confirmRecipientSession(session: RecipientSession): RecipientSession {
+  return {
+    ...session,
+    initiatedByRecipient: true,
+    status: 'active',
   }
 }
 

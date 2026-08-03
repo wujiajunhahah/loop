@@ -25,6 +25,7 @@ export interface OriginalContent {
   modality: MemoryModality
   uri: string
   capturedAt: string
+  text?: string
   checksum?: string
 }
 
@@ -33,6 +34,14 @@ export interface OrganizedContent {
   text: string
   sourceMemoryIds: EntityId[]
   reviewedByOwner: boolean
+}
+
+export interface DeviceInteractionProfileProvenance {
+  profileId?: string
+  sourceReference?: string
+  validation?: 'fixture_only' | 'physical_device'
+  model?: string
+  firmware?: string
 }
 
 export interface MemoryTriggerProvenance {
@@ -44,6 +53,11 @@ export interface MemoryTriggerProvenance {
   source: 'physical' | 'simulated'
   occurredAt: string
   verification: 'binding_verified' | 'entrustment_verified'
+  ownerId: EntityId
+  recipientId?: EntityId
+  sessionId: string
+  sessionSequence?: number
+  profile?: DeviceInteractionProfileProvenance
 }
 
 export interface Memory {

@@ -8,6 +8,7 @@ import {
 } from 'react'
 import type { DeviceCapabilityReport } from '../../devices/contracts'
 import type { HardwareBridge } from '../../adapters/hardware'
+import type { DeviceInteractionProfileProvenance } from '../../domain'
 import type {
   DeviceRuntime,
   RuntimeDeviceSnapshot,
@@ -35,7 +36,14 @@ import {
   getPhysicalDeviceRuntime,
 } from './deviceCenterRuntime'
 import { simulatorBridge } from '../hardware/simulatorStore'
-import { writeDeviceInteractionHandoff } from './deviceInteractionHandoff'
+import {
+  clearDeviceInteractionHandoff,
+  isDeviceInteractionProcessed,
+  markDeviceInteractionProcessed,
+  readDeviceInteractionHandoff,
+  writeDeviceInteractionHandoff,
+  type DeviceInteractionDisposition,
+} from './deviceInteractionHandoff'
 import './deviceCenter.css'
 
 type PermissionState =
@@ -63,6 +71,7 @@ export interface DeviceCenterPageProps {
     advance?(kind: 'omi' | 'ring'): void
   }
   hardwareBridge?: HardwareBridge
+  ownerId?: string
   recipientId?: string
   now?: () => number
 }
@@ -72,6 +81,38 @@ type DeviceCenterAppState = NonNullable<DeviceCenterEnvironment['appState']>
 
 function documentIsHidden() {
   return document.visibilityState === 'hidden'
+}
+
+function interactionProfile(
+  event: PendingDeviceEvent['event'],
+): DeviceInteractionProfileProvenance | undefined {
+  const value = (event as unknown as { provenance?: unknown }).provenance
+  if (value === null || typeof value !== 'object') return undefined
+  const candidate = value as Record<string, unknown>
+  if (
+    typeof candidate.profileId !== 'string' ||
+    candidate.profileId.trim() === '' ||
+    typeof candidate.sourceReference !== 'string' ||
+    candidate.sourceReference.trim() === '' ||
+    (candidate.validation !== 'fixture_only' &&
+      candidate.validation !== 'physical_device')
+  ) return undefined
+  return {
+    profileId: candidate.profileId,
+    sourceReference: candidate.sourceReference,
+    validation: candidate.validation,
+    ...(typeof candidate.model === 'string' && candidate.model.trim() !== ''
+      ? { model: candidate.model }
+      : {}),
+    ...(typeof candidate.firmware === 'string' && candidate.firmware.trim() !== ''
+      ? { firmware: candidate.firmware }
+      : {}),
+  }
+}
+
+function interactionSequence(event: PendingDeviceEvent['event']) {
+  const value = (event as unknown as { sessionSequence?: unknown }).sessionSequence
+  return Number.isSafeInteger(value) && Number(value) > 0 ? Number(value) : undefined
 }
 
 const metricLabels: Readonly<Record<string, string>> = {
@@ -595,12 +636,14 @@ function ConsentSummary({
   interactionConsent,
   mode,
   runtime,
+  onInteractionConsentChange,
   onError,
 }: {
   audioConsent: boolean
   interactionConsent: boolean
   mode: RoleMode
   runtime: DeviceRuntime
+  onInteractionConsentChange(checked: boolean): void
   onError(message?: string): void
 }) {
   const changeAudioConsent = async (checked: boolean) => {
@@ -611,7 +654,11 @@ function ConsentSummary({
   const changeInteractionConsent = async (checked: boolean) => {
     onError(undefined)
     const result = await runtime.setConsent({ interactionEvents: checked })
-    if (!result.ok) onError('触碰事件同意状态未能保存，请重试。')
+    if (!result.ok) {
+      onError('触碰事件同意状态未能保存，请重试。')
+      return
+    }
+    onInteractionConsentChange(checked)
   }
   return (
     <section className="consent-summary" aria-labelledby="consent-heading">
@@ -693,12 +740,16 @@ function DiagnosticsDisclosure({ snapshot, simulated }: { snapshot: RuntimeSnaps
 function PendingHardwarePrompt({
   pending,
   mode,
-  onClose,
+  busy,
+  onDefer,
+  onDismiss,
   onEnter,
 }: {
   pending: PendingDeviceEvent
   mode: RoleMode
-  onClose(): void
+  busy: boolean
+  onDefer(): void
+  onDismiss(): void
   onEnter(): void
 }) {
   const dialogRef = useRef<HTMLDivElement>(null)
@@ -717,17 +768,31 @@ function PendingHardwarePrompt({
     return () => previousFocus.current?.focus()
   }, [])
 
+  useEffect(() => {
+    if (busy) dialogRef.current?.focus()
+  }, [busy])
+
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'Escape') {
       event.preventDefault()
-      onClose()
+      event.stopPropagation()
+      if (!busy) onDefer()
       return
     }
     if (event.key !== 'Tab') return
+    if (busy) {
+      event.preventDefault()
+      dialogRef.current?.focus()
+      return
+    }
     const controls = dialogRef.current?.querySelectorAll<HTMLElement>(
       'button:not([disabled]), a[href], input:not([disabled])',
     )
-    if (controls === undefined || controls.length === 0) return
+    if (controls === undefined || controls.length === 0) {
+      event.preventDefault()
+      dialogRef.current?.focus()
+      return
+    }
     const first = controls[0]
     const last = controls[controls.length - 1]
     if (event.shiftKey && document.activeElement === first) {
@@ -745,18 +810,21 @@ function PendingHardwarePrompt({
         aria-describedby="pending-prompt-description"
         aria-labelledby="pending-prompt-title"
         aria-modal="true"
+        aria-busy={busy}
         className="pending-prompt__sheet"
         onKeyDown={handleKeyDown}
         ref={dialogRef}
         role="dialog"
+        tabIndex={-1}
       >
         <button
           aria-label="关闭提示"
           className="pending-prompt__close"
-          onClick={onClose}
+          onClick={onDefer}
           ref={closeRef}
           title="关闭提示"
           type="button"
+          disabled={busy}
         >
           关闭
         </button>
@@ -767,12 +835,15 @@ function PendingHardwarePrompt({
           源自 {deviceName} · {sourceLabel(pending.event.source)} · {observedTime(pending.event.occurredAt)}
         </p>
         <p className="pending-prompt__safety">没有录音、拍摄、播放或分享会自动开始。</p>
+        <p aria-live="polite" className="sr-only" role="status">
+          {busy ? '正在确认设备事件' : ''}
+        </p>
         <div className="pending-prompt__actions">
-          <button className="button button--primary" onClick={onEnter} type="button">
+          <button className="button button--primary" disabled={busy} onClick={onEnter} type="button">
             {creator ? '进入记录引导' : '确认这是给我的'}
           </button>
-          <button className="button button--secondary" onClick={onClose} type="button">稍后</button>
-          <button className="text-button" onClick={onClose} type="button">忽略</button>
+          <button className="button button--secondary" disabled={busy} onClick={onDefer} type="button">稍后</button>
+          <button className="text-button" disabled={busy} onClick={onDismiss} type="button">忽略</button>
         </div>
       </div>
     </div>
@@ -784,6 +855,7 @@ export function DeviceCenterPage({
   environment = getDefaultDeviceCenterEnvironment(),
   simulator,
   hardwareBridge = simulatorBridge,
+  ownerId = 'person-mei',
   recipientId = 'person-lin',
   now = Date.now,
 }: DeviceCenterPageProps = {}) {
@@ -794,11 +866,18 @@ export function DeviceCenterPage({
   const [permission, setPermission] = useState<PermissionState>(environment.permission)
   const [bluetoothPowered, setBluetoothPowered] = useState(environment.bluetoothPowered)
   const [mode, setMode] = useState<RoleMode>('creator')
-  const [handledEventId, setHandledEventId] = useState<string>()
   const [verifiedPending, setVerifiedPending] = useState<{
+    mode: RoleMode
+    ownerId: string
     pending: PendingDeviceEvent
     verification: 'binding_verified' | 'entrustment_verified'
   }>()
+  const [pendingActionEventId, setPendingActionEventId] = useState<string>()
+  const [deferredEventIds, setDeferredEventIds] = useState<ReadonlySet<string>>(
+    () => new Set(),
+  )
+  const [verificationRetryEventId, setVerificationRetryEventId] = useState<string>()
+  const [verificationAttempt, setVerificationAttempt] = useState(0)
   const [actionError, setActionError] = useState<string>()
   const [currentTime, setCurrentTime] = useState(() => now())
   const [appState, setAppState] = useState<DeviceCenterAppState>(() =>
@@ -806,13 +885,34 @@ export function DeviceCenterPage({
   )
   const headingRef = useRef<HTMLHeadingElement>(null)
   const refreshBluetoothStateRef = useRef(environment.refreshBluetoothState)
+  const operationGenerationRef = useRef(0)
   const runtime = simulationEnabled ? demoRuntime : physicalRuntime
   const snapshot = useRuntimeSnapshot(runtime)
   const pending = findPendingDeviceEvent(snapshot)
-  const visiblePending = verifiedPending?.pending.event.eventId === handledEventId
-    ? undefined
-    : verifiedPending
+  const visiblePending = verifiedPending !== undefined &&
+    verifiedPending.mode === mode &&
+    verifiedPending.ownerId === ownerId &&
+    !deferredEventIds.has(verifiedPending.pending.event.eventId) &&
+    !isDeviceInteractionProcessed(verifiedPending.pending.event.eventId)
+    ? verifiedPending
+    : undefined
   const connectedCount = snapshot.devices.filter((device) => device.phase === 'connected').length
+
+  useEffect(() => {
+    operationGenerationRef.current += 1
+    setPendingActionEventId(undefined)
+    setVerificationRetryEventId(undefined)
+    return () => {
+      operationGenerationRef.current += 1
+    }
+  }, [
+    hardwareBridge,
+    mode,
+    ownerId,
+    recipientId,
+    runtime,
+    snapshot.consent.interactionEvents,
+  ])
 
   useEffect(() => {
     setPermission(environment.permission)
@@ -874,63 +974,129 @@ export function DeviceCenterPage({
   useEffect(() => {
     if (
       pending === undefined ||
-      pending.event.eventId === handledEventId ||
+      deferredEventIds.has(pending.event.eventId) ||
+      isDeviceInteractionProcessed(pending.event.eventId) ||
       !snapshot.consent.interactionEvents
     ) {
       setVerifiedPending(undefined)
+      if (!snapshot.consent.interactionEvents) setPendingActionEventId(undefined)
       return
     }
 
     let active = true
+    const operationGeneration = ++operationGenerationRef.current
+    const operationIsCurrent = () =>
+      active && operationGeneration === operationGenerationRef.current
     const verify = async () => {
       const binding = hardwareBridge.getBindings().find(
-        (candidate) => candidate.deviceId === pending.event.deviceId,
+        (candidate) =>
+          candidate.deviceId === pending.event.deviceId &&
+          candidate.ownerId === ownerId,
       )
       if (mode === 'creator') {
-        if (binding === undefined) {
-          if (active) {
+        if (pending.event.interaction !== 'mark_moment' || binding === undefined) {
+          if (operationIsCurrent()) {
+            setVerificationRetryEventId(undefined)
+            markDeviceInteractionProcessed({
+              version: 1,
+              eventId: pending.event.eventId,
+              disposition: 'dismissed',
+              processedAt: new Date(now()).toISOString(),
+            })
             setVerifiedPending(undefined)
-            setActionError('触碰事件已收到，但设备尚未完成验证绑定。')
+            setActionError('设备尚未完成验证绑定，或绑定不属于当前创建者。')
           }
           return
         }
-        if (active) {
+        if (operationIsCurrent()) {
+          setVerificationRetryEventId(undefined)
           setActionError(undefined)
-          setVerifiedPending({ pending, verification: 'binding_verified' })
+          setVerifiedPending({
+            mode,
+            ownerId,
+            pending,
+            verification: 'binding_verified',
+          })
         }
         return
       }
 
-      const result = await hardwareBridge.trigger({
-        eventId: pending.event.eventId,
-        deviceId: pending.event.deviceId,
-        eventType: 'touch',
-        recipientId,
-        occurredAt: pending.event.occurredAt,
-        allowFallback: pending.event.source === 'simulated',
-        payload: { interaction: pending.event.interaction },
-      })
-      if (!active) return
-      if (result.outcome !== 'accepted' || result.event.verificationStatus !== 'verified') {
+      if (pending.event.interaction !== 'touch' || binding === undefined) {
+        if (operationIsCurrent()) {
+          setVerificationRetryEventId(undefined)
+          markDeviceInteractionProcessed({
+            version: 1,
+            eventId: pending.event.eventId,
+            disposition: 'dismissed',
+            processedAt: new Date(now()).toISOString(),
+          })
+          setVerifiedPending(undefined)
+          setActionError('触碰事件与当前托付关系的设备绑定不匹配。')
+        }
+        return
+      }
+
+      let result: Awaited<ReturnType<HardwareBridge['trigger']>>
+      try {
+        result = await hardwareBridge.trigger({
+          eventId: pending.event.eventId,
+          deviceId: pending.event.deviceId,
+          eventType: 'touch',
+          recipientId,
+          occurredAt: pending.event.occurredAt,
+          allowFallback: pending.event.source === 'simulated',
+          payload: { interaction: pending.event.interaction },
+        })
+      } catch {
+        if (!operationIsCurrent()) return
         setVerifiedPending(undefined)
-        setHandledEventId(pending.event.eventId)
+        setVerificationRetryEventId(pending.event.eventId)
+        setActionError('设备事件验证暂时未完成。')
+        return
+      }
+      if (!operationIsCurrent()) return
+      if (
+        (result.outcome !== 'accepted' && result.outcome !== 'duplicate') ||
+        result.event.verificationStatus !== 'verified'
+      ) {
+        setVerificationRetryEventId(undefined)
+        markDeviceInteractionProcessed({
+          version: 1,
+          eventId: pending.event.eventId,
+          disposition: 'dismissed',
+          processedAt: new Date(now()).toISOString(),
+        })
+        setVerifiedPending(undefined)
         setActionError('触碰事件未通过设备托付与接收者身份验证。')
         return
       }
+      setVerificationRetryEventId(undefined)
       setActionError(undefined)
-      setVerifiedPending({ pending, verification: 'entrustment_verified' })
+      setVerifiedPending({
+        mode,
+        ownerId,
+        pending,
+        verification: 'entrustment_verified',
+      })
     }
     void verify()
     return () => {
       active = false
+      if (operationGenerationRef.current === operationGeneration) {
+        operationGenerationRef.current += 1
+      }
     }
   }, [
+    deferredEventIds,
     hardwareBridge,
-    handledEventId,
     mode,
+    now,
+    ownerId,
     pending?.event.eventId,
     recipientId,
+    runtime,
     snapshot.consent.interactionEvents,
+    verificationAttempt,
   ])
 
   const toggleSimulation = async (enabled: boolean) => {
@@ -943,7 +1109,7 @@ export function DeviceCenterPage({
     }
 
     setActionError(undefined)
-    setHandledEventId(undefined)
+    operationGenerationRef.current += 1
     setSimulationEnabled(enabled)
     if (!enabled) return
     await demoRuntime.ready()
@@ -951,35 +1117,183 @@ export function DeviceCenterPage({
     if (!result.ok) setActionError('演示设备没有载入，请重试。')
   }
 
-  const dismissPending = () => {
-    if (visiblePending !== undefined) {
-      if (visiblePending.verification === 'entrustment_verified') {
-        void hardwareBridge.consume(visiblePending.pending.event.eventId)
+  const markProcessed = (
+    eventId: string,
+    disposition: DeviceInteractionDisposition,
+  ) => {
+    markDeviceInteractionProcessed({
+      version: 1,
+      eventId,
+      disposition,
+      processedAt: new Date(now()).toISOString(),
+    })
+  }
+
+  const consumeRecipientInteraction = async (
+    eventId: string,
+    operationGeneration: number,
+  ): Promise<'consumed' | 'failed' | 'stale'> => {
+    try {
+      await hardwareBridge.consume(eventId)
+      return operationGeneration === operationGenerationRef.current
+        ? 'consumed'
+        : 'stale'
+    } catch (error) {
+      if (operationGeneration !== operationGenerationRef.current) return 'stale'
+      if (
+        error instanceof Error &&
+        error.message.toLowerCase().includes('already been consumed')
+      ) {
+        return 'consumed'
       }
-      setHandledEventId(visiblePending.pending.event.eventId)
-      setVerifiedPending(undefined)
+      if (runtime.getSnapshot().consent.interactionEvents) {
+        setActionError('设备事件未能完成确认，请重试。')
+      }
+      return 'failed'
     }
   }
 
-  const enterPending = () => {
-    if (visiblePending === undefined) return
-    const { pending: verified, verification } = visiblePending
-    writeDeviceInteractionHandoff({
-      version: 1,
-      purpose: mode === 'creator' ? 'creator_capture' : 'recipient_entry',
+  const dismissPending = async () => {
+    if (visiblePending === undefined || pendingActionEventId !== undefined) return
+    const eventId = visiblePending.pending.event.eventId
+    const operationGeneration = ++operationGenerationRef.current
+    setPendingActionEventId(eventId)
+    if (visiblePending.verification === 'entrustment_verified') {
+      const result = await consumeRecipientInteraction(eventId, operationGeneration)
+      if (result === 'stale') return
+      if (result === 'failed') {
+        setPendingActionEventId(undefined)
+        return
+      }
+      if (!runtime.getSnapshot().consent.interactionEvents) {
+        setPendingActionEventId(undefined)
+        return
+      }
+    }
+    markProcessed(eventId, 'dismissed')
+    setActionError(undefined)
+    setVerifiedPending(undefined)
+    setPendingActionEventId(undefined)
+  }
+
+  const enterPending = async () => {
+    if (visiblePending === undefined || pendingActionEventId !== undefined) return
+    const {
+      mode: verifiedMode,
+      ownerId: verifiedOwnerId,
+      pending: verified,
+      verification,
+    } = visiblePending
+    if (mode !== verifiedMode || ownerId !== verifiedOwnerId) return
+    const operationGeneration = ++operationGenerationRef.current
+    setPendingActionEventId(verified.event.eventId)
+    if (verifiedMode === 'recipient') {
+      const result = await consumeRecipientInteraction(
+        verified.event.eventId,
+        operationGeneration,
+      )
+      if (result === 'stale') return
+      if (result === 'failed') {
+        setPendingActionEventId(undefined)
+        return
+      }
+    }
+    if (
+      operationGeneration !== operationGenerationRef.current ||
+      (verifiedMode === 'recipient' &&
+        !runtime.getSnapshot().consent.interactionEvents)
+    ) {
+      setPendingActionEventId(undefined)
+      return
+    }
+    const common = {
+      version: 2 as const,
       eventId: verified.event.eventId,
-      interaction: verified.event.interaction,
       deviceId: verified.event.deviceId,
       deviceName: verified.device.discovered.displayName ?? '已验证设备',
       source: verified.event.source,
       occurredAt: verified.event.occurredAt,
-      verification,
-      ...(mode === 'recipient' ? { recipientId } : {}),
-    })
-    setHandledEventId(verified.event.eventId)
+      ownerId: verifiedOwnerId,
+      sessionId: verified.event.sessionId,
+      ...(interactionSequence(verified.event) === undefined
+        ? {}
+        : { sessionSequence: interactionSequence(verified.event) }),
+      ...(interactionProfile(verified.event) === undefined
+        ? {}
+        : { profile: interactionProfile(verified.event) }),
+    }
+    const handoffWritten = verifiedMode === 'creator' && verification === 'binding_verified'
+      ? writeDeviceInteractionHandoff({
+          ...common,
+          purpose: 'creator_capture',
+          interaction: 'mark_moment',
+          verification: 'binding_verified',
+        }, now())
+      : verifiedMode === 'recipient' && verification === 'entrustment_verified'
+        ? writeDeviceInteractionHandoff({
+            ...common,
+            purpose: 'recipient_entry',
+            interaction: 'touch',
+            verification: 'entrustment_verified',
+            recipientId,
+          }, now())
+        : false
+    if (!handoffWritten) {
+      markProcessed(verified.event.eventId, 'dismissed')
+      setVerifiedPending(undefined)
+      setPendingActionEventId(undefined)
+      setActionError('设备事件已过期或来源证明不完整，请重新触碰设备。')
+      return
+    }
+    markProcessed(
+      verified.event.eventId,
+      verifiedMode === 'creator' ? 'entered_creator' : 'entered_recipient',
+    )
+    setActionError(undefined)
     setVerifiedPending(undefined)
-    if (mode === 'recipient') void hardwareBridge.consume(verified.event.eventId)
-    window.location.hash = mode === 'creator' ? '#/capture/new' : '#/recipient/verify'
+    setPendingActionEventId(undefined)
+    window.location.hash = verifiedMode === 'creator' ? '#/capture/new' : '#/recipient/verify'
+  }
+
+  const deferPending = () => {
+    if (visiblePending === undefined || pendingActionEventId !== undefined) return
+    const eventId = visiblePending.pending.event.eventId
+    operationGenerationRef.current += 1
+    setDeferredEventIds((current) => new Set(current).add(eventId))
+    setVerificationRetryEventId(undefined)
+    setActionError(undefined)
+    setVerifiedPending(undefined)
+  }
+
+  const retryVerification = () => {
+    if (
+      verificationRetryEventId === undefined ||
+      pending?.event.eventId !== verificationRetryEventId ||
+      !snapshot.consent.interactionEvents
+    ) return
+    operationGenerationRef.current += 1
+    setVerificationRetryEventId(undefined)
+    setActionError(undefined)
+    setVerificationAttempt((attempt) => attempt + 1)
+  }
+
+  const handleInteractionConsentChange = (checked: boolean) => {
+    if (checked) return
+    operationGenerationRef.current += 1
+    const eventId = visiblePending?.pending.event.eventId ?? pending?.event.eventId
+    const handoff = readDeviceInteractionHandoff()
+    if (handoff !== undefined) clearDeviceInteractionHandoff(handoff.eventId)
+    if (eventId !== undefined) markProcessed(eventId, 'consent_revoked')
+    setVerifiedPending(undefined)
+    setPendingActionEventId(undefined)
+  }
+
+  const changeMode = (nextMode: RoleMode) => {
+    operationGenerationRef.current += 1
+    setVerifiedPending(undefined)
+    setPendingActionEventId(undefined)
+    setActionError(undefined)
+    setMode(nextMode)
   }
 
   return (
@@ -996,7 +1310,7 @@ export function DeviceCenterPage({
         </div>
       </header>
 
-      <RoleModeControl mode={mode} onChange={setMode} />
+      <RoleModeControl mode={mode} onChange={changeMode} />
 
       <section className={`simulation-strip${simulationEnabled ? ' is-active' : ''}`} aria-label="演示数据设置">
         <div>
@@ -1020,6 +1334,11 @@ export function DeviceCenterPage({
       </div>
 
       {actionError !== undefined && <p className="device-center__alert" role="alert">{actionError}</p>}
+      {verificationRetryEventId !== undefined && (
+        <button className="text-button" onClick={retryVerification} type="button">
+          重试验证
+        </button>
+      )}
 
       <BluetoothGate
         environment={{ ...environment, appState, bluetoothPowered }}
@@ -1057,6 +1376,7 @@ export function DeviceCenterPage({
         audioConsent={snapshot.consent.audioCapture}
         interactionConsent={snapshot.consent.interactionEvents}
         mode={mode}
+        onInteractionConsentChange={handleInteractionConsentChange}
         onError={setActionError}
         runtime={runtime}
       />
@@ -1064,9 +1384,11 @@ export function DeviceCenterPage({
 
       {visiblePending !== undefined && (
         <PendingHardwarePrompt
+          busy={pendingActionEventId === visiblePending.pending.event.eventId}
           mode={mode}
-          onClose={dismissPending}
-          onEnter={enterPending}
+          onDefer={deferPending}
+          onDismiss={() => void dismissPending()}
+          onEnter={() => void enterPending()}
           pending={visiblePending.pending}
         />
       )}

@@ -5,6 +5,7 @@ import type {
   DeviceDiscoverySession,
   DeviceResult,
   DeviceSession,
+  DeviceSessionState,
   DeviceSubscription,
   DeviceTransport,
   DeviceTransportFrame,
@@ -146,6 +147,99 @@ function createAdapter(
       return ok(session)
     },
   }
+}
+
+function createControlledAdapter(adapterId: string) {
+  interface Controller {
+    state: DeviceSessionState
+    eventListeners: Set<(event: NormalizedDeviceEventBase) => void>
+    stateListeners: Set<(state: DeviceSessionState) => void>
+  }
+
+  const controllers = new Map<string, Controller>()
+  let sequence = 0
+  const adapter: DeviceAdapter<NormalizedDeviceEventBase> = {
+    adapterId,
+    matches: (device) => device.displayName?.startsWith(adapterId) ?? false,
+    openSession: async (transportSession) => {
+      const discoveryId = transportSession.device.discoveryId
+      const controller: Controller = {
+        state: 'open',
+        eventListeners: new Set(),
+        stateListeners: new Set(),
+      }
+      controllers.set(discoveryId, controller)
+      const sessionId = `${adapterId}-controlled-session-${++sequence}`
+      return ok({
+        sessionId,
+        device: {
+          deviceId: `${adapterId}-${discoveryId}`,
+          displayName: transportSession.device.displayName,
+          category: 'ring',
+          adapterId,
+        },
+        capabilities,
+        getState: () => controller.state,
+        subscribeState: (listener) => {
+          controller.stateListeners.add(listener)
+          listener(controller.state)
+          return {
+            unsubscribe: () => controller.stateListeners.delete(listener),
+          }
+        },
+        subscribe: (listener) => {
+          controller.eventListeners.add(listener)
+          return ok({
+            subscriptionId: `${sessionId}-listener-${controller.eventListeners.size}`,
+            unsubscribe: () => controller.eventListeners.delete(listener),
+          })
+        },
+        execute: async (command) =>
+          ok({
+            commandId: command.commandId,
+            sessionId,
+            status: 'completed',
+            acknowledgedAt: command.issuedAt,
+          }),
+        close: async () => {
+          controller.state = 'closed'
+          for (const listener of [...controller.stateListeners]) listener('closed')
+          return transportSession.close()
+        },
+      })
+    },
+  }
+
+  return {
+    adapter,
+    emit(discoveryId: string, event: NormalizedDeviceEventBase) {
+      const controller = controllers.get(discoveryId)
+      if (controller === undefined) throw new Error(`No session for ${discoveryId}.`)
+      for (const listener of [...controller.eventListeners]) listener(event)
+    },
+    end(discoveryId: string, state: Extract<DeviceSessionState, 'disconnected' | 'failed'>) {
+      const controller = controllers.get(discoveryId)
+      if (controller === undefined) throw new Error(`No session for ${discoveryId}.`)
+      controller.state = state
+      for (const listener of [...controller.stateListeners]) listener(state)
+    },
+  }
+}
+
+function runtimeEvent(
+  eventId: string,
+  kind: string,
+  details: Record<string, unknown> = {},
+): NormalizedDeviceEventBase {
+  return {
+    eventId,
+    deviceId: 'controlled-ring',
+    sessionId: 'controlled-session',
+    occurredAt: '2026-08-03T00:00:00.000Z',
+    source: 'physical',
+    kind,
+    ...details,
+  } as unknown as NormalizedDeviceEventBase
 }
 
 function createTransport(
@@ -425,6 +519,195 @@ describe('device runtime', () => {
     expect(session.getState()).toBe('disconnected')
     expect(saved.at(-1)).not.toHaveProperty('activeClaims')
     expect(saved.at(-1)).not.toHaveProperty('rawAudio')
+  })
+
+  it('removes retained interactions from connected, disconnected, and failed devices', async () => {
+    const discoveredAt = '2026-08-03T00:00:00.000Z'
+    const devices: DiscoveredDevice[] = ['connected', 'disconnected', 'failed'].map(
+      (state) => ({
+        discoveryId: `ring-${state}`,
+        transportId: 'fixture-transport',
+        transportKind: 'bluetooth_low_energy',
+        displayName: `ring ${state}`,
+        connectable: true,
+        discoveredAt,
+      }),
+    )
+    const controlled = createControlledAdapter('ring')
+    const runtime = createDeviceRuntime({
+      transports: [
+        createTransport(
+          devices,
+          devices.map((device) =>
+            ok(createTransportSession(device, `${device.discoveryId}-transport`)),
+          ),
+        ),
+      ],
+      adapters: [controlled.adapter],
+    })
+
+    await runtime.setConsent({ interactionEvents: true })
+    await runtime.scan()
+    for (const device of devices) {
+      await expect(runtime.connect(device.discoveryId)).resolves.toMatchObject({ ok: true })
+      controlled.emit(
+        device.discoveryId,
+        runtimeEvent(`${device.discoveryId}-interaction`, 'interaction', {
+          interaction: 'mark_moment',
+        }),
+      )
+    }
+    await runtime.disconnect('ring-disconnected')
+    controlled.end('ring-failed', 'failed')
+
+    expect(runtime.getSnapshot().devices.map((device) => device.phase)).toEqual([
+      'connected',
+      'disconnected',
+      'failed',
+    ])
+    expect(
+      runtime.getSnapshot().devices.every(
+        (device) =>
+          (device.latestEvent as unknown as { kind?: string } | undefined)?.kind ===
+          'interaction',
+      ),
+    ).toBe(true)
+
+    await expect(runtime.setConsent({ interactionEvents: false })).resolves.toMatchObject({
+      ok: true,
+    })
+
+    const snapshot = runtime.getSnapshot()
+    expect(snapshot.sessions).toHaveLength(1)
+    expect(snapshot.sessions[0]?.history).toEqual([])
+    expect(snapshot.sessions[0]?.latestEvent).toBeUndefined()
+    expect(snapshot.devices.every((device) => device.latestEvent === undefined)).toBe(true)
+  })
+
+  it('preserves non-interaction history, latest values, and latest events on revocation', async () => {
+    const device: DiscoveredDevice = {
+      discoveryId: 'ring-consent-retention',
+      transportId: 'fixture-transport',
+      transportKind: 'bluetooth_low_energy',
+      displayName: 'ring consent retention',
+      connectable: true,
+      discoveredAt: '2026-08-03T00:00:00.000Z',
+    }
+    const controlled = createControlledAdapter('ring')
+    const runtime = createDeviceRuntime({
+      transports: [
+        createTransport(
+          [device],
+          [ok(createTransportSession(device, 'ring-consent-retention-transport'))],
+        ),
+      ],
+      adapters: [controlled.adapter],
+    })
+
+    await runtime.setConsent({ interactionEvents: true })
+    await runtime.scan()
+    await runtime.connect(device.discoveryId)
+    controlled.emit(
+      device.discoveryId,
+      runtimeEvent('heart-rate', 'metric', {
+        metric: {
+          name: 'heart_rate',
+          value: 72,
+          unit: 'bpm',
+          privacy: 'normalized',
+          exportConsentRequired: false,
+        },
+      }),
+    )
+    controlled.emit(
+      device.discoveryId,
+      runtimeEvent('worn-status', 'status', { status: 'worn' }),
+    )
+    controlled.emit(
+      device.discoveryId,
+      runtimeEvent('parse-failure', 'parse_failure', {
+        errorCode: 'invalid_data',
+        failure: { code: 'invalid_packet' },
+      }),
+    )
+    controlled.emit(
+      device.discoveryId,
+      runtimeEvent('mark-moment', 'interaction', { interaction: 'mark_moment' }),
+    )
+
+    await runtime.setConsent({ interactionEvents: false })
+
+    const snapshot = runtime.getSnapshot()
+    expect(
+      snapshot.sessions[0]?.history.map(
+        (event) => (event as unknown as { kind?: string }).kind,
+      ),
+    ).toEqual(['metric', 'status', 'parse_failure'])
+    expect(snapshot.sessions[0]?.latestEvent).toMatchObject({
+      eventId: 'parse-failure',
+      kind: 'parse_failure',
+    })
+    expect(snapshot.devices[0]?.latestEvent).toMatchObject({
+      eventId: 'parse-failure',
+      kind: 'parse_failure',
+    })
+    expect(snapshot.sessions[0]?.latestValues.heart_rate).toMatchObject({
+      value: 72,
+      unit: 'bpm',
+    })
+    expect(snapshot.devices[0]?.latestValues.heart_rate).toMatchObject({
+      value: 72,
+      unit: 'bpm',
+    })
+  })
+
+  it('continues rejecting new interactions after consent is revoked', async () => {
+    const device: DiscoveredDevice = {
+      discoveryId: 'ring-revoked',
+      transportId: 'fixture-transport',
+      transportKind: 'bluetooth_low_energy',
+      displayName: 'ring revoked',
+      connectable: true,
+      discoveredAt: '2026-08-03T00:00:00.000Z',
+    }
+    const controlled = createControlledAdapter('ring')
+    const runtime = createDeviceRuntime({
+      transports: [
+        createTransport(
+          [device],
+          [ok(createTransportSession(device, 'ring-revoked-transport'))],
+        ),
+      ],
+      adapters: [controlled.adapter],
+    })
+
+    await runtime.setConsent({ interactionEvents: true })
+    await runtime.scan()
+    const connection = await runtime.connect(device.discoveryId)
+    if (!connection.ok) throw new Error(connection.error.message)
+    const received = vi.fn()
+    const subscription = connection.value.subscribe(received)
+    expect(subscription).toMatchObject({ ok: true })
+    await runtime.setConsent({ interactionEvents: false })
+
+    controlled.emit(
+      device.discoveryId,
+      runtimeEvent('rejected-interaction', 'interaction', {
+        interaction: 'mark_moment',
+      }),
+    )
+    expect(received).not.toHaveBeenCalled()
+    expect(runtime.getSnapshot().sessions[0]?.history).toEqual([])
+    expect(runtime.getSnapshot().devices[0]?.latestEvent).toBeUndefined()
+
+    const status = runtimeEvent('allowed-status', 'status', { status: 'worn' })
+    controlled.emit(device.discoveryId, status)
+    expect(received).toHaveBeenCalledWith(expect.objectContaining({ eventId: 'allowed-status' }))
+    expect(runtime.getSnapshot().sessions[0]?.history).toHaveLength(1)
+    expect(runtime.getSnapshot().devices[0]?.latestEvent).toMatchObject({
+      eventId: 'allowed-status',
+      kind: 'status',
+    })
   })
 
   it('serializes preference updates after asynchronous persistence restore', async () => {

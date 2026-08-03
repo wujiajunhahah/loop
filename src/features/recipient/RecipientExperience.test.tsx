@@ -1,23 +1,70 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { beforeEach, describe, expect, it } from 'vitest'
-import { playbackService } from '../../data/services'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import {
+  contextCaptureService,
+  demoPlans,
+  demoRecipientSessions,
+  playbackService,
+} from '../../data/services'
+import { plannedInteractions, recipientSessions } from '../../data/seed'
 import { RecipientExperience } from './RecipientExperience'
 import { resetRecipientEntryForTests } from './session'
 import {
   clearDeviceInteractionHandoff,
+  readDeviceInteractionHandoff,
   writeDeviceInteractionHandoff,
 } from '../devices/deviceInteractionHandoff'
 
+function recipientHandoff(eventId = 'touch-verified-1') {
+  return {
+    version: 2 as const,
+    purpose: 'recipient_entry' as const,
+    eventId,
+    interaction: 'touch' as const,
+    deviceId: 'ring-verified-1',
+    deviceName: 'Alloop Ring',
+    source: 'simulated' as const,
+    occurredAt: new Date().toISOString(),
+    verification: 'entrustment_verified' as const,
+    ownerId: 'person-mei',
+    recipientId: 'person-lin',
+    sessionId: 'ring-session-verified-1',
+    sessionSequence: 3,
+    profile: {
+      profileId: 'ring-demo-v1',
+      sourceReference: 'simulator:ring:v1',
+      validation: 'fixture_only' as const,
+    },
+  }
+}
+
 describe('recipient experience demo', () => {
+  afterEach(() => cleanup())
+
   beforeEach(async () => {
     window.location.hash = '/recipient'
     await playbackService.stop()
     resetRecipientEntryForTests()
     clearDeviceInteractionHandoff()
     sessionStorage.clear()
+    vi.restoreAllMocks()
+    demoRecipientSessions.splice(
+      0,
+      demoRecipientSessions.length,
+      ...recipientSessions.map((session) => ({ ...session })),
+    )
+    demoPlans.splice(
+      0,
+      demoPlans.length,
+      ...plannedInteractions.map((plan) => ({
+        ...plan,
+        memoryIds: [...plan.memoryIds],
+      })),
+    )
   })
 
   it('lets Lin actively enter, continue the recipe plan, and leave a response', async () => {
+    const capture = vi.spyOn(contextCaptureService, 'capture')
     render(<RecipientExperience />)
 
     expect(screen.getByText('这里有一段只留给你的东西。')).toBeInTheDocument()
@@ -48,6 +95,9 @@ describe('recipient experience demo', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: /保存回应/ }))
     await screen.findByText('已保存到你们的关系记录。')
+    expect(capture).toHaveBeenLastCalledWith(expect.objectContaining({
+      original: expect.objectContaining({ text: '今天我也做了这道菜。' }),
+    }))
   })
 
   it('does not let a direct deep link bypass recipient confirmation', () => {
@@ -60,18 +110,7 @@ describe('recipient experience demo', () => {
   })
 
   it('shows verified device provenance before identity confirmation', async () => {
-    writeDeviceInteractionHandoff({
-      version: 1,
-      purpose: 'recipient_entry',
-      eventId: 'touch-verified-1',
-      interaction: 'touch',
-      deviceId: 'ring-verified-1',
-      deviceName: 'Alloop Ring',
-      source: 'simulated',
-      occurredAt: '2026-08-03T00:00:00.000Z',
-      verification: 'entrustment_verified',
-      recipientId: 'person-lin',
-    })
+    writeDeviceInteractionHandoff(recipientHandoff())
     window.location.hash = '/recipient/verify'
 
     render(<RecipientExperience />)
@@ -80,17 +119,64 @@ describe('recipient experience demo', () => {
     expect(screen.getByText(/Alloop Ring · 演示数据/)).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /是我的，打开看看/ }))
     await screen.findByText('The first family recipe')
+    const currentSession = demoRecipientSessions.find(
+      (session) => session.trigger?.eventId === 'touch-verified-1',
+    )
+    expect(currentSession).toMatchObject({
+      initiatedByRecipient: true,
+      trigger: {
+        ownerId: 'person-mei',
+        recipientId: 'person-lin',
+        sessionId: 'ring-session-verified-1',
+        sessionSequence: 3,
+        profile: { validation: 'fixture_only' },
+      },
+    })
+    expect(currentSession?.id).not.toBe('session-demo')
+    expect(readDeviceInteractionHandoff('recipient_entry')).toBeUndefined()
   })
 
-  it('persists the recipient permanent-close choice', () => {
+  it('persists permanent close across every recipient path and clears new handoffs', async () => {
     const view = render(<RecipientExperience />)
     fireEvent.click(screen.getByRole('button', { name: '永久关闭这段入口' }))
     view.unmount()
-    window.location.hash = '/recipient'
 
+    for (const path of [
+      '/recipient',
+      '/recipient/verify',
+      '/recipient/memory/memory-tomato-eggs',
+      '/recipient/plan/plan-five-recipes',
+      '/recipient/complete',
+    ]) {
+      window.location.hash = path
+      const closedView = render(<RecipientExperience />)
+      expect(screen.getByText('这段入口已按你的选择关闭。')).toBeInTheDocument()
+      expect(screen.queryByText('The first family recipe')).not.toBeInTheDocument()
+      closedView.unmount()
+    }
+
+    writeDeviceInteractionHandoff(recipientHandoff('touch-after-close'))
+    window.location.hash = '/recipient/verify'
     render(<RecipientExperience />)
-
     expect(screen.getByText('这段入口已按你的选择关闭。')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /主动进入/ })).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(readDeviceInteractionHandoff('recipient_entry')).toBeUndefined()
+    })
+  })
+
+  it.each([
+    ['postpone', /现在还不想看/],
+    ['skip', /跳过这次/],
+  ])('consumes the handoff when the recipient chooses %s', async (_choice, buttonName) => {
+    writeDeviceInteractionHandoff(recipientHandoff(`touch-${_choice}`))
+    window.location.hash = '/recipient/verify'
+    const view = render(<RecipientExperience />)
+
+    fireEvent.click(screen.getByRole('button', { name: buttonName }))
+    expect(readDeviceInteractionHandoff('recipient_entry')).toBeUndefined()
+    view.unmount()
+    window.location.hash = '/recipient/verify'
+    render(<RecipientExperience />)
+    expect(screen.getByText('先从你的入口确认身份。')).toBeInTheDocument()
   })
 })

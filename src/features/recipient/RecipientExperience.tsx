@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import type { Memory, RecipientChoice, RecipientSession } from '../../domain'
 import type { RecipientAgentView } from '../agent'
-import { contextCaptureService, demoMemories, demoRecipientSessions, plannedInteractionService, relationshipAgent, playbackService } from '../../data/services'
+import { contextCaptureService, demoMemories, plannedInteractionService, relationshipAgent, playbackService, upsertDemoRecipientSession } from '../../data/services'
 import { simulatorBridge } from '../hardware/simulatorStore'
 import {
   clearDeviceInteractionHandoff,
@@ -10,6 +10,7 @@ import {
 } from '../devices/deviceInteractionHandoff'
 import {
   chooseRecipientAction,
+  confirmRecipientSession,
   demoPlan,
   demoRecipient,
   createRecipientSession,
@@ -34,8 +35,16 @@ function go(path: string) {
 }
 
 export function RecipientExperience() {
-  const [deviceHandoff] = useState(() =>
-    readDeviceInteractionHandoff('recipient_entry'),
+  const [permanentlyClosed, setPermanentlyClosed] = useState(
+    isRecipientEntryPermanentlyClosed,
+  )
+  const [deviceHandoff, setDeviceHandoff] = useState(() =>
+    permanentlyClosed
+      ? undefined
+      : readDeviceInteractionHandoff('recipient_entry', {
+          ownerId: 'person-mei',
+          recipientId: demoRecipient.id,
+        }),
   )
   const [path, setPath] = useState<RecipientPath>(getPath)
   const [session, setSession] = useState<RecipientSession>(() =>
@@ -43,11 +52,9 @@ export function RecipientExperience() {
   )
   const [manualEntry, setManualEntry] = useState(false)
   const [identityConfirmed, setIdentityConfirmed] = useState(false)
-  const [permanentlyClosed, setPermanentlyClosed] = useState(
-    isRecipientEntryPermanentlyClosed,
-  )
   const [presentationMode, setPresentationMode] = useState<PresentationMode>('text')
   const [presentation, setPresentation] = useState<RecipientAgentView>()
+  const [presentationFailed, setPresentationFailed] = useState(false)
   const [memory, setMemory] = useState<Memory>()
   const [loading, setLoading] = useState(false)
   const [playing, setPlaying] = useState(false)
@@ -61,37 +68,68 @@ export function RecipientExperience() {
   }, [])
 
   useEffect(() => simulatorBridge.subscribe((event) => {
-    if ((event.eventType === 'touch' || event.eventType === 'simulated') && event.recipientId === demoRecipient.id) {
+    if (
+      !permanentlyClosed &&
+      (event.eventType === 'touch' || event.eventType === 'simulated') &&
+      event.recipientId === demoRecipient.id
+    ) {
       go('/recipient/verify')
     }
-  }), [])
+  }), [permanentlyClosed])
 
   useEffect(() => {
-    if (path !== 'memory' || presentation) return
+    if (!permanentlyClosed) return
+    clearDeviceInteractionHandoff(deviceHandoff?.eventId)
+    setDeviceHandoff(undefined)
+  }, [deviceHandoff?.eventId, permanentlyClosed])
+
+  useEffect(() => {
+    if (
+      path !== 'memory' ||
+      presentation ||
+      presentationFailed ||
+      !identityConfirmed ||
+      permanentlyClosed
+    ) return
     let cancelled = false
     setLoading(true)
     void (async () => {
-      const activeSession = demoRecipientSessions.find((item) => item.id === session.id)
-      if (!activeSession) demoRecipientSessions.push(session)
-      const composed = await relationshipAgent.enter({
-        relationshipId: demoRecipient.relationshipId,
-        sessionId: session.id,
-        delivery: 'recipient_request',
-      })
-      const memory = demoMemories.find((item) => item.id === composed.content.memoryId)
-      if (!cancelled) {
-        setPresentation(composed)
-        setMemory(memory)
-        setLoading(false)
+      try {
+        const composed = await relationshipAgent.enter({
+          relationshipId: demoRecipient.relationshipId,
+          sessionId: session.id,
+          delivery: 'recipient_request',
+        })
+        const memory = demoMemories.find((item) => item.id === composed.content.memoryId)
+        if (!cancelled) {
+          setPresentation(composed)
+          setMemory(memory)
+        }
+      } catch {
+        if (!cancelled) {
+          setPresentationFailed(true)
+          setPresentation(undefined)
+          setMemory(undefined)
+        }
+      } finally {
+        if (!cancelled) setLoading(false)
       }
     })()
     return () => {
       cancelled = true
     }
-  }, [path, presentation, session.id])
+  }, [identityConfirmed, path, permanentlyClosed, presentation, presentationFailed, session.id])
+
+  const consumeDeviceHandoff = () => {
+    clearDeviceInteractionHandoff(deviceHandoff?.eventId)
+    setDeviceHandoff(undefined)
+  }
 
   const choose = (choice: RecipientChoice, next?: string) => {
-    setSession((current) => chooseRecipientAction(current, choice))
+    const nextSession = chooseRecipientAction(session, choice)
+    upsertDemoRecipientSession(nextSession)
+    setSession(nextSession)
+    if (choice !== 'accept') consumeDeviceHandoff()
     if (choice === 'accept') {
       try {
         plannedInteractionService.transition(
@@ -108,9 +146,18 @@ export function RecipientExperience() {
 
   const closePermanently = () => {
     permanentlyCloseRecipientEntry()
-    clearDeviceInteractionHandoff(deviceHandoff?.eventId)
+    consumeDeviceHandoff()
     setPermanentlyClosed(true)
     choose('close', '/')
+  }
+
+  const confirmIdentity = () => {
+    const confirmedSession = confirmRecipientSession(session)
+    upsertDemoRecipientSession(confirmedSession)
+    setSession(confirmedSession)
+    setIdentityConfirmed(true)
+    consumeDeviceHandoff()
+    go('/recipient/memory/memory-tomato-eggs')
   }
 
   const continuePlan = () => {
@@ -147,6 +194,7 @@ export function RecipientExperience() {
         modality: 'text',
         uri: `memory://recipient-response/${Date.now()}`,
         capturedAt: new Date().toISOString(),
+        text: response.trim(),
       },
     })
     setSavedResponse(true)
@@ -159,17 +207,20 @@ export function RecipientExperience() {
     (path !== 'verify' && !identityConfirmed)
   )
 
+  if (permanentlyClosed) {
+    return <section className="recipient-shell"><p className="eyebrow">Entry closed</p><h1>这段入口已按你的选择关闭。</h1><p className="recipient-lead">Loop 不会自动重新打开、播放或发送提醒。新的入口需要新的明确托付与身份确认。</p><a className="button button--secondary" href="#/">返回首页</a></section>
+  }
+
   if (gatedPath) {
     return <section className="recipient-shell"><p className="eyebrow">Identity required</p><h1>先从你的入口确认身份。</h1><p className="recipient-lead">直接链接不会打开记忆、计划或音频。请回到入口，由你主动开始。</p><a className="button button--primary" href="#/recipient">回到入口</a></section>
   }
 
   if (path === 'entry') {
-    if (permanentlyClosed) return <section className="recipient-shell"><p className="eyebrow">Entry closed</p><h1>这段入口已按你的选择关闭。</h1><p className="recipient-lead">Loop 不会自动重新打开、播放或发送提醒。新的入口需要新的明确托付与身份确认。</p><a className="button button--secondary" href="#/">返回首页</a></section>
     return <section className="recipient-shell"><p className="eyebrow">A private place for you</p><h1>这里有一段只留给你的东西。</h1><p className="recipient-lead">你可以从戒指的触碰进入，也可以在 Demo 中主动打开。什么时候靠近，由你决定。</p><div className="recipient-entry"><div><span className="ring-mark" aria-hidden="true">○</span><p className="micro-label">来自 Mei · {demoRecipient.relationshipLabel}</p><h2>母亲想和你继续做五道菜</h2><p>没有自动播放，也没有必须完成的事情。先确认这是你的入口。</p></div><button className="button button--primary" onClick={() => { setManualEntry(true); go('/recipient/verify') }}>主动进入 <span aria-hidden="true">→</span></button></div><button className="text-button" onClick={closePermanently}>永久关闭这段入口</button></section>
   }
 
   if (path === 'verify') {
-    return <section className="recipient-shell"><p className="eyebrow">Step 01 · Your choice</p><h1>这是给你的吗？</h1><p className="recipient-lead">它来自 Mei，关系标记是“{demoRecipient.relationshipLabel}”。确认后，Loop 才会为你整理这一次进入的内容。</p>{deviceHandoff && <div className="recipient-source" role="status"><strong>设备入口已验证</strong><span>{deviceHandoff.deviceName} · {deviceHandoff.source === 'simulated' ? '演示数据' : '实体设备'} · {new Date(deviceHandoff.occurredAt).toLocaleString('zh-CN')}</span><small>托付与接收者身份已验证；内容、播放与回应仍由你决定。</small></div>}<div className="choice-list"><button className="choice choice--strong" onClick={() => { setIdentityConfirmed(true); clearDeviceInteractionHandoff(deviceHandoff?.eventId); go('/recipient/memory/memory-tomato-eggs') }}><span>是我的，打开看看</span><span aria-hidden="true">→</span></button><button className="choice" onClick={() => choose('postpone', '/')}><span>现在还不想看，稍后再说</span><span aria-hidden="true">↓</span></button><button className="choice" onClick={() => choose('skip', '/')}><span>跳过这次</span><span aria-hidden="true">×</span></button></div><button className="text-button" onClick={closePermanently}>永久关闭</button></section>
+    return <section className="recipient-shell"><p className="eyebrow">Step 01 · Your choice</p><h1>这是给你的吗？</h1><p className="recipient-lead">它来自 Mei，关系标记是“{demoRecipient.relationshipLabel}”。确认后，Loop 才会为你整理这一次进入的内容。</p>{deviceHandoff && <div className="recipient-source" role="status"><strong>设备入口已验证</strong><span>{deviceHandoff.deviceName} · {deviceHandoff.source === 'simulated' ? '演示数据' : '实体设备'} · {new Date(deviceHandoff.occurredAt).toLocaleString('zh-CN')}</span><small>托付与接收者身份已验证；内容、播放与回应仍由你决定。</small></div>}<div className="choice-list"><button className="choice choice--strong" onClick={confirmIdentity}><span>是我的，打开看看</span><span aria-hidden="true">→</span></button><button className="choice" onClick={() => choose('postpone', '/')}><span>现在还不想看，稍后再说</span><span aria-hidden="true">↓</span></button><button className="choice" onClick={() => choose('skip', '/')}><span>跳过这次</span><span aria-hidden="true">×</span></button></div><button className="text-button" onClick={closePermanently}>永久关闭</button></section>
   }
 
   if (path === 'memory') {
@@ -181,5 +232,5 @@ export function RecipientExperience() {
     return <section className="recipient-shell"><p className="eyebrow">Step 03 · An invitation</p><h1>{demoPlan.title}</h1><p className="recipient-lead">这不是 Mei 留下的任务，而是一件你可以选择继续的共同小事。</p><div className="plan-progress"><div><strong>第 1 道</strong><span> / {demoPlan.totalSteps} 道</span></div><div className="progress-track"><span /></div><p>番茄炒蛋 · 先从最熟悉的一道开始</p></div><blockquote>“{demoPlan.invitation}”</blockquote><div className="recipient-actions"><button className="button button--primary" onClick={continuePlan}>继续这项计划 <span aria-hidden="true">→</span></button><button className="button button--secondary" onClick={() => choose('postpone', '/')}>以后再决定</button><button className="text-button" onClick={() => choose('close', '/')}>关闭这项计划</button></div></section>
   }
 
-  return <section className="recipient-shell"><p className="eyebrow">Completed for today</p><h1>你们的下一步，已经留出位置。</h1><p className="recipient-lead">第一道菜被点亮了。关系不会因为一次打开就结束，也不需要今天完成全部五道。</p><div className="completion-grid"><div className="completion-number">01<span>/05</span></div><div><h2>番茄炒蛋</h2><p>下一次，你可以从厨房里继续这段共同计划。</p></div></div><form className="response-form" onSubmit={(event) => void saveResponse(event)}><label htmlFor="recipient-response">留下一个回应或记录</label><textarea id="recipient-response" value={response} onChange={(event) => setResponse(event.target.value)} placeholder="今天想记下什么？" rows={4} /><p className="form-note">回应属于 Lin 自己，不会触发系统伪造 Mei 的即时回复。</p><button className="button button--primary" type="submit">保存回应 <span aria-hidden="true">↗</span></button>{savedResponse && <p className="form-note" role="status">已保存到你们的关系记录。</p>}</form><button className="text-button" onClick={() => { setSession(createRecipientSession()); setPresentation(undefined); setMemory(undefined); setManualEntry(false); setIdentityConfirmed(false); go('/recipient') }}>回到入口</button><span className="sr-only">Session status: {session.status}</span></section>
+  return <section className="recipient-shell"><p className="eyebrow">Completed for today</p><h1>你们的下一步，已经留出位置。</h1><p className="recipient-lead">第一道菜被点亮了。关系不会因为一次打开就结束，也不需要今天完成全部五道。</p><div className="completion-grid"><div className="completion-number">01<span>/05</span></div><div><h2>番茄炒蛋</h2><p>下一次，你可以从厨房里继续这段共同计划。</p></div></div><form className="response-form" onSubmit={(event) => void saveResponse(event)}><label htmlFor="recipient-response">留下一个回应或记录</label><textarea id="recipient-response" value={response} onChange={(event) => setResponse(event.target.value)} placeholder="今天想记下什么？" rows={4} /><p className="form-note">回应属于 Lin 自己，不会触发系统伪造 Mei 的即时回复。</p><button className="button button--primary" type="submit">保存回应 <span aria-hidden="true">↗</span></button>{savedResponse && <p className="form-note" role="status">已保存到你们的关系记录。</p>}</form><button className="text-button" onClick={() => { setSession(createRecipientSession()); setPresentation(undefined); setPresentationFailed(false); setMemory(undefined); setManualEntry(false); setIdentityConfirmed(false); go('/recipient') }}>回到入口</button><span className="sr-only">Session status: {session.status}</span></section>
 }

@@ -10,6 +10,13 @@ import type {
 } from '../../devices/runtime'
 import { MockHardwareBridge } from '../../adapters/hardware'
 import { DeviceCenterPage } from './DeviceCenterPage'
+import {
+  clearDeviceInteractionHandoff,
+  clearProcessedDeviceInteractions,
+  isDeviceInteractionProcessed,
+  readDeviceInteractionHandoff,
+  writeDeviceInteractionHandoff,
+} from './deviceInteractionHandoff'
 
 const capabilities: DeviceCapabilityReport = {
   interaction_events: { status: 'requires_vendor_profile', reason: '等待经过审核的设备协议。' },
@@ -184,12 +191,48 @@ function createRuntimeHarness(initial = snapshot()) {
 }
 
 function renderCenter(props: Record<string, unknown>) {
-  return render(createElement(DeviceCenterPage, props as never))
+  return render(createElement(DeviceCenterPage, {
+    now: () => Date.parse('2026-08-03T00:05:00.000Z'),
+    ...props,
+  } as never))
+}
+
+function interactionEvent(
+  eventId: string,
+  interaction: 'mark_moment' | 'touch',
+) {
+  return {
+    eventId,
+    deviceId: 'ring-normalized-private-id',
+    sessionId: 'ring-session-private-id',
+    occurredAt: '2026-08-03T00:00:00.000Z',
+    source: 'physical' as const,
+    kind: 'interaction' as const,
+    interaction,
+  }
+}
+
+async function createEntrustedHardwareBridge(deviceId: string) {
+  const hardwareBridge = new MockHardwareBridge()
+  await hardwareBridge.bindDevice({
+    deviceId,
+    deviceType: 'ring',
+    ownerProof: { identityId: 'person-mei', method: 'mock_code', value: 'LOOP-DEMO' },
+  })
+  await hardwareBridge.entrustDevice({
+    deviceId,
+    ownerProof: { identityId: 'person-mei', method: 'mock_code', value: 'LOOP-DEMO' },
+    recipientProof: { identityId: 'person-lin', method: 'mock_confirmation', value: 'LOOP-DEMO' },
+  })
+  return hardwareBridge
 }
 
 describe('DeviceCenterPage', () => {
   beforeEach(() => {
     window.location.hash = '#/devices'
+    clearDeviceInteractionHandoff()
+    clearProcessedDeviceInteractions()
+    sessionStorage.clear()
   })
 
   afterEach(() => {
@@ -432,11 +475,12 @@ describe('DeviceCenterPage', () => {
         value: 'LOOP-DEMO',
       },
     })
-    renderCenter({
+    const props = {
       runtime: harness.runtime,
       hardwareBridge,
       environment: { physicalSupported: true, permission: 'granted' },
-    })
+    }
+    const firstRender = renderCenter(props)
 
     expect(await screen.findByRole('dialog', { name: '为这一刻留个位置' })).toBeInTheDocument()
     expect(window.location.hash).toBe('#/devices')
@@ -444,6 +488,66 @@ describe('DeviceCenterPage', () => {
 
     fireEvent.click(screen.getByRole('button', { name: '进入记录引导' }))
     expect(window.location.hash).toBe('#/capture/new')
+
+    firstRender.unmount()
+    window.location.hash = '#/devices'
+    renderCenter(props)
+    await act(async () => {
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('does not repeat a dismissed event after remount and still offers a new event', async () => {
+    const mark = {
+      eventId: 'dismissed-mark-event',
+      deviceId: 'ring-normalized-private-id',
+      sessionId: 'ring-session-private-id',
+      occurredAt: '2026-08-03T00:00:00.000Z',
+      source: 'physical' as const,
+      kind: 'interaction' as const,
+      interaction: 'mark_moment' as const,
+    }
+    const harness = createRuntimeHarness(snapshot({
+      phase: 'connected',
+      consent: { audioCapture: false, sensitiveTelemetryExport: false, interactionEvents: true },
+      devices: [device('ring', 'connected', { event: mark })],
+    }))
+    const hardwareBridge = new MockHardwareBridge()
+    await hardwareBridge.bindDevice({
+      deviceId: mark.deviceId,
+      deviceType: 'ring',
+      ownerProof: { identityId: 'person-mei', method: 'mock_code', value: 'LOOP-DEMO' },
+    })
+    const props = {
+      runtime: harness.runtime,
+      hardwareBridge,
+      environment: { physicalSupported: true, permission: 'granted' as const },
+    }
+    const firstRender = renderCenter(props)
+
+    await screen.findByRole('dialog', { name: '为这一刻留个位置' })
+    fireEvent.click(screen.getByRole('button', { name: '忽略' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+    expect(isDeviceInteractionProcessed(mark.eventId)).toBe(true)
+
+    firstRender.unmount()
+    renderCenter(props)
+    await act(async () => {
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+
+    act(() => harness.publish(snapshot({
+      phase: 'connected',
+      consent: { audioCapture: false, sensitiveTelemetryExport: false, interactionEvents: true },
+      devices: [device('ring', 'connected', {
+        event: { ...mark, eventId: 'new-mark-event' },
+      })],
+    })))
+    expect(await screen.findByRole('dialog', { name: '为这一刻留个位置' })).toBeInTheDocument()
   })
 
   it('does not open a creator prompt for an unbound device event', async () => {
@@ -471,6 +575,78 @@ describe('DeviceCenterPage', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('设备尚未完成验证绑定')
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(window.location.hash).toBe('#/devices')
+  })
+
+  it('does not reuse creator verification after switching to recipient mode', async () => {
+    const mark = {
+      eventId: 'mode-race-mark-event',
+      deviceId: 'ring-normalized-private-id',
+      sessionId: 'ring-session-private-id',
+      occurredAt: '2026-08-03T00:00:00.000Z',
+      source: 'physical' as const,
+      kind: 'interaction' as const,
+      interaction: 'mark_moment' as const,
+    }
+    const harness = createRuntimeHarness(snapshot({
+      phase: 'connected',
+      consent: { audioCapture: false, sensitiveTelemetryExport: false, interactionEvents: true },
+      devices: [device('ring', 'connected', { event: mark })],
+    }))
+    const hardwareBridge = new MockHardwareBridge()
+    await hardwareBridge.bindDevice({
+      deviceId: mark.deviceId,
+      deviceType: 'ring',
+      ownerProof: { identityId: 'person-mei', method: 'mock_code', value: 'LOOP-DEMO' },
+    })
+    renderCenter({
+      runtime: harness.runtime,
+      hardwareBridge,
+      environment: { physicalSupported: true, permission: 'granted' },
+    })
+
+    const creatorEntry = await screen.findByRole('button', { name: '进入记录引导' })
+    fireEvent.click(screen.getByRole('radio', { name: '接收陪伴' }))
+    fireEvent.click(creatorEntry)
+
+    expect(window.location.hash).toBe('#/devices')
+    expect(readDeviceInteractionHandoff(undefined, {
+      now: Date.parse('2026-08-03T00:05:00.000Z'),
+    })).toBeUndefined()
+  })
+
+  it('rejects a device bound to a different owner', async () => {
+    const mark = {
+      eventId: 'wrong-owner-mark-event',
+      deviceId: 'ring-normalized-private-id',
+      sessionId: 'ring-session-private-id',
+      occurredAt: '2026-08-03T00:00:00.000Z',
+      source: 'physical' as const,
+      kind: 'interaction' as const,
+      interaction: 'mark_moment' as const,
+    }
+    const harness = createRuntimeHarness(snapshot({
+      phase: 'connected',
+      consent: { audioCapture: false, sensitiveTelemetryExport: false, interactionEvents: true },
+      devices: [device('ring', 'connected', { event: mark })],
+    }))
+    const hardwareBridge = new MockHardwareBridge()
+    await hardwareBridge.bindDevice({
+      deviceId: mark.deviceId,
+      deviceType: 'ring',
+      ownerProof: { identityId: 'person-other', method: 'mock_code', value: 'LOOP-DEMO' },
+    })
+    renderCenter({
+      runtime: harness.runtime,
+      hardwareBridge,
+      ownerId: 'person-mei',
+      environment: { physicalSupported: true, permission: 'granted' },
+    })
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('绑定不属于当前创建者')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(readDeviceInteractionHandoff(undefined, {
+      now: Date.parse('2026-08-03T00:05:00.000Z'),
+    })).toBeUndefined()
   })
 
   it('keeps recipient companionship pending, sourced, and user controlled', async () => {
@@ -532,7 +708,331 @@ describe('DeviceCenterPage', () => {
     expect(window.location.hash).toBe('#/devices')
 
     fireEvent.click(screen.getByRole('button', { name: '确认这是给我的' }))
-    expect(window.location.hash).toBe('#/recipient/verify')
+    await waitFor(() => expect(window.location.hash).toBe('#/recipient/verify'))
+  })
+
+  it('allows recipient verification to recover after a temporary trigger failure', async () => {
+    const touch = interactionEvent('retry-trigger-touch-event', 'touch')
+    const harness = createRuntimeHarness(snapshot({
+      phase: 'connected',
+      devices: [device('ring', 'connected')],
+    }))
+    const hardwareBridge = await createEntrustedHardwareBridge(touch.deviceId)
+    const trigger = vi.spyOn(hardwareBridge, 'trigger')
+      .mockRejectedValueOnce(new Error('temporary bridge failure'))
+    renderCenter({
+      runtime: harness.runtime,
+      hardwareBridge,
+      environment: { physicalSupported: true, permission: 'granted' },
+    })
+
+    fireEvent.click(screen.getByRole('radio', { name: '接收陪伴' }))
+    act(() => harness.publish(snapshot({
+      phase: 'connected',
+      consent: { audioCapture: false, sensitiveTelemetryExport: false, interactionEvents: true },
+      devices: [device('ring', 'connected', { event: touch })],
+    })))
+
+    expect(await screen.findByRole('alert')).not.toBeEmptyDOMElement()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(isDeviceInteractionProcessed(touch.eventId)).toBe(false)
+    fireEvent.click(screen.getByRole('button', { name: '重试验证' }))
+
+    expect(await screen.findByRole('dialog', { name: '为一段陪伴留出入口' })).toBeInTheDocument()
+    expect(trigger).toHaveBeenCalledTimes(2)
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
+  it('does not complete a recipient handoff after switching mode during consumption', async () => {
+    const touch = interactionEvent('mode-switch-during-consume-event', 'touch')
+    const harness = createRuntimeHarness(snapshot({
+      phase: 'connected',
+      devices: [device('ring', 'connected')],
+    }))
+    const hardwareBridge = await createEntrustedHardwareBridge(touch.deviceId)
+    const originalConsume = hardwareBridge.consume.bind(hardwareBridge)
+    let releaseConsume!: () => void
+    let notifyStarted!: () => void
+    const consumeStarted = new Promise<void>((resolve) => {
+      notifyStarted = resolve
+    })
+    const consumeBlocked = new Promise<void>((resolve) => {
+      releaseConsume = resolve
+    })
+    vi.spyOn(hardwareBridge, 'consume').mockImplementationOnce(async (eventId) => {
+      notifyStarted()
+      await consumeBlocked
+      return originalConsume(eventId)
+    })
+    renderCenter({
+      runtime: harness.runtime,
+      hardwareBridge,
+      environment: { physicalSupported: true, permission: 'granted' },
+    })
+
+    fireEvent.click(screen.getByRole('radio', { name: '接收陪伴' }))
+    act(() => harness.publish(snapshot({
+      phase: 'connected',
+      consent: { audioCapture: false, sensitiveTelemetryExport: false, interactionEvents: true },
+      devices: [device('ring', 'connected', { event: touch })],
+    })))
+    await screen.findByRole('dialog', { name: '为一段陪伴留出入口' })
+    fireEvent.click(screen.getByRole('button', { name: '确认这是给我的' }))
+    await consumeStarted
+    fireEvent.click(screen.getByRole('radio', { name: '记录这一刻' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+
+    await act(async () => {
+      releaseConsume()
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+
+    expect(window.location.hash).toBe('#/devices')
+    expect(readDeviceInteractionHandoff()).toBeUndefined()
+  })
+
+  it('defers without processing and offers the same event after remount', async () => {
+    const mark = interactionEvent('deferred-mark-event', 'mark_moment')
+    const harness = createRuntimeHarness(snapshot({
+      phase: 'connected',
+      consent: { audioCapture: false, sensitiveTelemetryExport: false, interactionEvents: true },
+      devices: [device('ring', 'connected', { event: mark })],
+    }))
+    const hardwareBridge = new MockHardwareBridge()
+    await hardwareBridge.bindDevice({
+      deviceId: mark.deviceId,
+      deviceType: 'ring',
+      ownerProof: { identityId: 'person-mei', method: 'mock_code', value: 'LOOP-DEMO' },
+    })
+    const props = {
+      runtime: harness.runtime,
+      hardwareBridge,
+      environment: { physicalSupported: true, permission: 'granted' as const },
+    }
+    const firstRender = renderCenter(props)
+
+    const dialog = await screen.findByRole('dialog', { name: '为这一刻留个位置' })
+    fireEvent.click(within(dialog).getByRole('button', { name: '稍后' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+    expect(isDeviceInteractionProcessed(mark.eventId)).toBe(false)
+
+    firstRender.unmount()
+    renderCenter(props)
+    expect(await screen.findByRole('dialog', { name: '为这一刻留个位置' })).toBeInTheDocument()
+  })
+
+  it('keeps keyboard focus and Escape inside a busy prompt with no enabled buttons', async () => {
+    const touch = interactionEvent('busy-prompt-touch-event', 'touch')
+    const harness = createRuntimeHarness(snapshot({
+      phase: 'connected',
+      devices: [device('ring', 'connected')],
+    }))
+    const hardwareBridge = await createEntrustedHardwareBridge(touch.deviceId)
+    const originalConsume = hardwareBridge.consume.bind(hardwareBridge)
+    let releaseConsume!: () => void
+    const consumeBlocked = new Promise<void>((resolve) => {
+      releaseConsume = resolve
+    })
+    vi.spyOn(hardwareBridge, 'consume').mockImplementationOnce(async (eventId) => {
+      await consumeBlocked
+      return originalConsume(eventId)
+    })
+    renderCenter({
+      runtime: harness.runtime,
+      hardwareBridge,
+      environment: { physicalSupported: true, permission: 'granted' },
+    })
+
+    fireEvent.click(screen.getByRole('radio', { name: '接收陪伴' }))
+    act(() => harness.publish(snapshot({
+      phase: 'connected',
+      consent: { audioCapture: false, sensitiveTelemetryExport: false, interactionEvents: true },
+      devices: [device('ring', 'connected', { event: touch })],
+    })))
+    const dialog = await screen.findByRole('dialog', { name: '为一段陪伴留出入口' })
+    fireEvent.click(within(dialog).getByRole('button', { name: '确认这是给我的' }))
+    await waitFor(() => expect(dialog).toHaveAttribute('aria-busy', 'true'))
+    expect(within(dialog).getAllByRole('button').every((button) => button.hasAttribute('disabled')))
+      .toBe(true)
+
+    const outsideControl = screen.getByRole('radio', { name: '记录这一刻' })
+    outsideControl.focus()
+    expect(outsideControl).toHaveFocus()
+    fireEvent.keyDown(dialog, { key: 'Tab' })
+    expect(dialog).toHaveFocus()
+    fireEvent.keyDown(dialog, { key: 'Escape' })
+    expect(screen.getByRole('dialog', { name: '为一段陪伴留出入口' })).toBeInTheDocument()
+
+    await act(async () => {
+      releaseConsume()
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+  })
+
+  it('keeps the recipient prompt open when bridge consumption fails', async () => {
+    const touch = {
+      eventId: 'consume-failure-touch-event',
+      deviceId: 'ring-normalized-private-id',
+      sessionId: 'ring-session-private-id',
+      occurredAt: '2026-08-03T00:00:00.000Z',
+      source: 'physical' as const,
+      kind: 'interaction' as const,
+      interaction: 'touch' as const,
+    }
+    const harness = createRuntimeHarness(snapshot({
+      phase: 'connected',
+      devices: [device('ring', 'connected')],
+    }))
+    const hardwareBridge = new MockHardwareBridge()
+    await hardwareBridge.bindDevice({
+      deviceId: touch.deviceId,
+      deviceType: 'ring',
+      ownerProof: { identityId: 'person-mei', method: 'mock_code', value: 'LOOP-DEMO' },
+    })
+    await hardwareBridge.entrustDevice({
+      deviceId: touch.deviceId,
+      ownerProof: { identityId: 'person-mei', method: 'mock_code', value: 'LOOP-DEMO' },
+      recipientProof: { identityId: 'person-lin', method: 'mock_confirmation', value: 'LOOP-DEMO' },
+    })
+    vi.spyOn(hardwareBridge, 'consume').mockRejectedValueOnce(new Error('bridge unavailable'))
+    renderCenter({
+      runtime: harness.runtime,
+      hardwareBridge,
+      environment: { physicalSupported: true, permission: 'granted' },
+    })
+
+    fireEvent.click(screen.getByRole('radio', { name: '接收陪伴' }))
+    act(() => harness.publish(snapshot({
+      phase: 'connected',
+      consent: { audioCapture: false, sensitiveTelemetryExport: false, interactionEvents: true },
+      devices: [device('ring', 'connected', { event: touch })],
+    })))
+    await screen.findByRole('dialog', { name: '为一段陪伴留出入口' })
+    fireEvent.click(screen.getByRole('button', { name: '确认这是给我的' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('设备事件未能完成确认，请重试')
+    expect(screen.getByRole('dialog', { name: '为一段陪伴留出入口' })).toBeInTheDocument()
+    expect(window.location.hash).toBe('#/devices')
+    expect(readDeviceInteractionHandoff()).toBeUndefined()
+    expect(isDeviceInteractionProcessed(touch.eventId)).toBe(false)
+  })
+
+  it('clears the pending handoff on consent revocation without replaying the old event', async () => {
+    const mark = {
+      eventId: 'revoked-mark-event',
+      deviceId: 'ring-normalized-private-id',
+      sessionId: 'ring-session-private-id',
+      occurredAt: '2026-08-03T00:00:00.000Z',
+      source: 'physical' as const,
+      kind: 'interaction' as const,
+      interaction: 'mark_moment' as const,
+    }
+    const harness = createRuntimeHarness(snapshot({
+      phase: 'connected',
+      consent: { audioCapture: false, sensitiveTelemetryExport: false, interactionEvents: true },
+      devices: [device('ring', 'connected', { event: mark })],
+    }))
+    const hardwareBridge = new MockHardwareBridge()
+    await hardwareBridge.bindDevice({
+      deviceId: mark.deviceId,
+      deviceType: 'ring',
+      ownerProof: { identityId: 'person-mei', method: 'mock_code', value: 'LOOP-DEMO' },
+    })
+    writeDeviceInteractionHandoff({
+      version: 2,
+      purpose: 'creator_capture',
+      eventId: mark.eventId,
+      interaction: mark.interaction,
+      deviceId: mark.deviceId,
+      deviceName: 'Alloop Ring',
+      source: mark.source,
+      occurredAt: mark.occurredAt,
+      verification: 'binding_verified',
+      ownerId: 'person-mei',
+      sessionId: mark.sessionId,
+    }, Date.parse('2026-08-03T00:05:00.000Z'))
+    renderCenter({
+      runtime: harness.runtime,
+      hardwareBridge,
+      environment: { physicalSupported: true, permission: 'granted' },
+    })
+
+    await screen.findByRole('dialog', { name: '为这一刻留个位置' })
+    fireEvent.click(screen.getByRole('checkbox', { name: '允许设备触碰事件' }))
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+    expect(readDeviceInteractionHandoff()).toBeUndefined()
+    expect(isDeviceInteractionProcessed(mark.eventId)).toBe(true)
+
+    fireEvent.click(screen.getByRole('checkbox', { name: '允许设备触碰事件' }))
+    await act(async () => {
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('does not navigate when consent is revoked during recipient consumption', async () => {
+    const touch = {
+      eventId: 'revoked-during-consume-event',
+      deviceId: 'ring-normalized-private-id',
+      sessionId: 'ring-session-private-id',
+      occurredAt: '2026-08-03T00:00:00.000Z',
+      source: 'physical' as const,
+      kind: 'interaction' as const,
+      interaction: 'touch' as const,
+    }
+    const harness = createRuntimeHarness(snapshot({
+      phase: 'connected',
+      devices: [device('ring', 'connected')],
+    }))
+    const hardwareBridge = new MockHardwareBridge()
+    await hardwareBridge.bindDevice({
+      deviceId: touch.deviceId,
+      deviceType: 'ring',
+      ownerProof: { identityId: 'person-mei', method: 'mock_code', value: 'LOOP-DEMO' },
+    })
+    await hardwareBridge.entrustDevice({
+      deviceId: touch.deviceId,
+      ownerProof: { identityId: 'person-mei', method: 'mock_code', value: 'LOOP-DEMO' },
+      recipientProof: { identityId: 'person-lin', method: 'mock_confirmation', value: 'LOOP-DEMO' },
+    })
+    const originalConsume = hardwareBridge.consume.bind(hardwareBridge)
+    let releaseConsume: (() => void) | undefined
+    vi.spyOn(hardwareBridge, 'consume').mockImplementationOnce(async (eventId) => {
+      await new Promise<void>((resolve) => {
+        releaseConsume = resolve
+      })
+      return originalConsume(eventId)
+    })
+    renderCenter({
+      runtime: harness.runtime,
+      hardwareBridge,
+      environment: { physicalSupported: true, permission: 'granted' },
+    })
+
+    fireEvent.click(screen.getByRole('radio', { name: '接收陪伴' }))
+    act(() => harness.publish(snapshot({
+      phase: 'connected',
+      consent: { audioCapture: false, sensitiveTelemetryExport: false, interactionEvents: true },
+      devices: [device('ring', 'connected', { event: touch })],
+    })))
+    await screen.findByRole('dialog', { name: '为一段陪伴留出入口' })
+    fireEvent.click(screen.getByRole('button', { name: '确认这是给我的' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: '允许设备触碰事件' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+
+    await act(async () => {
+      releaseConsume?.()
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+
+    expect(window.location.hash).toBe('#/devices')
+    expect(readDeviceInteractionHandoff()).toBeUndefined()
+    expect(isDeviceInteractionProcessed(touch.eventId)).toBe(true)
   })
 
   it('does not open a recipient prompt when the entrusted identity is different', async () => {

@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup } from '@testing-library/react'
 import { CaptureFlow } from './CaptureFlow'
-import { contextCaptureService } from '../../data/services'
+import { contextCaptureService, demoPolicies } from '../../data/services'
 import {
   clearDeviceInteractionHandoff,
   writeDeviceInteractionHandoff,
@@ -54,24 +54,90 @@ describe('CaptureFlow', () => {
       original: { kind: 'original', modality: 'text', uri: 'memory://text/test', capturedAt: new Date().toISOString() },
       createdAt: new Date().toISOString(),
     })
-    render(<CaptureFlow route="/capture/review" />)
+    const view = render(<CaptureFlow route="/capture/new" />)
+    await waitFor(() => expect(screen.getByText(/Lin · Mother and daughter/)).toBeInTheDocument())
+    fireEvent.change(screen.getByPlaceholderText('写下想留给对方的内容...'), {
+      target: { value: '今天一起做了第一道菜。' },
+    })
+    fireEvent.change(screen.getByPlaceholderText('例如：五道家庭菜的第一道'), {
+      target: { value: '厨房里的晚上' },
+    })
+    fireEvent.change(screen.getByPlaceholderText('这段内容和你们的关系有什么特别之处？'), {
+      target: { value: '这是想留给 Lin 的一刻。' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: '查看审核内容' }))
+    view.rerender(<CaptureFlow route="/capture/review" />)
     fireEvent.click(screen.getByRole('button', { name: '确认并保存' }))
 
     expect(screen.getByRole('alert')).toHaveTextContent('请确认 AI 使用边界')
     expect(capture).not.toHaveBeenCalled()
   })
 
+  it('revalidates an empty draft reached through a direct review link', async () => {
+    const capture = vi.spyOn(contextCaptureService, 'capture')
+    render(<CaptureFlow route="/capture/review" />)
+    fireEvent.click(screen.getByLabelText('我已审核原始内容、整理预览和使用边界'))
+    fireEvent.click(screen.getByRole('button', { name: '确认并保存' }))
+
+    expect(screen.getByRole('alert')).toHaveTextContent('请先写下内容')
+    expect(capture).not.toHaveBeenCalled()
+  })
+
+  it('keeps per-record AI consent from changing relationship policy flags', async () => {
+    const relationshipPolicy = demoPolicies.find(
+      (policy) => policy.relationshipId === 'relationship-mei-lin',
+    )!
+    const originalFlags = {
+      allowAiOrganization: relationshipPolicy.allowAiOrganization,
+      allowParaphrase: relationshipPolicy.allowParaphrase,
+    }
+    vi.spyOn(contextCaptureService, 'capture').mockResolvedValue({
+      id: 'memory-ai-record', ownerId: 'person-mei', relationshipId: 'relationship-mei-lin', recipientId: 'person-lin',
+      topic: '[允许 AI 整理] 厨房里的晚上', meaning: '留给 Lin', visibility: 'relationship_specific',
+      original: { kind: 'original', modality: 'text', uri: 'memory://text/ai-record', capturedAt: new Date().toISOString() },
+      createdAt: new Date().toISOString(),
+    })
+    const view = render(<CaptureFlow route="/capture/new" />)
+    await waitFor(() => expect(screen.getByText(/Lin · Mother and daughter/)).toBeInTheDocument())
+    fireEvent.change(screen.getByPlaceholderText('写下想留给对方的内容...'), { target: { value: '今天一起做了第一道菜。' } })
+    fireEvent.change(screen.getByPlaceholderText('例如：五道家庭菜的第一道'), { target: { value: '厨房里的晚上' } })
+    fireEvent.change(screen.getByPlaceholderText('这段内容和你们的关系有什么特别之处？'), { target: { value: '这是想留给 Lin 的一刻。' } })
+    fireEvent.click(screen.getByRole('button', { name: '查看审核内容' }))
+    view.rerender(<CaptureFlow route="/capture/review" />)
+    fireEvent.click(screen.getByLabelText('允许 AI 整理这条记录'))
+    fireEvent.click(screen.getByLabelText('我已审核原始内容、整理预览和使用边界'))
+    fireEvent.click(screen.getByRole('button', { name: '确认并保存' }))
+
+    await waitFor(() => expect(window.location.hash).toBe('#/capture/success'))
+    expect(relationshipPolicy).toMatchObject(originalFlags)
+  })
+
   it('reviews and saves verified device provenance without automatic capture', async () => {
+    const relationshipPolicy = demoPolicies.find(
+      (policy) => policy.relationshipId === 'relationship-mei-lin',
+    )!
+    const policyFlags = {
+      allowAiOrganization: relationshipPolicy.allowAiOrganization,
+      allowParaphrase: relationshipPolicy.allowParaphrase,
+    }
     writeDeviceInteractionHandoff({
-      version: 1,
+      version: 2,
       purpose: 'creator_capture',
       eventId: 'mark-verified-1',
       interaction: 'mark_moment',
       deviceId: 'ring-verified-1',
       deviceName: 'Alloop Ring',
       source: 'simulated',
-      occurredAt: '2026-08-03T00:00:00.000Z',
+      occurredAt: new Date().toISOString(),
       verification: 'binding_verified',
+      ownerId: 'person-mei',
+      sessionId: 'ring-session-verified-1',
+      sessionSequence: 2,
+      profile: {
+        profileId: 'ring-demo-v1',
+        sourceReference: 'simulator:ring:v1',
+        validation: 'fixture_only',
+      },
     })
     const capture = vi.spyOn(contextCaptureService, 'capture').mockResolvedValue({
       id: 'memory-device-mark', ownerId: 'person-mei', relationshipId: 'relationship-mei-lin', recipientId: 'person-lin',
@@ -93,11 +159,29 @@ describe('CaptureFlow', () => {
     fireEvent.click(screen.getByRole('button', { name: '确认并保存' }))
 
     await waitFor(() => expect(capture).toHaveBeenCalledWith(expect.objectContaining({
+      original: expect.objectContaining({
+        text: '今天一起做了第一道菜。',
+      }),
       trigger: expect.objectContaining({
         eventId: 'mark-verified-1',
         deviceName: 'Alloop Ring',
         verification: 'binding_verified',
+        ownerId: 'person-mei',
+        sessionId: 'ring-session-verified-1',
+        sessionSequence: 2,
+        profile: expect.objectContaining({
+          validation: 'fixture_only',
+        }),
       }),
     })))
+    expect(relationshipPolicy).toMatchObject(policyFlags)
+
+    view.rerender(<CaptureFlow route="/capture/success" />)
+    expect(screen.getByText(/来自 Alloop Ring 的已验证标记/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('link', { name: 'Capture another' }))
+    view.rerender(<CaptureFlow route="/capture/new" />)
+
+    expect(screen.getByPlaceholderText('写下想留给对方的内容...')).toHaveValue('')
+    expect(screen.queryByRole('region', { name: '设备标记来源' })).not.toBeInTheDocument()
   })
 })

@@ -1273,11 +1273,16 @@ export function createDeviceRuntime(options: DeviceRuntimeOptions): DeviceRuntim
       }
     }
     if (revokeInteractions) {
-      for (const [key, session] of sessions) {
+      for (const session of sessions.values()) {
         session.history = session.history.filter((event) => !isInteractionEvent(event))
         session.latestEvent = session.history.at(-1)
-        const device = devices.get(key)
-        if (device?.sessionId === session.session.sessionId) {
+      }
+      for (const device of devices.values()) {
+        if (device.latestEvent !== undefined && isInteractionEvent(device.latestEvent)) {
+          device.latestEvent = undefined
+        }
+        const session = sessions.get(device.deviceKey)
+        if (session !== undefined && session.session.sessionId === device.sessionId) {
           device.latestEvent = session.latestEvent
         }
       }

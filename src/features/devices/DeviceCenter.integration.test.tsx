@@ -6,13 +6,17 @@ import { createRingSimulator } from '../../devices/simulators'
 import { DeviceCenterPage } from './DeviceCenterPage'
 import {
   clearDeviceInteractionHandoff,
+  clearProcessedDeviceInteractions,
   readDeviceInteractionHandoff,
 } from './deviceInteractionHandoff'
+
+const simulatorNow = Date.parse('2026-08-03T00:05:00.000Z')
 
 describe('device center simulator integration', () => {
   beforeEach(() => {
     window.location.hash = '#/devices'
     clearDeviceInteractionHandoff()
+    clearProcessedDeviceInteractions()
     sessionStorage.clear()
   })
 
@@ -40,6 +44,7 @@ describe('device center simulator integration', () => {
       <DeviceCenterPage
         environment={{ physicalSupported: false, permission: 'unsupported' }}
         hardwareBridge={hardwareBridge}
+        now={() => simulatorNow}
         runtime={physicalRuntime}
         simulator={{
           runtime: demoRuntime,
@@ -64,7 +69,7 @@ describe('device center simulator integration', () => {
     fireEvent.click(screen.getByRole('button', { name: '进入记录引导' }))
 
     await waitFor(() => expect(window.location.hash).toBe('#/capture/new'))
-    expect(readDeviceInteractionHandoff('creator_capture')).toMatchObject({
+    expect(readDeviceInteractionHandoff('creator_capture', { now: simulatorNow })).toMatchObject({
       eventId: 'ring-simulated-session-1-event-2',
       deviceName: '集成测试戒指',
       source: 'simulated',
@@ -76,7 +81,15 @@ describe('device center simulator integration', () => {
   })
 
   it('requires entrusted recipient identity before a simulated touch handoff', async () => {
-    const ring = createRingSimulator({ deviceName: '接收者测试戒指' })
+    const ring = createRingSimulator({
+      deviceName: '接收者测试戒指',
+      events: [
+        { role: 'heart_rate', value: 72, unit: 'bpm' },
+        { kind: 'interaction', interaction: 'mark_moment' },
+        { kind: 'interaction', interaction: 'touch' },
+        { kind: 'interaction', interaction: 'touch' },
+      ],
+    })
     const demoRuntime = createDeviceRuntime({
       transports: [ring.transport],
       adapters: [ring.adapter],
@@ -97,6 +110,7 @@ describe('device center simulator integration', () => {
       <DeviceCenterPage
         environment={{ physicalSupported: false, permission: 'unsupported' }}
         hardwareBridge={hardwareBridge}
+        now={() => simulatorNow}
         runtime={physicalRuntime}
         simulator={{ runtime: demoRuntime, advance: () => { ring.next() } }}
       />,
@@ -110,14 +124,15 @@ describe('device center simulator integration', () => {
     await screen.findByText('72 bpm')
 
     fireEvent.click(screen.getByRole('button', { name: '发送下一个演示事件' }))
-    await screen.findByRole('dialog', { name: '为一段陪伴留出入口' })
-    fireEvent.click(screen.getByRole('button', { name: '忽略' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('设备绑定不匹配')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: '发送下一个演示事件' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('设备绑定不匹配')
     await screen.findByRole('dialog', { name: '为一段陪伴留出入口' })
     fireEvent.click(screen.getByRole('button', { name: '确认这是给我的' }))
 
     await waitFor(() => expect(window.location.hash).toBe('#/recipient/verify'))
-    expect(readDeviceInteractionHandoff('recipient_entry')).toMatchObject({
+    expect(readDeviceInteractionHandoff('recipient_entry', { now: simulatorNow })).toMatchObject({
       interaction: 'touch',
       deviceName: '接收者测试戒指',
       verification: 'entrustment_verified',
