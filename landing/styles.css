@@ -1919,6 +1919,16 @@ svg {
   box-shadow: 0 30px 70px rgba(14, 39, 92, 0.23);
 }
 
+@media (min-width: 901px) {
+  html[lang="en"] .join-form {
+    display: flex;
+    min-height: 416px;
+    align-self: center;
+    flex-direction: column;
+    justify-content: center;
+  }
+}
+
 .join-form-intro {
   margin-bottom: 26px;
 }
