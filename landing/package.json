@@ -3,6 +3,6 @@
   "private": true,
   "type": "commonjs",
   "scripts": {
-    "test": "node --test"
+    "test": "node --test language.node.cjs api/subscribe.node.cjs"
   }
 }

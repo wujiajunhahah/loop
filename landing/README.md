@@ -24,7 +24,7 @@ landing/
 ├── subscription.css    # 订阅结果页样式
 ├── subscription-result.js # 订阅结果状态文案
 ├── api/
-│   ├── subscribe.js    # 发送 24 小时有效的双语订阅确认邮件
+│   ├── subscribe.js    # 按界面语言发送 24 小时有效的订阅确认邮件
 │   └── confirm-subscription.js # 确认后写入 Resend Contacts
 ├── assets/             # Logo、信鸽、favicon、分享图
 ├── robots.txt          # 爬虫规则与 sitemap 地址
@@ -41,7 +41,7 @@ landing/
 - 页面文案与 FAQ：修改 `index.html`。
 - 英文页面：同步修改 `en/index.html`；语言选择会保存在浏览器本地存储与 Cookie 中。
 - 颜色、排版和响应式：修改 `styles.css` 顶部变量及对应组件。
-- 邮件订阅：共创叙事区内只收集邮箱；`api/subscribe.js` 先发送带 Logo 的中英双语确认邮件，用户点击后由 `api/confirm-subscription.js` 写入 Resend Contacts，并向首次确认者发送双语欢迎邮件。
+- 邮件订阅：共创叙事区内只收集邮箱；`api/subscribe.js` 先按用户当前界面语言发送带 Logo 的精简确认邮件，用户点击后由 `api/confirm-subscription.js` 写入 Resend Contacts，并向首次确认者发送双语欢迎邮件。
 - 订阅结果：确认成功跳转到 `/subscribed`；过期、无效或服务异常也由同一页面提供双语提示和重新订阅入口。
 - 品牌主视觉：优先使用 `assets/brand-bird-logo.webp`；透明高质量源为 `assets/brand-bird-logo.png`。
 - 分享图：更新 `assets/og-cover.png` 后，同时核对 `index.html` 中的 Open Graph 和 Twitter Card 地址。

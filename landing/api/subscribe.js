@@ -36,84 +36,110 @@ function sign(payload, secret) {
   return createHmac('sha256', secret).update(payload).digest('base64url');
 }
 
-function buildConfirmationEmail(confirmUrl) {
+function buildConfirmationEmail(confirmUrl, locale) {
+  const copy = locale === 'zh'
+    ? {
+      lang: 'zh-CN',
+      brand: '我在',
+      subject: '确认一下，就好｜我在',
+      preheader: '点一下，偶尔收到「我在」值得分享的新消息。',
+      eyebrow: '我在 · 确认订阅',
+      title: '确认一下，<br />就好。',
+      lead: '点一下，偶尔收到产品新进展与共创邀请。<br />只在值得说的时候写信。',
+      button: '确认订阅',
+      validity: '链接 24 小时内有效',
+      ignore: '不是你？忽略即可。',
+      fallback: '按钮没有打开？使用备用确认链接',
+      footer: '把重要的话，好好留下。',
+      footerMeta: '我在 · WOZAI.SPACE',
+      textTitle: '确认一下，就好。',
+      textLead: '点一下，偶尔收到「我在」的产品新进展与共创邀请。只在值得说的时候写信。',
+      textAction: '确认订阅：',
+    }
+    : {
+      lang: 'en',
+      brand: 'Wozai',
+      subject: 'One tap. You’re in. | Wozai',
+      preheader: 'Confirm once, then hear from Wozai only when there is something worth sharing.',
+      eyebrow: 'WOZAI · CONFIRM SUBSCRIPTION',
+      title: 'One tap.<br />You’re in.',
+      lead: 'Get occasional product notes and co-creation invitations.<br />We only write when there is something worth sharing.',
+      button: 'Confirm subscription',
+      validity: 'This link is valid for 24 hours',
+      ignore: 'Not you? Ignore this email.',
+      fallback: 'Button not working? Use the backup confirmation link',
+      footer: 'Leave what matters, with care.',
+      footerMeta: 'WOZAI.SPACE',
+      textTitle: 'One tap. You’re in.',
+      textLead: 'Get occasional Wozai product notes and co-creation invitations. We only write when there is something worth sharing.',
+      textAction: 'Confirm your subscription:',
+    };
+
   const text = [
-    '再确认一下，我们就保持一点联系。',
-    'One more step, and we’ll stay in touch.',
+    copy.textTitle,
     '',
-    '请在 24 小时内打开下面的链接，确认订阅「我在」的产品近况、共创邀请与新内容：',
-    'Open the link below within 24 hours to confirm your subscription to Wozai updates, co-creation invitations, and new stories:',
+    copy.textLead,
     '',
+    copy.textAction,
     confirmUrl,
     '',
-    '如果这不是你的操作，可以直接忽略。你的邮箱不会进入订阅名单。',
-    'If you did not request this, simply ignore this email. Your address will not be added to our list.',
+    `${copy.validity}. ${copy.ignore}`,
     '',
-    '我在｜真实记录，安心托付，未来相见。',
-    'Wozai | Real memories, entrusted with care, meeting again in the future.',
+    `${copy.brand} · ${copy.footer}`,
   ].join('\n');
 
   const html = `<!doctype html>
-<html lang="zh-CN">
+<html lang="${copy.lang}">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light only" />
-    <title>确认订阅「我在」</title>
+    <title>${copy.subject}</title>
     <style>
-      @media only screen and (max-width: 640px) {
+      @media only screen and (max-width: 620px) {
         .email-shell { width: 100% !important; }
-        .email-pad { padding-left: 26px !important; padding-right: 26px !important; }
-        .email-title { font-size: 34px !important; line-height: 1.28 !important; }
+        .email-pad { padding-left: 28px !important; padding-right: 28px !important; }
+        .email-title { font-size: 42px !important; }
         .email-button { display: block !important; text-align: center !important; }
       }
     </style>
   </head>
-  <body style="margin:0;padding:0;background:#e8e3d9;color:#162b3c;">
-    <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">再确认一步，我们就偶尔把「我在」的近况送到你身边。 One more step to confirm your Wozai subscription.</div>
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;background:#e8e3d9;">
+  <body style="margin:0;padding:0;background:#e9e5db;color:#162b3c;">
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">${copy.preheader}</div>
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;background:#e9e5db;">
       <tr>
-        <td align="center" style="padding:34px 14px;">
-          <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" class="email-shell" style="width:600px;max-width:600px;background:#fffdf8;border:1px solid #d8d2c7;border-radius:22px;overflow:hidden;">
+        <td align="center" style="padding:42px 14px;">
+          <table role="presentation" width="560" cellspacing="0" cellpadding="0" border="0" class="email-shell" style="width:560px;max-width:560px;background:#fffdf8;border:1px solid #d8d2c7;border-radius:28px;overflow:hidden;box-shadow:0 24px 70px rgba(22,43,60,.10);">
             <tr>
-              <td class="email-pad" style="padding:34px 48px 24px;border-bottom:1px solid #e5dfd4;">
+              <td class="email-pad" style="padding:30px 44px 26px;">
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0">
                   <tr>
-                    <td width="54" valign="middle"><img src="${LOGO_URL}" width="50" height="40" alt="我在" style="display:block;width:50px;height:40px;object-fit:contain;border:0;" /></td>
-                    <td valign="middle" style="padding-left:11px;font-family:'Songti SC','STSong',Georgia,serif;font-size:25px;font-weight:700;letter-spacing:.08em;color:#162b3c;">我在</td>
+                    <td width="50" valign="middle"><img src="${LOGO_URL}" width="46" height="37" alt="${copy.brand}" style="display:block;width:46px;height:37px;object-fit:contain;border:0;" /></td>
+                    <td valign="middle" style="padding-left:10px;font-family:'Songti SC','STSong',Georgia,serif;font-size:23px;font-weight:700;letter-spacing:.08em;color:#162b3c;">${copy.brand}</td>
                   </tr>
                 </table>
               </td>
             </tr>
             <tr>
-              <td class="email-pad" style="padding:52px 48px 46px;">
-                <p style="margin:0 0 18px;font-family:Arial,'PingFang SC',sans-serif;font-size:11px;font-weight:700;letter-spacing:.18em;color:#2c61d6;">确认订阅 · CONFIRM SUBSCRIPTION</p>
-                <h1 class="email-title" style="margin:0 0 24px;font-family:'Songti SC','STSong',Georgia,serif;font-size:43px;font-weight:600;line-height:1.3;letter-spacing:-.02em;color:#162b3c;">再确认一下，<br />我们就保持一点联系。</h1>
-                <p style="margin:-12px 0 20px;font-family:Georgia,serif;font-size:17px;font-style:italic;line-height:1.6;color:#2c61d6;">One more step, and we’ll stay in touch.</p>
-                <p style="margin:0 0 8px;font-family:Arial,'PingFang SC',sans-serif;font-size:15px;line-height:1.9;color:#52606a;">偶尔收到「我在」的产品进展、共创邀请与认真写下的新内容。不会频繁打扰，也不会把你的邮箱用于未说明的用途。</p>
-                <p style="margin:0 0 30px;font-family:Arial,'PingFang SC',sans-serif;font-size:12px;line-height:1.8;color:#7b8382;">Occasionally receive product updates, co-creation invitations, and thoughtful new stories from Wozai. We will not email often or use your address for anything we have not explained.</p>
-                <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 28px;">
+              <td class="email-pad" style="padding:36px 44px 50px;border-top:1px solid #e8e2d8;">
+                <p style="margin:0 0 18px;font-family:Arial,'PingFang SC',sans-serif;font-size:10px;font-weight:700;letter-spacing:.18em;color:#2c61d6;">${copy.eyebrow}</p>
+                <h1 class="email-title" style="margin:0 0 22px;font-family:'Songti SC','STSong',Georgia,serif;font-size:52px;font-weight:600;line-height:1.12;letter-spacing:-.035em;color:#162b3c;">${copy.title}</h1>
+                <p style="margin:0 0 30px;font-family:Arial,'PingFang SC',sans-serif;font-size:15px;line-height:1.85;color:#5d686d;">${copy.lead}</p>
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 22px;">
                   <tr>
-                    <td bgcolor="#2c61d6" style="border-radius:999px;">
-                      <a class="email-button" href="${confirmUrl}" style="display:inline-block;padding:14px 27px;font-family:Arial,'PingFang SC',sans-serif;font-size:14px;font-weight:700;line-height:1;color:#ffffff;text-decoration:none;border-radius:999px;">确认订阅 / Confirm&nbsp;&nbsp;→</a>
+                    <td bgcolor="#162b3c" style="border-radius:999px;">
+                      <a class="email-button" href="${confirmUrl}" style="display:inline-block;padding:16px 28px;font-family:Arial,'PingFang SC',sans-serif;font-size:14px;font-weight:700;line-height:1;color:#ffffff;text-decoration:none;border-radius:999px;">${copy.button}&nbsp;&nbsp;→</a>
                     </td>
                   </tr>
                 </table>
-                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;background:#f2eee5;border-radius:12px;">
-                  <tr>
-                    <td style="padding:15px 17px;font-family:Arial,'PingFang SC',sans-serif;font-size:12px;line-height:1.7;color:#6b726f;">
-                      <strong style="color:#40515c;">24 小时内有效 · Valid for 24 hours</strong><br />如果这不是你的操作，可以直接忽略，你的邮箱不会进入订阅名单。<br /><span style="color:#8a8f8c;">If you did not request this, simply ignore this email. Your address will not be added to our list.</span>
-                    </td>
-                  </tr>
-                </table>
-                <p style="margin:24px 0 0;font-family:Arial,'PingFang SC',sans-serif;font-size:11px;line-height:1.8;color:#8a8f8c;word-break:break-all;">按钮无法打开时，请复制这个地址。 If the button does not open, copy this link:<br /><a href="${confirmUrl}" style="color:#667a94;text-decoration:underline;">${confirmUrl}</a></p>
+                <p style="margin:0;font-family:Arial,'PingFang SC',sans-serif;font-size:11px;line-height:1.7;color:#858b88;">${copy.validity}&nbsp;&nbsp;·&nbsp;&nbsp;${copy.ignore}</p>
+                <p style="margin:16px 0 0;font-family:Arial,'PingFang SC',sans-serif;font-size:10px;line-height:1.7;color:#9a9e9a;"><a href="${confirmUrl}" style="color:#7c858b;text-decoration:underline;text-underline-offset:3px;">${copy.fallback}</a></p>
               </td>
             </tr>
             <tr>
-              <td class="email-pad" style="padding:25px 48px 30px;background:#f4f1e9;border-top:1px solid #e5dfd4;">
-                <p style="margin:0 0 6px;font-family:'Songti SC','STSong',Georgia,serif;font-size:14px;color:#40515c;">真实记录，安心托付，未来相见。</p>
-                <p style="margin:0 0 6px;font-family:Arial,'PingFang SC',sans-serif;font-size:10px;line-height:1.7;color:#7d8581;">Real memories, entrusted with care, meeting again in the future.</p>
-                <p style="margin:0;font-family:Arial,'PingFang SC',sans-serif;font-size:10px;line-height:1.7;color:#929691;">我在 · wozai.space&nbsp;&nbsp;｜&nbsp;&nbsp;这是订阅确认邮件，不是营销邮件。 This is a subscription confirmation, not a marketing email.</p>
+              <td class="email-pad" style="padding:22px 44px 25px;background:#162b3c;">
+                <p style="margin:0;font-family:'Songti SC','STSong',Georgia,serif;font-size:14px;line-height:1.7;color:#fffdf8;">${copy.footer}</p>
+                <p style="margin:5px 0 0;font-family:Arial,'PingFang SC',sans-serif;font-size:9px;letter-spacing:.12em;color:#91a1ad;">${copy.footerMeta}</p>
               </td>
             </tr>
           </table>
@@ -123,7 +149,7 @@ function buildConfirmationEmail(confirmUrl) {
   </body>
 </html>`;
 
-  return { text, html };
+  return { subject: copy.subject, text, html };
 }
 
 async function sendConfirmation(apiKey, body) {
@@ -189,13 +215,13 @@ module.exports = async function handler(request, response) {
   const siteUrl = (process.env.SITE_URL || requestOrigin).replace(/\/$/, '');
   const confirmUrl = `${siteUrl}/api/confirm-subscription?token=${encodeURIComponent(token)}`;
   const sender = process.env.RESEND_FROM_EMAIL || '我在 <hello@wozai.space>';
-  const emailContent = buildConfirmationEmail(confirmUrl);
+  const emailContent = buildConfirmationEmail(confirmUrl, locale);
 
   try {
     await sendConfirmation(apiKey, {
       from: sender,
       to: [email],
-      subject: '确认订阅「我在」｜Confirm your Wozai subscription',
+      subject: emailContent.subject,
       text: emailContent.text,
       html: emailContent.html,
     });
