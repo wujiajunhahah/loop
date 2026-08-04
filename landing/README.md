@@ -27,6 +27,7 @@ landing/
 ├── sitemap.xml         # 搜索引擎页面清单
 ├── llms.txt            # 面向生成式搜索的品牌事实与边界
 ├── site.webmanifest    # Web App 名称、颜色与图标
+├── package.json        # 将 Vercel Functions 固定为 CommonJS 运行模式
 ├── .env.example        # 环境变量名称；不包含真实密钥
 └── vercel.json         # 部署、缓存和安全响应头
 ```

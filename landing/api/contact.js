@@ -8,14 +8,12 @@ const ALLOWED_ROLES = new Set([
   '其他',
 ]);
 
-function reply(data, status = 200) {
-  return Response.json(data, {
-    status,
-    headers: {
-      'Cache-Control': 'no-store',
-      'X-Content-Type-Options': 'nosniff',
-    },
-  });
+function reply(response, data, status = 200) {
+  response.statusCode = status;
+  response.setHeader('Content-Type', 'application/json; charset=utf-8');
+  response.setHeader('Cache-Control', 'no-store');
+  response.setHeader('X-Content-Type-Options', 'nosniff');
+  response.end(JSON.stringify(data));
 }
 
 function clean(value, maxLength) {
@@ -50,27 +48,27 @@ async function resend(path, apiKey, body) {
   return response.json();
 }
 
-export default {
-  async fetch(request) {
+module.exports = async function handler(request, response) {
     if (request.method !== 'POST') {
-      return reply({ ok: false, message: 'Method not allowed' }, 405);
+      return reply(response, { ok: false, message: 'Method not allowed' }, 405);
     }
 
     const apiKey = process.env.RESEND_API_KEY;
     if (!apiKey) {
-      return reply({ ok: false, message: '联系服务尚未配置，请直接邮件联系 hello@wozai.space。' }, 503);
+      return reply(response, { ok: false, message: '联系服务尚未配置，请直接邮件联系 hello@wozai.space。' }, 503);
     }
 
     let input;
     try {
-      input = await request.json();
+      input = typeof request.body === 'string' ? JSON.parse(request.body) : request.body;
+      if (!input || typeof input !== 'object') throw new Error('Invalid body');
     } catch {
-      return reply({ ok: false, message: '提交内容格式不正确。' }, 400);
+      return reply(response, { ok: false, message: '提交内容格式不正确。' }, 400);
     }
 
     // Honeypot: bots often fill fields hidden from real visitors.
     if (clean(input.website, 200)) {
-      return reply({ ok: true, message: '谢谢，我们已经收到。' });
+      return reply(response, { ok: true, message: '谢谢，我们已经收到。' });
     }
 
     const name = clean(input.name, 80);
@@ -80,7 +78,7 @@ export default {
     const consent = input.consent === true;
 
     if (!name || !ALLOWED_ROLES.has(role) || !EMAIL_PATTERN.test(email) || !consent) {
-      return reply({ ok: false, message: '请检查称呼、身份、邮箱与授权选项。' }, 400);
+      return reply(response, { ok: false, message: '请检查称呼、身份、邮箱与授权选项。' }, 400);
     }
 
     const safeName = escapeHtml(name);
@@ -120,9 +118,8 @@ export default {
     const [notificationResult] = await Promise.allSettled([notification, acknowledgement, contactRecord]);
     if (notificationResult.status === 'rejected') {
       console.error('Contact notification failed', notificationResult.reason?.status || 'unknown');
-      return reply({ ok: false, message: '暂时没有提交成功，请稍后重试或邮件联系 hello@wozai.space。' }, 502);
+      return reply(response, { ok: false, message: '暂时没有提交成功，请稍后重试或邮件联系 hello@wozai.space。' }, 502);
     }
 
-    return reply({ ok: true, message: '已经收到。确认邮件也正在飞往你的邮箱。' });
-  },
+    return reply(response, { ok: true, message: '已经收到。确认邮件也正在飞往你的邮箱。' });
 };

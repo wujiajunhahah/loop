@@ -1,25 +1,13 @@
+const { createHmac } = require('node:crypto');
+
 const RESEND_API = 'https://api.resend.com';
 
 function fromBase64Url(value) {
-  const normalized = value.replaceAll('-', '+').replaceAll('_', '/');
-  return atob(normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '='));
+  return Buffer.from(value, 'base64url').toString('utf8');
 }
 
-function toBase64Url(value) {
-  return btoa(value).replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '');
-}
-
-async function sign(payload, secret) {
-  const encoder = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    'raw',
-    encoder.encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign'],
-  );
-  const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(payload));
-  return toBase64Url(String.fromCharCode(...new Uint8Array(signature)));
+function sign(payload, secret) {
+  return createHmac('sha256', secret).update(payload).digest('base64url');
 }
 
 function safeEqual(a, b) {
@@ -43,35 +31,38 @@ async function resend(path, apiKey, method, body) {
   return response;
 }
 
-function redirect(siteUrl, state) {
-  return Response.redirect(`${siteUrl}/?subscription=${state}#subscribe`, 302);
+function redirect(response, siteUrl, state) {
+  response.statusCode = 302;
+  response.setHeader('Cache-Control', 'no-store');
+  response.setHeader('Location', `${siteUrl}/?subscription=${state}#subscribe`);
+  response.end();
 }
 
-export default {
-  async fetch(request) {
+module.exports = async function handler(request, response) {
     const apiKey = process.env.RESEND_API_KEY;
     const secret = process.env.SUBSCRIBE_TOKEN_SECRET || apiKey;
-    const siteUrl = (process.env.SITE_URL || new URL(request.url).origin).replace(/\/$/, '');
-    if (!apiKey || !secret) return redirect(siteUrl, 'error');
+    const requestOrigin = `${request.headers['x-forwarded-proto'] || 'https'}://${request.headers.host}`;
+    const siteUrl = (process.env.SITE_URL || requestOrigin).replace(/\/$/, '');
+    if (!apiKey || !secret) return redirect(response, siteUrl, 'error');
 
-    const token = new URL(request.url).searchParams.get('token');
-    if (!token) return redirect(siteUrl, 'invalid');
+    const token = new URL(request.url, requestOrigin).searchParams.get('token');
+    if (!token) return redirect(response, siteUrl, 'invalid');
 
     let parsed;
     try {
       parsed = JSON.parse(fromBase64Url(token));
     } catch {
-      return redirect(siteUrl, 'invalid');
+      return redirect(response, siteUrl, 'invalid');
     }
 
     const email = String(parsed.email || '').trim().toLowerCase();
     const expires = Number(parsed.expires);
     const signature = String(parsed.signature || '');
     const unsigned = JSON.stringify({ email, expires });
-    const expected = await sign(unsigned, secret);
+    const expected = sign(unsigned, secret);
 
     if (!email || !Number.isFinite(expires) || expires < Date.now() || !safeEqual(signature, expected)) {
-      return redirect(siteUrl, expires < Date.now() ? 'expired' : 'invalid');
+      return redirect(response, siteUrl, expires < Date.now() ? 'expired' : 'invalid');
     }
 
     const createBody = { email, unsubscribed: false };
@@ -87,7 +78,7 @@ export default {
 
     if (!contactResponse.ok) {
       console.error('Resend contact update failed', contactResponse.status);
-      return redirect(siteUrl, 'error');
+      return redirect(response, siteUrl, 'error');
     }
 
     const followups = [];
@@ -101,6 +92,5 @@ export default {
     }
     await Promise.allSettled(followups);
 
-    return redirect(siteUrl, 'confirmed');
-  },
+    return redirect(response, siteUrl, 'confirmed');
 };

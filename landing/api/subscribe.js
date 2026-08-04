@@ -1,14 +1,14 @@
+const { createHmac } = require('node:crypto');
+
 const RESEND_API = 'https://api.resend.com';
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-function reply(data, status = 200) {
-  return Response.json(data, {
-    status,
-    headers: {
-      'Cache-Control': 'no-store',
-      'X-Content-Type-Options': 'nosniff',
-    },
-  });
+function reply(response, data, status = 200) {
+  response.statusCode = status;
+  response.setHeader('Content-Type', 'application/json; charset=utf-8');
+  response.setHeader('Cache-Control', 'no-store');
+  response.setHeader('X-Content-Type-Options', 'nosniff');
+  response.end(JSON.stringify(data));
 }
 
 function clean(value, maxLength) {
@@ -16,20 +16,11 @@ function clean(value, maxLength) {
 }
 
 function toBase64Url(value) {
-  return btoa(value).replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '');
+  return Buffer.from(value, 'utf8').toString('base64url');
 }
 
-async function sign(payload, secret) {
-  const encoder = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    'raw',
-    encoder.encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign'],
-  );
-  const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(payload));
-  return toBase64Url(String.fromCharCode(...new Uint8Array(signature)));
+function sign(payload, secret) {
+  return createHmac('sha256', secret).update(payload).digest('base64url');
 }
 
 async function sendConfirmation(apiKey, body) {
@@ -45,38 +36,39 @@ async function sendConfirmation(apiKey, body) {
   if (!response.ok) throw new Error(`Resend request failed with ${response.status}`);
 }
 
-export default {
-  async fetch(request) {
+module.exports = async function handler(request, response) {
     if (request.method !== 'POST') {
-      return reply({ ok: false, message: 'Method not allowed' }, 405);
+      return reply(response, { ok: false, message: 'Method not allowed' }, 405);
     }
 
     const apiKey = process.env.RESEND_API_KEY;
     if (!apiKey) {
-      return reply({ ok: false, message: '订阅服务尚未配置，请稍后再试。' }, 503);
+      return reply(response, { ok: false, message: '订阅服务尚未配置，请稍后再试。' }, 503);
     }
 
     let input;
     try {
-      input = await request.json();
+      input = typeof request.body === 'string' ? JSON.parse(request.body) : request.body;
+      if (!input || typeof input !== 'object') throw new Error('Invalid body');
     } catch {
-      return reply({ ok: false, message: '提交内容格式不正确。' }, 400);
+      return reply(response, { ok: false, message: '提交内容格式不正确。' }, 400);
     }
 
     if (clean(input.website, 200)) {
-      return reply({ ok: true, message: '确认邮件已经发送，请查看邮箱。' });
+      return reply(response, { ok: true, message: '确认邮件已经发送，请查看邮箱。' });
     }
 
     const email = clean(input.email, 254).toLowerCase();
     if (!EMAIL_PATTERN.test(email) || input.consent !== true) {
-      return reply({ ok: false, message: '请输入有效邮箱并确认订阅授权。' }, 400);
+      return reply(response, { ok: false, message: '请输入有效邮箱并确认订阅授权。' }, 400);
     }
 
     const expires = Date.now() + 24 * 60 * 60 * 1000;
     const unsigned = JSON.stringify({ email, expires });
-    const signature = await sign(unsigned, process.env.SUBSCRIBE_TOKEN_SECRET || apiKey);
+    const signature = sign(unsigned, process.env.SUBSCRIBE_TOKEN_SECRET || apiKey);
     const token = toBase64Url(JSON.stringify({ email, expires, signature }));
-    const siteUrl = (process.env.SITE_URL || new URL(request.url).origin).replace(/\/$/, '');
+    const requestOrigin = `${request.headers['x-forwarded-proto'] || 'https'}://${request.headers.host}`;
+    const siteUrl = (process.env.SITE_URL || requestOrigin).replace(/\/$/, '');
     const confirmUrl = `${siteUrl}/api/confirm-subscription?token=${encodeURIComponent(token)}`;
     const sender = process.env.RESEND_FROM_EMAIL || '我在 <hello@wozai.space>';
 
@@ -90,9 +82,8 @@ export default {
       });
     } catch (error) {
       console.error('Subscription confirmation failed');
-      return reply({ ok: false, message: '确认邮件暂时没有发出，请稍后再试。' }, 502);
+      return reply(response, { ok: false, message: '确认邮件暂时没有发出，请稍后再试。' }, 502);
     }
 
-    return reply({ ok: true, message: '确认邮件已经发送，请在 24 小时内完成确认。' });
-  },
+    return reply(response, { ok: true, message: '确认邮件已经发送，请在 24 小时内完成确认。' });
 };
