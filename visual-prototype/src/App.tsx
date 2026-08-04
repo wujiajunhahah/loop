@@ -1549,8 +1549,6 @@ function RecipientHome({
   messenger,
   onCompose,
   onPigeon,
-  onDismissPigeon,
-  pigeonDockDismissed,
 }: {
   go: (page: Page) => void
   memories: MemoryEntry[]
@@ -1560,10 +1558,8 @@ function RecipientHome({
   onUpdatePreferences: (patch: Partial<RecipientPreferences>) => void
   onOpenMemory: (id: number) => void
   messenger: MessengerChannelState
-  onCompose: () => void
+  onCompose: (draft?: MessengerDraft) => void
   onPigeon: () => void
-  onDismissPigeon: () => void
-  pigeonDockDismissed: boolean
 }) {
   const [duration, setDuration] = useState<5 | 10 | 15>(data.preferences.duration)
   const [sound, setSound] = useState(data.preferences.sound)
@@ -1571,6 +1567,8 @@ function RecipientHome({
   const [adjusting, setAdjusting] = useState(false)
   const [ended, setEnded] = useState(false)
   const [now, setNow] = useState(Date.now())
+  const [chatDraft, setChatDraft] = useState('')
+  const [hardwareDetection, setHardwareDetection] = useState(false)
   useEffect(() => {
     if (!data.preferences.accepted || !data.sessionEndsAt) return
     const timer = window.setInterval(() => setNow(Date.now()), 1000)
@@ -1579,22 +1577,53 @@ function RecipientHome({
   const secondsRemaining = data.sessionEndsAt ? Math.min(data.preferences.duration * 60, Math.max(0, Math.ceil((data.sessionEndsAt - now) / 1000))) : data.preferences.duration * 60
   const sessionExpired = Boolean(data.preferences.accepted && data.preferences.frequency !== '暂停出现' && data.sessionEndsAt && secondsRemaining <= 0)
   const remainingLabel = `${Math.floor(secondsRemaining / 60)}:${String(secondsRemaining % 60).padStart(2, '0')}`
-  const featured = memories.find((memory) => memory.seed.type !== '愿景' && !data.viewedMemoryIds.includes(memory.seed.id)) ?? memories.find((memory) => memory.seed.type !== '愿景') ?? memories[0]
   const currentMemoryIds = new Set(memories.map((memory) => memory.seed.id))
   const viewedCount = data.viewedMemoryIds.filter((id) => currentMemoryIds.has(id)).length
-  const wish = memories.find((memory) => memory.seed.type === '愿景')
   const daughterHistory = messenger.history
   const daughterSending = messenger.phase === 'sending'
   const daughterDelivered = messenger.phase === 'delivered'
-  const dockStatus = pigeonDockDismissed ? null : daughterSending ? 'sending' : daughterDelivered && messenger.unread ? 'delivered' : null
-  const dockUnread = daughterDelivered && messenger.unread
-  const counts = memories.reduce<Record<MemoryKind, number>>((result, memory) => ({ ...result, [memory.kind]: result[memory.kind] + 1 }), { 照片: 0, 文字: 0, 声音: 0, 物件: 0 })
-  const flows: { page: Page; title: string; copy: string; accent: string; status: string }[] = [
-    { page: 'gallery', title: '妈妈的记忆', copy: `${memories.length} 段本人确认的照片、文字、声音与物件`, accent: 'sand', status: '去看看' },
-    { page: 'echo', title: '给记忆写一封信', copy: '只从妈妈真实留下并授权的内容里寻找关联', accent: 'blue', status: '交给信使' },
-    { page: 'seek', title: '顺着线索看看', copy: '可以慢慢问，也可以直接查看完整原文', accent: 'ink', status: '一问一答' },
-    { page: 'wish', title: '一个可以拒绝的愿望', copy: '把妈妈明确留下的愿望改成今天合适的一小步', accent: 'clay', status: wish ? data.dismissedWishIds.includes(wish.seed.id) ? '已放回原文' : '由你决定' : '没有任务' },
+  const motherMemories = memories.filter((memory) => memory.seed.type !== '愿景')
+  const counts = motherMemories.reduce<Record<MemoryKind, number>>((result, memory) => ({ ...result, [memory.kind]: result[memory.kind] + 1 }), { 照片: 0, 文字: 0, 声音: 0, 物件: 0 })
+  const exchangeIds = new Set(daughterHistory.map((exchange) => exchange.id))
+  const clipText = (value: string, fallback: string, limit = 20) => {
+    const text = value.trim()
+    return text ? `${text.slice(0, limit)}${text.length > limit ? '…' : ''}` : fallback
+  }
+  const daughterAlbum = [
+    ...daughterHistory.slice().reverse().map((exchange) => ({
+      id: `exchange-${exchange.id}`,
+      mode: exchange.mode,
+      title: clipText(exchange.text, exchange.mode === '图片' ? '交给 AI 的一张照片' : exchange.mode === '语音' ? '交给 AI 的一段声音' : '交给 AI 的一句话'),
+      copy: exchange.text || (exchange.mode === '图片' ? exchange.attachment?.name ?? '图片内容已保存' : `${exchange.attachment?.duration ?? 0} 秒语音内容已保存`),
+      meta: formatMessengerTime(exchange.sentAt),
+      attachment: exchange.attachment,
+      exchangeId: exchange.id,
+      sourceSeedId: exchange.sourceSeedId,
+    })),
+    ...data.entries.filter((entry) => !entry.exchangeId || !exchangeIds.has(entry.exchangeId)).map((entry) => ({
+      id: `entry-${entry.id}`,
+      mode: '文字' as CaptureType,
+      title: entry.title,
+      copy: entry.text,
+      meta: entry.createdAt,
+      attachment: undefined as MessengerAttachment | undefined,
+      exchangeId: undefined as number | undefined,
+      sourceSeedId: entry.sourceSeedId,
+    })),
   ]
+  const chatStatus = daughterSending
+    ? 'AI 正在妈妈授权的真实记录中检索'
+    : daughterDelivered && messenger.unread
+      ? '已找到一段可追溯回忆，点这里查看'
+      : daughterHistory.length
+        ? `${daughterHistory.length} 条对话记录保存在这里`
+        : ''
+  const openChatComposer = (mode: CaptureType) => {
+    if (mode !== '文字' && !hardwareDetection) return
+    const text = mode === '文字' ? chatDraft.trim() : ''
+    onCompose({ mode, text })
+    if (mode === '文字') setChatDraft('')
+  }
 
   if (ended || sessionExpired) {
     return (
@@ -1655,23 +1684,17 @@ function RecipientHome({
           <button className="secondary-button" onClick={() => go('you')}>只查看我的记录</button>
           <button className="recipient-text-button" onClick={() => { onUpdatePreferences({ frequency: '仅主动进入' }); onStart({ ...data.preferences, frequency: '仅主动进入' }) }}>恢复为仅主动进入</button>
         </main>
-        <nav className="bottom-nav recipient-bottom-nav" aria-label="女儿端导航">
-          <button className="active" onClick={() => go('recipient')}><span>⌂</span>今天</button>
-          <button onClick={() => go('gallery')}><span>▱</span>记忆</button>
-          <button onClick={() => go('you')}><span>○</span>我的</button>
-        </nav>
       </div>
     )
   }
 
   return (
-    <div className="screen recipient-screen">
+    <div className="screen recipient-screen recipient-album-screen">
       <div className="tide tide-a" /><div className="tide tide-b" />
       <main className="scroll-page recipient-home recipient-dashboard">
-        <header className="recipient-header">
-          <div className="recipient-kicker"><SourceMark>林岚亲自留下并授权</SourceMark><Pill tone="paper">仅林崖可见</Pill></div>
-          <h1>妈妈留给你的<br />记忆</h1>
-          <p>不用一次看完。今天只打开一小段，也已经足够。</p>
+        <header className="recipient-header recipient-album-header">
+          <h1>我在</h1>
+          <p>{daughterAlbum.length ? `我的上传 ${daughterAlbum.length} 条 · 妈妈回忆 ${motherMemories.length} 段` : `妈妈回忆 ${motherMemories.length} 段`}</p>
         </header>
 
         <button className="recipient-session-bar" onClick={() => setAdjusting(!adjusting)} aria-expanded={adjusting}>
@@ -1687,41 +1710,66 @@ function RecipientHome({
           </section>
         )}
 
-        <section className="recipient-summary-card">
-          <div><small>妈妈为你开放</small><strong>{memories.length}</strong><span>段记忆</span></div>
-          <p>{counts.照片} 张照片 · {counts.文字} 段文字<br />{counts.声音} 段声音 · {counts.物件} 个物件</p>
-          <span>{viewedCount ? `你已看过 ${viewedCount} 段` : '还没有打开任何一段'}</span>
-        </section>
-
-        {featured && (
-          <section className="recipient-feature-card">
-            <div className="recipient-feature-art"><MemoryArtwork memory={featured} /></div>
-            <div className="recipient-feature-copy"><small>{data.viewedMemoryIds.length ? '继续下一段' : '欢迎记忆'}</small><h2>{featured.seed.title}</h2><p>{featured.seed.excerpt}</p><button onClick={() => onOpenMemory(featured.seed.id)}>先看静态内容 <b>›</b></button></div>
+        {daughterAlbum.length > 0 && (
+          <section className="recipient-album-section" aria-labelledby="daughter-album-title">
+            <div className="recipient-album-heading"><h2 id="daughter-album-title">我的上传</h2><span>{daughterAlbum.length} 条</span></div>
+            <div className="recipient-album-grid recipient-own-grid">
+              {daughterAlbum.slice(0, 6).map((item, index) => (
+                <button key={item.id} className={`recipient-album-card recipient-own-card ${index === 0 ? 'is-wide' : ''} ${item.mode === '图片' ? 'is-image' : item.mode === '语音' ? 'is-audio' : 'is-text'}`} onClick={() => item.exchangeId ? onPigeon() : item.sourceSeedId ? onOpenMemory(item.sourceSeedId) : go('you')}>
+                  <span className="recipient-album-label">{item.mode}</span>
+                  <div className="recipient-own-preview">
+                    {item.mode === '图片' && item.attachment?.kind === 'image' ? (
+                      <img src={item.attachment.dataUrl} alt={item.attachment.name} />
+                    ) : item.mode === '语音' ? (
+                      <span className="recipient-wave-preview" aria-hidden="true"><i /><i /><i /><i /><i /></span>
+                    ) : (
+                      <blockquote>{item.copy}</blockquote>
+                    )}
+                  </div>
+                  <div className="recipient-album-copy"><h3>{item.title}</h3><p>{item.copy}</p><small>{item.meta}</small></div>
+                </button>
+              ))}
+            </div>
           </section>
         )}
 
-        <section className="recipient-home-section">
-          <div className="recipient-section-title"><h2>你可以这样使用</h2><span>随时退出</span></div>
-          <div className="flow-list recipient-flow-list">
-            {flows.map((flow) => (
-              <button key={flow.page} className={`flow-card flow-${flow.accent}`} onClick={() => flow.page === 'echo' ? onCompose() : go(flow.page)}>
-                <span className="recipient-flow-status">{flow.status}</span>
-                <div><h2>{flow.title}</h2><p>{flow.copy}</p></div><b>›</b>
-              </button>
-            ))}
-          </div>
+        <section className="recipient-album-section" aria-labelledby="mother-album-title">
+          <div className="recipient-album-heading"><h2 id="mother-album-title">妈妈上传的回忆</h2><span>{motherMemories.length} 段 · 已看 {viewedCount}</span></div>
+          <div className="recipient-summary-strip"><span>{counts.照片} 照片</span><span>{counts.文字} 文字</span><span>{counts.声音} 语音</span><span>{counts.物件} 物件</span></div>
+          {motherMemories.length ? (
+            <div className="recipient-album-grid recipient-mother-grid">
+              {motherMemories.slice(0, 6).map((memory, index) => (
+                <button key={memory.seed.id} className={`recipient-album-card recipient-memory-album-card ${index === 0 ? 'is-wide' : ''}`} onClick={() => onOpenMemory(memory.seed.id)}>
+                  <span className="recipient-album-label">{memory.kind}</span>
+                  <div className="recipient-memory-preview"><MemoryArtwork memory={memory} /></div>
+                  <div className="recipient-album-copy"><h3>{memory.seed.title}</h3><p>{memory.seed.excerpt}</p><small>{memory.date} · {memory.scene}</small></div>
+                </button>
+              ))}
+            </div>
+          ) : <p className="recipient-empty-copy">暂时没有妈妈授权给你的回忆。</p>}
+          <button className="recipient-album-more" onClick={() => go('gallery')}>查看全部妈妈回忆</button>
         </section>
-        <button className="you-entry recipient-you-entry" onClick={() => go('you')}><span>{data.entries.length}</span><div><small>你在这里留下的内容</small><h2>我的今天</h2></div><b>›</b></button>
-        <p className="session-exit">本次体验不会自动播放声音 · 任何页面都可以返回</p>
       </main>
-      <nav className="bottom-nav recipient-bottom-nav" aria-label="女儿端导航">
-        <button className="active" onClick={() => go('recipient')}><span>⌂</span>今天</button>
-        <button onClick={() => go('gallery')}><span>▱</span>记忆</button>
-        <button onClick={() => go('you')}><span>○</span>我的</button>
-      </nav>
-      {dockStatus ? (
-        <PigeonDock owner="daughter" status={dockStatus} unread={dockUnread} onClick={onPigeon} onDismiss={onDismissPigeon} />
-      ) : daughterHistory.length > 0 ? <button className="pigeon-history-shortcut recipient-pigeon-history" onClick={onPigeon} aria-label="查看女儿端往返信件"><img src={mascotIdleImage} alt="" /><span>往返信件</span></button> : <button className="floating-add recipient-compose-add" onClick={onCompose} aria-label="把女儿的此刻交给信使">＋</button>}
+
+      <section className="recipient-chat-dock recipient-deepseek-dock" aria-label="AI 对话工具">
+        <div className="recipient-chat-box recipient-deepseek-box">
+          {(daughterSending || daughterDelivered || daughterHistory.length > 0) && (
+            <button className="recipient-chat-context" onClick={onPigeon} disabled={!daughterSending && !daughterDelivered && !daughterHistory.length} aria-live="polite">
+              <span>{daughterSending ? '检索中' : daughterDelivered && messenger.unread ? '新回忆' : '历史'}</span><b>{chatStatus}</b>
+            </button>
+          )}
+          <textarea className="recipient-chat-input" value={chatDraft} rows={1} onChange={(event) => setChatDraft(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey && chatDraft.trim()) { event.preventDefault(); openChatComposer('文字') } }} placeholder="给 AI 发送消息" aria-label="输入要交给 AI 的内容" />
+          <div className="recipient-chat-toolbar" aria-label="输入工具">
+            <button className="recipient-chat-tool recipient-chat-attach" onClick={() => openChatComposer('图片')} disabled={!hardwareDetection} aria-label="图片输入">＋</button>
+            <button className={`recipient-hardware-switch ${hardwareDetection ? 'active' : ''}`} role="switch" aria-checked={hardwareDetection} onClick={() => setHardwareDetection((value) => !value)}>
+              <i /><span>硬件感知</span>
+            </button>
+            <button className="recipient-chat-tool recipient-chat-history" onClick={onPigeon} disabled={!daughterSending && !daughterDelivered && !daughterHistory.length} aria-label="查看往返信件">历史</button>
+            <button className="recipient-chat-tool recipient-chat-voice" onClick={() => openChatComposer('语音')} disabled={!hardwareDetection} aria-label="语音输入">声</button>
+            <button className="recipient-chat-send" disabled={!chatDraft.trim()} onClick={() => openChatComposer('文字')} aria-label="发送文字">↑</button>
+          </div>
+        </div>
+      </section>
     </div>
   )
 }
@@ -2016,7 +2064,6 @@ function App() {
   const [activeMessengerOwner, setActiveMessengerOwner] = useState<MessengerOwner | null>(null)
   const [savedMessengerDrafts, setSavedMessengerDrafts] = useState<Partial<Record<MessengerOwner, SavedMessengerDraft>>>(loadMessengerDrafts)
   const [pigeonDockDismissed, setPigeonDockDismissed] = useState(false)
-  const [recipientPigeonDockDismissed, setRecipientPigeonDockDismissed] = useState(false)
   const [recipientData, setRecipientData] = useState<RecipientData>(loadRecipientData)
   const [recipientEchoContextId, setRecipientEchoContextId] = useState<number | null>(null)
   const allMemories = useMemo(() => buildMemories(seeds), [seeds])
@@ -2050,7 +2097,6 @@ function App() {
           showToast('这一刻已收进记忆库，并按授权留给林崖。妈妈端无需等待回信。', 3000)
           return
         }
-        setRecipientPigeonDockDismissed(false)
         setMessenger((current) => {
           const currentChannel = current[owner]
           if (currentChannel.phase !== 'sending' || currentChannel.pending.id !== pending.id) return current
@@ -2152,17 +2198,17 @@ function App() {
     setActiveMessengerOwner(null)
   }
 
-  const beginCompose = (owner: MessengerOwner, contextSeedId?: number) => {
+  const beginCompose = (owner: MessengerOwner, contextSeedId?: number, draftOverride?: MessengerDraft) => {
     const channel = messenger[owner]
     if (channel.phase === 'sending') {
       showToast(owner === 'daughter' ? '信使正在路上，可以先在女儿首页等待' : '上一段内容正在保存到记忆库，请稍后再留一段')
       return false
     }
     if (activeMessengerOwner && activeMessengerOwner !== owner) closeMessengerSheet()
-    const saved = savedMessengerDrafts[owner]
+    const saved = draftOverride ? undefined : savedMessengerDrafts[owner]
     const effectiveContextSeedId = contextSeedId ?? saved?.contextSeedId
     const context: MessengerContext = { owner, returnPage: owner === 'daughter' ? 'recipient' : 'creator', contextSeedId: effectiveContextSeedId }
-    const draft = saved?.draft ?? (owner === 'daughter'
+    const draft = draftOverride ?? saved?.draft ?? (owner === 'daughter'
       ? { mode: '文字', text: effectiveContextSeedId ? '' : '今天回家路上下雨了，忽然有些想你。' }
       : { mode: '图片', text: '' })
     setMessenger((current) => ({ ...current, [owner]: { phase: 'composing', history: current[owner].history, draft, context } }))
@@ -2224,8 +2270,8 @@ function App() {
 
   const openComposer = () => { beginCompose('mother') }
 
-  const openDaughterComposer = (contextSeedId?: number) => {
-    if (!beginCompose('daughter', contextSeedId)) return
+  const openDaughterComposer = (contextSeedId?: number, draft?: MessengerDraft) => {
+    if (!beginCompose('daughter', contextSeedId, draft)) return
     setRecipientEchoContextId(contextSeedId ?? null)
     setPage('echo')
     window.setTimeout(() => document.querySelector('.phone-screen')?.scrollTo({ top: 0, behavior: quiet ? 'auto' : 'smooth' }), 0)
@@ -2269,7 +2315,6 @@ function App() {
     }
     setSavedMessengerDrafts((current) => { const next = { ...current }; delete next[owner]; return next })
     if (owner === 'daughter') {
-      setRecipientPigeonDockDismissed(false)
       addDaughterEntry({
         id: exchangeId,
         exchangeId,
@@ -2329,8 +2374,7 @@ function App() {
   }
 
   const dismissPigeonDock = (owner: MessengerOwner) => {
-    if (owner === 'daughter') setRecipientPigeonDockDismissed(true)
-    else setPigeonDockDismissed(true)
+    if (owner === 'mother') setPigeonDockDismissed(true)
     showToast(owner === 'mother'
       ? '已收起，内容仍会在后台保存到记忆库'
       : messenger[owner].phase === 'sending' ? '已收起，信使仍会在后台送达' : '已收起，可从往返信件再次查看')
@@ -2444,7 +2488,7 @@ function App() {
     case 'library': content = <LibraryPage seeds={seeds} go={go} onOpen={(seed) => openDetail(seed, 'library')} onCompose={openComposer} initialFilter={libraryFilter} />; break
     case 'detail': content = detail ? <ObjectDetailPage seed={detail} onBack={() => go(detailBack)} onUpdate={updateSeed} /> : <LibraryPage seeds={seeds} go={go} onOpen={(seed) => openDetail(seed, 'library')} onCompose={openComposer} initialFilter={libraryFilter} />; break
     case 'settings': content = <SettingsPage go={go} onCompose={openComposer} onRecipient={() => go('recipient')} memories={allMemories} recipientData={recipientData} onExport={exportAllRecords} quiet={quiet} onQuietChange={setQuiet} />; break
-    case 'recipient': content = <RecipientHome go={go} memories={recipientMemories} data={recipientData} onStart={startRecipientExperience} onEndSession={endRecipientSession} onUpdatePreferences={updateRecipientPreferences} onOpenMemory={(id) => selectRecipientMemory(id, true)} messenger={messenger.daughter} onCompose={() => openDaughterComposer()} onPigeon={() => openPigeonHistory('daughter')} onDismissPigeon={() => dismissPigeonDock('daughter')} pigeonDockDismissed={recipientPigeonDockDismissed} />; break
+    case 'recipient': content = <RecipientHome go={go} memories={recipientMemories} data={recipientData} onStart={startRecipientExperience} onEndSession={endRecipientSession} onUpdatePreferences={updateRecipientPreferences} onOpenMemory={(id) => selectRecipientMemory(id, true)} messenger={messenger.daughter} onCompose={(draft) => openDaughterComposer(undefined, draft)} onPigeon={() => openPigeonHistory('daughter')} />; break
     case 'gallery': content = <GalleryPage onBack={() => go('recipient')} go={go} memories={recipientMemories} selectedMemoryId={recipientData.selectedMemoryId} viewedMemoryIds={recipientData.viewedMemoryIds} soundEnabled={recipientData.preferences.sound} onSelect={(id) => selectRecipientMemory(id)} onViewed={markRecipientMemoryViewed} onRespond={respondToRecipientMemory} />; break
     case 'echo': content = <MessengerHubPage onBack={() => go('recipient')} onCompose={() => openDaughterComposer(recipientEchoContextId ?? undefined)} onOpenHistory={(id) => openPigeonHistory('daughter', id)} history={messenger.daughter.history} />; break
     case 'seek': content = selectedRecipientMemory ? <SeekPage onBack={() => go('gallery')} memory={selectedRecipientMemory} onSaveEntry={addDaughterEntry} /> : <GalleryPage onBack={() => go('recipient')} go={go} memories={[]} selectedMemoryId={0} viewedMemoryIds={[]} soundEnabled={false} onSelect={() => {}} onViewed={() => {}} onRespond={() => {}} />; break

@@ -715,7 +715,6 @@ button.settings-list-row:active { background: rgba(229,222,212,.58); }
 .recipient-paused-page > p { max-width: 310px; margin: 13px auto 24px; color: #7e7c77; font: 11px/1.8 "Songti SC", STSong, serif; }
 .recipient-paused-page .primary-button, .recipient-paused-page .secondary-button { width: 100%; min-height: 47px; border-radius: 999px; }
 .recipient-paused-page .secondary-button { margin-top: 8px; border: 1px solid #d5cdc2; color: #687779; background: rgba(255,253,248,.48); }
-.recipient-paused-screen .recipient-bottom-nav { right: 20px; }
 
 .recipient-dashboard { padding: 52px 20px 145px; }
 .recipient-dashboard .recipient-header h1 { margin-top: 17px; font-size: 34px; }
@@ -753,15 +752,7 @@ button.settings-list-row:active { background: rgba(229,222,212,.58); }
 .recipient-section-title { display: flex; justify-content: space-between; align-items: baseline; }
 .recipient-section-title h2 { margin: 0; font: 16px "Songti SC", serif; }
 .recipient-section-title span { color: #99928a; font-size: 8px; }
-.recipient-flow-list { margin-top: 10px; }
-.recipient-flow-list .flow-card { min-height: 78px; grid-template-columns: 66px 1fr 14px; }
-.recipient-flow-status { width: 58px; min-height: 29px; display: grid; place-items: center; border: 1px solid currentColor; border-radius: 999px; font-size: 8px; opacity: .78; }
-.recipient-flow-list .flow-card > b { font-size: 18px; }
 .recipient-you-entry { margin-top: 13px; }
-.recipient-bottom-nav { left: 20px; right: 88px; bottom: calc(13px + env(safe-area-inset-bottom)); height: 69px; padding: 8px 9px; grid-template-columns: repeat(3, minmax(0,1fr)); }
-.recipient-bottom-nav button { line-height: 1.25; }
-.recipient-bottom-nav button span { font-size: 18px; }
-.recipient-compose-add { right: 17px; bottom: calc(17px + env(safe-area-inset-bottom)); width: 58px; height: 58px; font-size: 31px; }
 .recipient-screen .pigeon-dock { right: 7px; bottom: calc(7px + env(safe-area-inset-bottom)); width: 78px; height: 76px; }
 .recipient-screen .pigeon-dock-copy { right: 0; width: 76px; min-height: 24px; padding: 3px 5px; }
 .recipient-screen .pigeon-dock-copy b { font-size: 8px; }.recipient-screen .pigeon-dock-copy small { display: none; }
@@ -893,11 +884,8 @@ button.settings-list-row:active { background: rgba(229,222,212,.58); }
   .recipient-safety-list small, .recipient-sound-choice small, .safe-banner p, .recipient-source-panel p { font-size: 10px; }
   .recipient-choice-row > b, .recipient-choice-row button, .recipient-memory-actions button { font-size: 11px; }
   .recipient-choice-row button, .recipient-memory-actions button, .recipient-source-toggle, .frequency-options button { min-height: 44px; }
-  .recipient-summary-card > p, .recipient-feature-copy p, .recipient-flow-list .flow-card p { font-size: 10px; }
-  .recipient-flow-status, .recipient-memory-picker button > small, .recipient-memory-meta { font-size: 9px; }
   .recipient-story-copy p { font-size: 11px; }
   .recipient-source-toggle { font-size: 11px; }
-  .recipient-bottom-nav button { font-size: 10px; }
   .daughter-note-form button, .frequency-card button, .hidden-memory-control button, .influence-row > button { min-height: 44px; }
   .icon-button { width: 44px; height: 44px; }
   .pigeon-sheet-close { width: 40px; height: 40px; }
@@ -963,7 +951,6 @@ button.settings-list-row:active { background: rgba(229,222,212,.58); }
   .recipient-feature-copy { padding-top: 11px; padding-bottom: 10px; }
   .recipient-feature-copy h2 { margin-top: 5px; }
   .recipient-home-section { margin-top: 16px; }
-  .recipient-flow-list .flow-card { min-height: 70px; }
   .recipient-consent-page { padding: calc(36px + env(safe-area-inset-top)) 20px 36px; }
   .recipient-consent-page > header { margin-top: 14px; }
   .recipient-consent-page > header h1 { margin-top: 6px; font-size: 30px; line-height: 1.25; }
@@ -1025,3 +1012,549 @@ button.settings-list-row:active { background: rgba(229,222,212,.58); }
   .prototype-stage { padding-top: 15px; padding-bottom: 15px; }
   .stage-caption { margin-bottom: 5px; }
 }
+
+/* Daughter homepage album mode and AI chat input. */
+.recipient-album-screen {
+  background:
+    radial-gradient(circle at 88% 8%, rgba(212,224,222,.78), transparent 28%),
+    radial-gradient(circle at 3% 58%, rgba(227,212,193,.58), transparent 32%),
+    #f3eee6;
+}
+.recipient-album-screen .tide { z-index: 0; }
+.recipient-album-screen .recipient-dashboard {
+  padding: calc(40px + env(safe-area-inset-top)) 18px calc(168px + env(safe-area-inset-bottom));
+  color: #35464b;
+  font: 14px/1.5 "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+}
+.recipient-album-screen .recipient-dashboard > * { position: relative; z-index: 1; }
+.recipient-album-screen .recipient-kicker { gap: 8px; }
+.recipient-album-screen .source-mark,
+.recipient-album-screen .pill,
+.recipient-album-label,
+.recipient-summary-strip span,
+.recipient-chat-status span,
+.recipient-hardware-switch,
+.recipient-chat-tool { font-size: 12px; letter-spacing: 0; }
+.recipient-album-screen .recipient-header h1 {
+  margin: 14px 0 4px;
+  color: #344f59;
+  font: 16px/1.45 "Songti SC", STSong, serif;
+  letter-spacing: 0;
+}
+.recipient-album-screen .recipient-header > p {
+  margin: 0;
+  color: #6c716f;
+  font: 14px/1.5 "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  letter-spacing: 0;
+}
+.recipient-album-screen .recipient-session-bar {
+  min-height: 38px;
+  margin-top: 14px;
+  border-radius: 8px;
+  font-size: 12px;
+}
+.recipient-album-screen .recipient-session-panel { border-radius: 8px; }
+.recipient-album-screen .recipient-session-panel > div > span,
+.recipient-album-screen .recipient-session-panel button { font-size: 12px; }
+.recipient-album-section { margin-top: 20px; }
+.recipient-album-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.recipient-album-heading h2 {
+  margin: 0;
+  color: #344b51;
+  font: 16px/1.35 "Songti SC", STSong, serif;
+  letter-spacing: 0;
+}
+.recipient-album-heading span {
+  color: #85827b;
+  font-size: 12px;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+.recipient-summary-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0 0 10px;
+}
+.recipient-summary-strip span {
+  min-height: 30px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(91,111,115,.12);
+  border-radius: 8px;
+  color: #617579;
+  background: rgba(255,253,248,.5);
+}
+.recipient-album-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  align-items: start;
+}
+.recipient-album-card {
+  position: relative;
+  min-width: 0;
+  min-height: 184px;
+  padding: 0;
+  border: 1px solid rgba(127,113,95,.13);
+  border-radius: 8px;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: 112px minmax(0, 1fr);
+  color: #405055;
+  background: rgba(255,253,248,.78);
+  box-shadow: 0 8px 18px rgba(62,59,54,.055);
+  text-align: left;
+  cursor: pointer;
+}
+.recipient-album-card.is-wide {
+  grid-column: 1 / 3;
+  min-height: 164px;
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, .92fr);
+  grid-template-rows: 1fr;
+}
+.recipient-album-label {
+  position: absolute;
+  z-index: 5;
+  left: 8px;
+  top: 8px;
+  padding: 4px 8px;
+  border: 1px solid rgba(255,255,255,.54);
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(44,60,64,.46);
+  backdrop-filter: blur(8px);
+}
+.recipient-own-preview,
+.recipient-memory-preview {
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #ded8cf;
+}
+.recipient-own-preview img,
+.recipient-memory-preview img { width: 100%; height: 100%; display: block; object-fit: cover; }
+.recipient-own-preview blockquote {
+  min-height: 112px;
+  height: 100%;
+  margin: 0;
+  padding: 42px 12px 12px;
+  color: #f9f3e9;
+  background: linear-gradient(145deg, #6b7f82, #344c52);
+  font: 14px/1.45 "Songti SC", STSong, serif;
+}
+.recipient-own-card.is-audio .recipient-own-preview {
+  display: grid;
+  place-items: center;
+  background:
+    repeating-linear-gradient(90deg, rgba(255,255,255,.04) 0 1px, transparent 1px 9px),
+    linear-gradient(145deg, #7b8e93, #40555d);
+}
+.recipient-wave-preview {
+  width: 78%;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+.recipient-wave-preview i {
+  width: 5px;
+  height: 18px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.86);
+}
+.recipient-wave-preview i:nth-child(2) { height: 32px; }
+.recipient-wave-preview i:nth-child(3) { height: 48px; }
+.recipient-wave-preview i:nth-child(4) { height: 28px; }
+.recipient-wave-preview i:nth-child(5) { height: 38px; }
+.recipient-album-copy {
+  min-width: 0;
+  padding: 10px;
+  background: rgba(255,253,248,.92);
+}
+.recipient-album-card.is-wide .recipient-album-copy { border-left: 1px solid rgba(127,113,95,.12); }
+.recipient-album-copy h3 {
+  margin: 0 0 5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #344f59;
+  font: 16px/1.35 "Songti SC", STSong, serif;
+  letter-spacing: 0;
+}
+.recipient-album-copy p {
+  margin: 0;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  color: #6f7472;
+  font-size: 14px;
+  line-height: 1.45;
+}
+.recipient-album-copy small {
+  display: block;
+  margin-top: 7px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #989189;
+  font-size: 12px;
+  line-height: 1.35;
+}
+.recipient-memory-preview .memory-artwork,
+.recipient-memory-preview .figma-crop {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  aspect-ratio: auto;
+  border-radius: 0;
+}
+.recipient-memory-preview .memory-image-art::after { inset: 50% 0 0; }
+.recipient-memory-preview .memory-text-art { min-height: 0; padding: 40px 12px 12px; }
+.recipient-memory-preview .memory-text-art blockquote { font-size: 14px; line-height: 1.45; }
+.recipient-memory-preview .memory-text-art > span,
+.recipient-memory-preview .memory-audio-copy b,
+.recipient-memory-preview .memory-image-caption { font-size: 14px; letter-spacing: 0; }
+.recipient-memory-preview .memory-audio-art { min-height: 0; height: 100%; align-content: center; }
+.recipient-empty-album {
+  width: 100%;
+  min-height: 132px;
+  padding: 16px;
+  border: 1px dashed #c9c0b5;
+  border-radius: 8px;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 6px;
+  color: #6f7776;
+  background: rgba(255,253,248,.45);
+  cursor: pointer;
+}
+.recipient-empty-album span {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  color: #fff;
+  background: #758d93;
+  font-size: 20px;
+}
+.recipient-empty-album b { font: 16px/1.35 "Songti SC", STSong, serif; }
+.recipient-empty-album p,
+.recipient-empty-copy { margin: 0; color: #81817b; font-size: 14px; line-height: 1.45; text-align: center; }
+.recipient-album-more {
+  width: 100%;
+  min-height: 40px;
+  margin-top: 10px;
+  border: 1px solid #d8d0c5;
+  border-radius: 8px;
+  color: #596f75;
+  background: rgba(255,253,248,.58);
+  font-size: 14px;
+  cursor: pointer;
+}
+.recipient-chat-dock {
+  position: absolute;
+  z-index: 28;
+  left: 12px;
+  right: 12px;
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  display: grid;
+  gap: 6px;
+  pointer-events: none;
+}
+.recipient-chat-dock > * { pointer-events: auto; }
+.recipient-chat-status {
+  min-height: 32px;
+  padding: 5px 9px;
+  border: 1px solid rgba(91,111,115,.12);
+  border-radius: 8px;
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  color: #5c6f73;
+  background: rgba(255,253,248,.84);
+  box-shadow: 0 6px 16px rgba(54,58,57,.06);
+  text-align: left;
+  cursor: pointer;
+}
+.recipient-chat-status:disabled { cursor: default; opacity: 1; }
+.recipient-chat-status span {
+  min-height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  color: #fff;
+  background: #6f858a;
+}
+.recipient-chat-status b {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 500;
+}
+.recipient-chat-box {
+  padding: 8px;
+  border: 1px solid rgba(88,106,111,.14);
+  border-radius: 8px;
+  background: rgba(250,248,244,.96);
+  box-shadow: 0 10px 28px rgba(35,42,44,.16);
+  backdrop-filter: blur(18px);
+}
+.recipient-chat-tools {
+  display: grid;
+  grid-template-columns: 34px 34px 34px minmax(0, 1fr);
+  gap: 6px;
+  align-items: center;
+}
+.recipient-chat-tool,
+.recipient-hardware-switch {
+  height: 34px;
+  border: 1px solid rgba(92,105,107,.15);
+  border-radius: 8px;
+  color: #5e6f72;
+  background: #f1eee8;
+  cursor: pointer;
+}
+.recipient-chat-tool.is-active { color: #fff; background: #667f86; }
+.recipient-chat-tool:disabled { opacity: .36; cursor: not-allowed; }
+.recipient-hardware-switch {
+  min-width: 0;
+  padding: 0 7px;
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+  text-align: left;
+}
+.recipient-hardware-switch i {
+  position: relative;
+  width: 26px;
+  height: 16px;
+  border-radius: 999px;
+  background: #cfc8bd;
+}
+.recipient-hardware-switch i::after {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #fffdf8;
+  transition: transform .18s ease;
+}
+.recipient-hardware-switch.active { color: #fff; background: #617b82; }
+.recipient-hardware-switch.active i { background: rgba(255,255,255,.36); }
+.recipient-hardware-switch.active i::after { transform: translateX(10px); }
+.recipient-hardware-switch span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.recipient-hardware-switch b { font-weight: 500; }
+.recipient-chat-input-row {
+  margin-top: 7px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 38px;
+  gap: 7px;
+  align-items: end;
+}
+.recipient-chat-input-row textarea {
+  width: 100%;
+  min-height: 42px;
+  max-height: 72px;
+  padding: 11px 12px;
+  border: 1px solid #e2ddd5;
+  border-radius: 8px;
+  resize: none;
+  outline: 0;
+  color: #36494e;
+  background: #fffdf8;
+  font: 14px/1.35 "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+}
+.recipient-chat-input-row textarea::placeholder { color: #9b958f; }
+.recipient-chat-send {
+  width: 38px;
+  height: 42px;
+  border: 0;
+  border-radius: 8px;
+  color: #fff;
+  background: #304f58;
+  font-size: 18px;
+  cursor: pointer;
+}
+.recipient-chat-send:disabled { opacity: .34; cursor: default; }
+.app:has(.recipient-album-screen) > .toast { bottom: calc(154px + env(safe-area-inset-bottom)); }
+
+@media (max-width: 390px) {
+  .recipient-album-screen .recipient-dashboard { padding-left: 14px; padding-right: 14px; }
+  .recipient-chat-dock { left: 8px; right: 8px; }
+  .recipient-chat-tools { grid-template-columns: 32px 32px 32px minmax(0, 1fr); }
+  .recipient-hardware-switch { padding: 0 6px; gap: 5px; }
+}
+
+@media (max-height: 720px) {
+  .recipient-album-screen .recipient-dashboard {
+    padding-top: calc(28px + env(safe-area-inset-top));
+    padding-bottom: calc(148px + env(safe-area-inset-bottom));
+  }
+  .recipient-album-section { margin-top: 14px; }
+  .recipient-album-card { min-height: 160px; grid-template-rows: 92px minmax(0, 1fr); }
+  .recipient-album-card.is-wide { min-height: 140px; }
+  .recipient-album-copy { padding: 8px; }
+  .recipient-album-copy p { -webkit-line-clamp: 1; }
+  .recipient-chat-status { min-height: 28px; }
+  .recipient-chat-box { padding: 6px; }
+  .recipient-chat-input-row textarea { min-height: 38px; padding-top: 9px; padding-bottom: 9px; }
+  .recipient-chat-send { height: 38px; }
+}
+
+.recipient-album-screen .recipient-dashboard { padding-bottom: calc(206px + env(safe-area-inset-bottom)); }
+.recipient-deepseek-dock { left: 10px; right: 10px; bottom: calc(10px + env(safe-area-inset-bottom)); gap: 8px; }
+.recipient-deepseek-box {
+  padding: 10px 10px 9px;
+  border: 1px solid rgba(92,106,111,.14);
+  border-radius: 18px;
+  background: rgba(255,253,248,.94);
+  box-shadow: 0 14px 30px rgba(35,42,44,.16);
+  backdrop-filter: blur(18px);
+}
+.recipient-chat-context {
+  width: 100%;
+  min-height: 30px;
+  padding: 0 0 8px;
+  border: 0;
+  border-bottom: 1px solid rgba(91,111,115,.12);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #5c6f73;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.recipient-chat-context:disabled { cursor: default; opacity: 1; }
+.recipient-chat-context span {
+  flex: 0 0 auto;
+  min-height: 22px;
+  padding: 0 8px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  color: #fff;
+  background: #6f858a;
+  font-size: 12px;
+}
+.recipient-chat-context b {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  line-height: 1.35;
+  font-weight: 500;
+}
+.recipient-chat-input {
+  width: 100%;
+  min-height: 52px;
+  max-height: 88px;
+  margin-top: 8px;
+  padding: 2px 0 10px;
+  border: 0;
+  outline: 0;
+  resize: none;
+  color: #33464b;
+  background: transparent;
+  font: 14px/1.45 "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+}
+.recipient-chat-input::placeholder { color: #98a0a0; }
+.recipient-chat-toolbar {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) 54px 36px 38px;
+  gap: 8px;
+  align-items: center;
+}
+.recipient-chat-tool,
+.recipient-chat-send,
+.recipient-hardware-switch {
+  height: 36px;
+  border-radius: 10px;
+}
+.recipient-chat-tool.recipient-chat-attach,
+.recipient-chat-tool.recipient-chat-voice,
+.recipient-chat-tool.recipient-chat-history {
+  border: 1px solid rgba(92,105,107,.15);
+  color: #5e6f72;
+  background: #f1eee8;
+  font-size: 14px;
+}
+.recipient-chat-tool.recipient-chat-attach:disabled,
+.recipient-chat-tool.recipient-chat-voice:disabled { opacity: .34; cursor: not-allowed; }
+.recipient-chat-tool.recipient-chat-history { font-size: 12px; }
+.recipient-hardware-switch {
+  min-width: 0;
+  padding: 0 9px;
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  border: 1px solid rgba(92,105,107,.15);
+  color: #5e6f72;
+  background: #f1eee8;
+  text-align: left;
+}
+.recipient-hardware-switch i { width: 26px; height: 16px; }
+.recipient-hardware-switch span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+.recipient-chat-send {
+  width: 38px;
+  border: 0;
+  color: #fff;
+  background: #2f5f6a;
+  font-size: 18px;
+}
+.recipient-chat-send:disabled { opacity: .34; cursor: default; }
+.app:has(.recipient-album-screen) > .toast { bottom: calc(166px + env(safe-area-inset-bottom)); }
+
+@media (max-width: 390px) {
+  .recipient-album-screen .recipient-dashboard { padding-left: 14px; padding-right: 14px; }
+  .recipient-chat-dock { left: 8px; right: 8px; }
+  .recipient-chat-toolbar { grid-template-columns: 34px minmax(0, 1fr) 50px 34px 38px; gap: 6px; }
+  .recipient-hardware-switch { padding: 0 8px; gap: 6px; }
+  .recipient-hardware-switch span { font-size: 11px; }
+}
+
+@media (max-height: 720px) {
+  .recipient-album-screen .recipient-dashboard {
+    padding-top: calc(28px + env(safe-area-inset-top));
+    padding-bottom: calc(160px + env(safe-area-inset-bottom));
+  }
+  .recipient-album-section { margin-top: 14px; }
+  .recipient-album-card { min-height: 160px; grid-template-rows: 92px minmax(0, 1fr); }
+  .recipient-album-card.is-wide { min-height: 140px; }
+  .recipient-album-copy { padding: 8px; }
+  .recipient-album-copy p { -webkit-line-clamp: 1; }
+  .recipient-chat-context { padding-bottom: 7px; }
+  .recipient-chat-input { min-height: 42px; margin-top: 6px; padding-bottom: 8px; }
+  .recipient-chat-toolbar { gap: 6px; }
+  .recipient-chat-status { min-height: 28px; }
+  .recipient-chat-box { padding: 8px 8px 7px; }
+  .recipient-chat-send { height: 36px; }
+}
+.recipient-album-screen .recipient-header h1 { margin-top: 0; }
+.recipient-deepseek-box > .recipient-chat-input:first-child { margin-top: 0; }
