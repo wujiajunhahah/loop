@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:alloop/core/utils/al_file_utils.dart';
 import 'package:alloop/core/utils/csv_file_writer.dart';
+import 'package:alloop/core/services/hrv_http_forwarder.dart';
 import 'package:alloop/features/common/presentation/controllers/device_status_controller.dart';
 import 'package:alloop/features/history_sync_debug/domain/models/history_sync_state.dart';
 import 'package:alloop/foundations/log/al_logger.dart';
@@ -51,6 +52,9 @@ class HistorySyncDebugController extends GetxController {
   final String deviceId;
 
   final AlloopBlueLite _blue = AlloopBlueLite.instance;
+  final HrvHttpForwarder _hrvForwarder = HrvHttpForwarder();
+  MeasurementRecord? _latestValidHrv;
+  bool _hrvForwardAttempted = false;
 
   static const String _logTag = 'history_sync';
 
@@ -129,6 +133,7 @@ class HistorySyncDebugController extends GetxController {
   @override
   void onClose() {
     _syncSubscription?.cancel();
+    _hrvForwarder.close();
     super.onClose();
   }
 
@@ -208,6 +213,15 @@ class HistorySyncDebugController extends GetxController {
 
         final records = recordsByType.putIfAbsent(event.type, () => []);
         records.add(event.record);
+        if (event.type == 'measurement' && event.record is MeasurementRecord) {
+          final measurement = event.record as MeasurementRecord;
+          if (measurement.hrv > 0 &&
+              measurement.hrSuccess &&
+              (_latestValidHrv == null ||
+                  measurement.unixSec > _latestValidHrv!.unixSec)) {
+            _latestValidHrv = measurement;
+          }
+        }
         recordsByType.refresh();
         typeSyncStatuses.refresh();
 
@@ -249,6 +263,7 @@ class HistorySyncDebugController extends GetxController {
   /// Idempotent: if there are no records this round, no files are written and no
   /// flags are changed.
   Future<void> _finalizeSync() async {
+    await _forwardLatestHrv();
     if (recordsByType.values.every((records) => records.isEmpty)) {
       return;
     }
@@ -263,6 +278,33 @@ class HistorySyncDebugController extends GetxController {
       activity: (recordsByType['activity']?.isNotEmpty ?? false),
       sport: (recordsByType['sport']?.isNotEmpty ?? false),
     );
+  }
+
+  /// Sends only the newest valid SDK-provided HRV record. This keeps the HTTP
+  /// bridge small and ensures the reply service never mistakes HR for HRV.
+  Future<void> _forwardLatestHrv() async {
+    final measurement = _latestValidHrv;
+    if (_hrvForwardAttempted || measurement == null) return;
+    _hrvForwardAttempted = true;
+
+    final result = await _hrvForwarder.sendLatest(
+      ringDeviceId: deviceId,
+      record: measurement,
+    );
+    if (result.accepted) {
+      AlLogger.info(
+        'Latest HRV forwarded: value=${measurement.hrv}, unixSec=${measurement.unixSec}',
+        tag: _logTag,
+      );
+      AlToast.showSuccess('Latest HRV ${measurement.hrv} sent to Pigeon backend');
+      return;
+    }
+
+    AlLogger.error(
+      'HRV forwarding failed: ${result.message}',
+      tag: _logTag,
+    );
+    AlToast.showError('HRV was synced locally but could not reach the Pigeon backend');
   }
 
   /// Writes the records accumulated in [recordsByType] out to CSV files.
@@ -454,6 +496,8 @@ class HistorySyncDebugController extends GetxController {
     syncState.value = HistorySyncState.idle;
     errorMessage.value = '';
     currentSyncType.value = '';
+    _latestValidHrv = null;
+    _hrvForwardAttempted = false;
   }
 
   String _describeError(Object error) {

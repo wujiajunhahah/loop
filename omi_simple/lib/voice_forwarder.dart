@@ -3,7 +3,10 @@ import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 
 class AudioForwarder {
-  static const String serverUrl = 'https://wozai.space/api/conversation/voice-diary';
+  static const String serverUrl = String.fromEnvironment(
+    'VOICE_DIARY_URL',
+    defaultValue: 'http://192.168.252.151:8010/api/conversation/voice-diary',
+  );
 
   final List<int> _buffer = [];
   Timer? _flushTimer;

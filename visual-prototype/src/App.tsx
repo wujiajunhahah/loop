@@ -1,4 +1,15 @@
 import { ChangeEvent, ReactNode, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  createPigeonInteraction,
+  getLatestHrvStatus,
+  getRecentVoiceDiaryChunks,
+  markPigeonPresented,
+  submitPigeonFeedback,
+  type PigeonFeedbackCode,
+  type PigeonPresentationMode,
+  type HrvLatestStatus,
+  type VoiceDiaryChunk,
+} from './api/pigeon'
 
 type Page =
   | 'creator'
@@ -47,7 +58,40 @@ type MessengerExchange = MessengerDraft & {
   sourceSeedId?: number
   matchReason?: string
   resultText: string
+  sourceLabel?: string
+  backendClientRequestId?: string
+  backendInteractionId?: string
+  backendPending?: boolean
+  backendPresented?: boolean
+  backendDecision?: 'grounded_match' | 'partial_match' | 'no_match' | 'pause'
+  presentationMode?: PigeonPresentationMode
+  reduceMotion?: boolean
+  allowDeeperPrompt?: boolean
+  requestedIntensity?: Intensity
   feedback?: '很相关' | '不相关' | '太重了' | '不要再出现' | '这不是她的意思'
+}
+
+const backendMemoryToSeedId: Record<string, number> = {
+  memory_linlan_20130608_001: 109,
+}
+
+const feedbackCodeByLabel: Record<NonNullable<MessengerExchange['feedback']>, PigeonFeedbackCode> = {
+  很相关: 'very_relevant',
+  不相关: 'not_relevant',
+  太重了: 'too_heavy',
+  不要再出现: 'suppress_memory',
+  这不是她的意思: 'misrepresents_creator',
+}
+
+function formatPigeonReply(reply: {
+  lead: string
+  quote: string | null
+  context_note: string | null
+  closing: string | null
+}) {
+  return [reply.lead, reply.quote ? `“${reply.quote}”` : null, reply.context_note, reply.closing]
+    .filter(Boolean)
+    .join('\n\n')
 }
 
 type MessengerChannelState =
@@ -562,7 +606,7 @@ function MessengerComposeSheet({
   onSaveDraft: (draft: MessengerDraft) => void
   onSend: (draft: MessengerDraft) => void
 }) {
-  const [mode, setMode] = useState<CaptureType>(draft.mode)
+  const [mode, setMode] = useState<CaptureType>(context.owner === 'daughter' ? '文字' : draft.mode)
   const [text, setText] = useState(draft.text)
   const [attachment, setAttachment] = useState(draft.attachment)
   const [recording, setRecording] = useState(false)
@@ -584,11 +628,12 @@ function MessengerComposeSheet({
     : mode === '语音'
       ? currentAttachment?.kind === 'audio' || Boolean(text.trim())
       : Boolean(text.trim())
-  const modeMeta: Array<{ mode: CaptureType; icon: string; label: string }> = [
+  const allModeMeta: Array<{ mode: CaptureType; icon: string; label: string }> = [
     { mode: '图片', icon: '▧', label: '放入照片' },
     { mode: '语音', icon: '•••', label: '说一段话' },
     { mode: '文字', icon: '✎', label: '写下一句' },
   ]
+  const modeMeta = context.owner === 'daughter' ? allModeMeta.filter((item) => item.mode === '文字') : allModeMeta
   const tag = mode === '图片' ? (currentAttachment ? '已放入' : '待放入') : mode === '语音' ? (currentAttachment ? '已录下' : '待录下') : '已写下'
   const senderName = context.owner === 'daughter' ? '林崖' : '林岚'
 
@@ -759,7 +804,7 @@ function MessengerThreadSheet({
   return (
     <div className="pigeon-overlay reply-messenger-overlay">
       <button className="pigeon-scrim" onClick={onClose} aria-label="关闭信使带回的内容" />
-      <section className="pigeon-sheet reply-messenger-sheet" role="dialog" aria-modal="true" aria-labelledby="reply-messenger-title">
+      <section className={`pigeon-sheet reply-messenger-sheet presentation-${(exchange.presentationMode ?? 'standard').replace('_', '-')}`} role="dialog" aria-modal="true" aria-labelledby="reply-messenger-title">
         <div className="reply-pigeon-art" aria-hidden="true">
           <span className="pigeon-art-speech">我从妈妈留下的记录里，<br />带回了一段线索。<i>♥</i></span>
           <img src={mascotReturningImage} alt="" />
@@ -773,6 +818,10 @@ function MessengerThreadSheet({
           <span className="reply-envelope-icon"><i /></span>
           <span><small>回信已经送到</small><b>打开看看信鸽带回了什么</b></span>
         </div>
+
+        {exchange.presentationMode && <p className="reply-presentation-note">
+          {exchange.presentationMode === 'gentle' ? '这次会轻一点、慢一点地呈现' : exchange.presentationMode === 'standard_open' ? '这次可以从原文继续了解更多' : '这次按标准节奏呈现'}
+        </p>}
 
         {exchanges.length > 1 && <nav className="exchange-history-nav" aria-label="往返信件"><button disabled={activeIndex === 0} onClick={() => setActiveIndex((index) => Math.max(0, index - 1))}>‹ 上一封</button><span>{activeIndex + 1} / {exchanges.length}</span><button disabled={activeIndex === exchanges.length - 1} onClick={() => setActiveIndex((index) => Math.min(exchanges.length - 1, index + 1))}>下一封 ›</button></nav>}
 
@@ -790,7 +839,7 @@ function MessengerThreadSheet({
           <span className="paper-label">{memory ? '妈妈留下的旧记录' : restricted ? '当前接收范围' : '本次寻找结果'}</span>
           {memory ? <div className="exchange-photo exchange-memory-photo"><MemoryArtwork memory={memory} /></div> : <div className="exchange-voice empty-result-mark">{restricted ? '暂未开放' : '未找到'}<span>{restricted ? '这段内容当前不在你的接收范围' : '不生成妈妈没有说过的话'}</span></div>}
           <p>{restricted ? '这段旧记录的授权或内容强度已经调整，系统不会继续展示它。' : exchange.resultText}</p>
-          <small>{memory ? `${memory.origin} · ${exchange.matchReason ?? '系统关联'} · 妈妈已确认` : restricted ? '你写下的此刻仍由你保留；旧记录不会越过当前授权。' : '只保存女儿的此刻，不生成推测内容。'}</small>
+          <small>{memory ? `${exchange.sourceLabel ?? memory.origin} · ${exchange.matchReason ?? '系统关联'} · 妈妈已确认` : restricted ? '你写下的此刻仍由你保留；旧记录不会越过当前授权。' : '只保存女儿的此刻，不生成推测内容。'}</small>
           {memory && <button className="exchange-source-link" onClick={() => onOpenMemory(memory.seed.id)}>查看这段原始记忆 ›</button>}
         </article>
         <section className="exchange-feedback" aria-label="这次关联是否合适">
@@ -1132,7 +1181,7 @@ const baseMemories: MemoryEntry[] = [
   },
   {
     kind: '文字', visual: { style: 'text', src: rainyRoadImage, quote: '一次没做好，不等于你不行。今晚先睡，明天再说。', tone: 'dark', position: 'center 54%' },
-    seed: { id: 109, title: '没考好那晚的短信', relation: '给女儿 · 母女', type: '文字', excerpt: '一次没做好，不等于你不行。今晚先睡，明天再说。', source: '旧手机短信原文 · 时间已核对', status: '妈妈已确认', intensity: 'L2', year: '2013', delivery: standardDaughterDelivery },
+    seed: { id: 109, title: '没考好那晚的短信', relation: '给女儿 · 母女', type: '文字', excerpt: '一次没做好，不等于你不行。今晚先睡，明天再说。', source: '旧手机短信原文 · 时间已核对', status: '妈妈已确认', intensity: 'L1', year: '2013', delivery: standardDaughterDelivery },
     date: '2013.06.08', scene: '成绩公布后的夜晚', origin: '旧手机短信导出',
     story: '你那晚一直没有回消息，我怕再多问一句都会变成压力，只发了这几句话。它不是一句安慰模板，而是我后来一直想守住的分寸：一次结果不能替你定义自己。',
   },
@@ -1216,34 +1265,6 @@ function buildMemories(seeds: Seed[]): MemoryEntry[] {
   })
   const added = seeds.filter((seed) => !baseIds.has(seed.id)).map(fallbackMemory)
   return [...added, ...existing].sort((left, right) => Number(left.seed.type === '愿景') - Number(right.seed.type === '愿景'))
-}
-
-function matchMemoryForDraft(draft: MessengerDraft, memories: MemoryEntry[], contextSeedId?: number) {
-  const text = draft.text.trim()
-  const rules: Array<{ id: number; pattern: RegExp; reason: string }> = [
-    { id: 118, pattern: /复查|检查|医院|身体|生病|看病|害怕|担心/, reason: '相似的身体担忧与边界' },
-    { id: 116, pattern: /不同意|难听的话|车里录音|楼下的车/, reason: '相似的争执与承担' },
-    { id: 110, pattern: /吵架|道歉|生气|争执|误会|说重了|和好|哄我/, reason: '相似的冲突与道歉' },
-    { id: 109, pattern: /考试|成绩|失败|没考好|压力|做不好|睡不着/, reason: '相似的失落与重新开始' },
-    { id: 115, pattern: /火车|车站|离家|远方|送别|舍不得/, reason: '相似的离开与舍不得' },
-    { id: 108, pattern: /行李|证件|宿舍|箱子|搬家|去外地/, reason: '相似的出发与独立' },
-    { id: 112, pattern: /工作|公司|入职|同事|第一周|上班|换工作/, reason: '相似的新工作与第一周' },
-    { id: 107, pattern: /开学|早餐|豆浆|钥匙|冰箱|便签|第一天/, reason: '相似的第一天与出门前叮嘱' },
-    { id: 111, pattern: /植物|薄荷|阳台|浇水|养花|花盆/, reason: '相似的植物与照料' },
-    { id: 113, pattern: /除夕|春节|饺子|年夜饭|过年/, reason: '相似的节日与厨房声音' },
-    { id: 114, pattern: /菜市场|买菜|豆角|焖面|烟火气/, reason: '相似的一顿家常饭' },
-    { id: 117, pattern: /夏天|蝉|散步|傍晚|公园|慢一点/, reason: '相似的散步与普通傍晚' },
-    { id: 4, pattern: /雨|回家|开车|路上/, reason: '相似的雨天与回家路' },
-    { id: 3, pattern: /外婆|馄饨|做饭|食谱|红烧肉/, reason: '同一种家的味道' },
-    { id: 102, pattern: /奖杯|比赛|舞蹈|练习/, reason: '相似的比赛与坚持' },
-    { id: 1, pattern: /第一次|紧张|独立|买票/, reason: '相似的“第一次”' },
-    { id: 2, pattern: /西湖|湖边|一家人|普通的下午/, reason: '相似的湖边与普通下午' },
-  ]
-  const matchedRule = rules.find((rule) => rule.pattern.test(text))
-  const contextMemory = contextSeedId ? memories.find((item) => item.seed.id === contextSeedId) : undefined
-  const memory = contextMemory ?? (matchedRule ? memories.find((item) => item.seed.id === matchedRule.id) : undefined)
-  const reason = contextMemory ? '回应你正在看的这段记忆' : matchedRule?.reason
-  return { memory, reason }
 }
 
 function MemoryArtwork({ memory, context = 'card' }: { memory: MemoryEntry; context?: 'card' | 'detail' }) {
@@ -1559,6 +1580,8 @@ function RecipientHome({
   onUpdatePreferences,
   onOpenMemory,
   messenger,
+  latestHrv,
+  latestVoiceDiary,
   onSend,
   onPigeon,
   onIntentionAction,
@@ -1569,6 +1592,8 @@ function RecipientHome({
   onUpdatePreferences: (patch: Partial<RecipientPreferences>) => void
   onOpenMemory: (id: number) => void
   messenger: MessengerChannelState
+  latestHrv: HrvLatestStatus | null
+  latestVoiceDiary: VoiceDiaryChunk | null
   onSend: (draft: MessengerDraft) => boolean
   onPigeon: () => void
   onIntentionAction: (intention: RecipientIntention, action: 'progress' | 'complete') => void
@@ -1811,6 +1836,22 @@ function RecipientHome({
               <p><b id="interaction-history-title">{daughterSending ? '正在路上' : daughterDelivered && messenger.unread ? '有新的带回' : '信鸽在这里'}</b></p>
               {daughterHistory.length > 0 && <button onClick={onPigeon}>全部</button>}
             </div>
+            <div className={`recipient-voice-diary-status recipient-hrv-status ${latestHrv?.fresh ? 'is-fresh' : 'is-stale'}`} role="status">
+              <span><i aria-hidden="true" />Alloop HRV {latestHrv?.has_reading ? '已接收' : '尚未收到'}</span>
+              <b>{latestHrv?.value == null ? '--' : `${latestHrv.value.toFixed(0)} ms`}</b>
+              <small>{latestHrv?.fresh
+                ? `这次回信会采用${latestHrv.state === 'low' ? '轻缓' : latestHrv.state === 'high' ? '开放探索' : '标准'}节奏；仅调节呈现，不判断情绪`
+                : latestHrv?.has_reading
+                  ? '最近数据已过有效期，本次回信不会使用它'
+                  : '请在 Alloop 客户端连接戒指并执行历史数据同步'}</small>
+            </div>
+            {latestVoiceDiary && (
+              <div className="recipient-voice-diary-status" role="status">
+                <span><i aria-hidden="true" />Alloop 已接收语音片段</span>
+                <b>{(latestVoiceDiary.bytes_received / 1024).toFixed(1)} KB · {latestVoiceDiary.audio_format.toUpperCase()}</b>
+                <small>{new Date(latestVoiceDiary.received_at).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })} 收到，等待后续处理</small>
+              </div>
+            )}
             {interactionHistory.length ? (
               <div className="recipient-history-list">
                 {interactionHistory.map((item) => (
@@ -2221,6 +2262,9 @@ function App() {
   const [pigeonDockDismissed, setPigeonDockDismissed] = useState(false)
   const [recipientData, setRecipientData] = useState<RecipientData>(loadRecipientData)
   const [recipientEchoContextId, setRecipientEchoContextId] = useState<number | null>(null)
+  const [latestHrv, setLatestHrv] = useState<HrvLatestStatus | null>(null)
+  const [latestVoiceDiary, setLatestVoiceDiary] = useState<VoiceDiaryChunk | null>(null)
+  const pigeonRequestsInFlight = useRef(new Set<string>())
   const allMemories = useMemo(() => buildMemories(seeds), [seeds])
   const authorizedRecipientMemories = useMemo(() => allMemories.filter((memory) => memory.seed.status === '妈妈已确认' && memory.seed.delivery.visible && memory.seed.delivery.flows.includes('查看')), [allMemories])
   const recipientMemories = useMemo(() => authorizedRecipientMemories.filter((memory) => memory.seed.type !== '愿景' && !recipientData.hiddenMemoryIds.includes(memory.seed.id) && (recipientData.preferences.intensity === 'L2' || memory.seed.intensity === 'L1')), [authorizedRecipientMemories, recipientData.hiddenMemoryIds, recipientData.preferences.intensity])
@@ -2234,11 +2278,69 @@ function App() {
   }
 
   useEffect(() => {
+    let active = true
+    const refreshDeviceStatus = () => {
+      void getRecentVoiceDiaryChunks(1)
+        .then((items) => { if (active) setLatestVoiceDiary(items[0] ?? null) })
+        .catch(() => { /* 接收状态是辅助信息，不阻断信鸽文字链路。 */ })
+      void getLatestHrvStatus()
+        .then((status) => { if (active) setLatestHrv(status) })
+        .catch(() => { /* HRV 状态不可用时，后端会安全回退到标准节奏。 */ })
+    }
+    refreshDeviceStatus()
+    const timer = window.setInterval(refreshDeviceStatus, 5_000)
+    return () => { active = false; window.clearInterval(timer) }
+  }, [])
+
+  useEffect(() => {
     const timers: number[] = []
     ;(['mother', 'daughter'] as const).forEach((owner) => {
       const channel = messenger[owner]
       if (channel.phase !== 'sending') return
       const pending = channel.pending
+      if (owner === 'daughter' && pending.backendPending) {
+        const clientRequestId = pending.backendClientRequestId
+        if (!clientRequestId || pigeonRequestsInFlight.current.has(clientRequestId)) return
+        pigeonRequestsInFlight.current.add(clientRequestId)
+        void createPigeonInteraction({
+          clientRequestId,
+          text: pending.text,
+          intensity: pending.requestedIntensity ?? 'L1',
+        }).then((response) => {
+          const sourceSeedId = response.evidence ? backendMemoryToSeedId[response.evidence.memory_id] : undefined
+          setMessenger((current) => {
+            const currentChannel = current.daughter
+            if (currentChannel.phase !== 'sending' || currentChannel.pending.id !== pending.id) return current
+            const completed: MessengerExchange = {
+              ...currentChannel.pending,
+              sourceSeedId,
+              matchReason: response.evidence?.relation_reason,
+              sourceLabel: response.evidence?.source_label,
+              resultText: formatPigeonReply(response.reply),
+              backendInteractionId: response.interaction_id,
+              backendPending: false,
+              backendDecision: response.decision,
+              presentationMode: response.presentation.mode,
+              reduceMotion: response.presentation.reduce_motion,
+              allowDeeperPrompt: response.presentation.allow_deeper_prompt,
+            }
+            return { ...current, daughter: { ...currentChannel, pending: completed, deliverAt: Date.now() + 900 } }
+          })
+        }).catch(() => {
+          setMessenger((current) => {
+            const currentChannel = current.daughter
+            if (currentChannel.phase !== 'sending' || currentChannel.pending.id !== pending.id) return current
+            return { ...current, daughter: { ...currentChannel, pending: {
+              ...currentChannel.pending,
+              backendPending: false,
+              backendDecision: 'no_match',
+              presentationMode: 'standard',
+              resultText: '信使暂时无法连接到记忆服务，因此没有补写任何内容。你写下的此刻仍会保留。',
+            }, deliverAt: Date.now() + 900 } }
+          })
+        }).finally(() => pigeonRequestsInFlight.current.delete(clientRequestId))
+        return
+      }
       const deliver = () => {
         if (owner === 'mother') {
           const seed = motherExchangeToSeed(pending)
@@ -2441,21 +2543,22 @@ function App() {
     const channel = messenger[owner]
     if (channel.phase !== 'composing') return
     const { context } = channel
-    const { memory, reason } = owner === 'daughter'
-      ? matchMemoryForDraft(draft, recipientMemories.filter((memory) => memory.seed.delivery.flows.includes('回应')), context.contextSeedId)
-      : { memory: undefined, reason: undefined }
     const exchangeId = Date.now()
+    const backendClientRequestId = owner === 'daughter'
+      ? `web-${typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : `${exchangeId}-${Math.random().toString(16).slice(2)}`}`
+      : undefined
     const pending: MessengerExchange = {
       ...draft,
       id: exchangeId,
       sentAt: new Date().toISOString(),
       sender: owner,
       returnPage: context.returnPage,
-      sourceSeedId: memory?.seed.id,
-      matchReason: reason,
+      backendClientRequestId,
+      backendPending: owner === 'daughter',
+      requestedIntensity: owner === 'daughter' ? recipientData.preferences.intensity : undefined,
       resultText: owner === 'mother'
         ? '这一刻会原样保存到记忆，并按妈妈确认的授权留给女儿。'
-        : memory?.seed.excerpt ?? '这次没有找到足够相关的旧记录。系统不会猜妈妈会怎么回答，你写下的此刻仍会被好好保存。',
+        : '信使正在从妈妈留下并授权的真实记录中寻找关联。',
     }
     setSavedMessengerDrafts((current) => { const next = { ...current }; delete next[owner]; return next })
     if (owner === 'daughter') {
@@ -2467,7 +2570,7 @@ function App() {
         text: draft.text || (draft.mode === '图片' ? `今天放入了「${draft.attachment?.name ?? '一张照片'}」。` : `今天留下了一段 ${draft.attachment?.duration ?? ''} 秒声音。`),
       })
     } else setPigeonDockDismissed(false)
-    setMessenger((current) => ({ ...current, [owner]: { phase: 'sending', history: current[owner].history, pending, deliverAt: Date.now() + 2600 } }))
+    setMessenger((current) => ({ ...current, [owner]: { phase: 'sending', history: current[owner].history, pending, deliverAt: owner === 'daughter' ? Date.now() + 120_000 : Date.now() + 2600 } }))
     setActiveMessengerOwner(null)
     setPage(context.returnPage)
     window.setTimeout(() => document.querySelector('.phone-screen')?.scrollTo({ top: 0, behavior: quiet ? 'auto' : 'smooth' }), 0)
@@ -2478,19 +2581,19 @@ function App() {
       showToast('信鸽正在路上，请等它回来再继续')
       return false
     }
-    const eligibleMemories = contextSeedId ? recipientMemories : recipientMemories.filter((item) => item.seed.delivery.flows.includes('回应'))
-    const { memory, reason } = matchMemoryForDraft(draft, eligibleMemories, contextSeedId)
     const contextMemory = contextSeedId ? recipientMemories.find((item) => item.seed.id === contextSeedId) : undefined
     const exchangeId = Date.now()
+    const backendClientRequestId = `web-${typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : `${exchangeId}-${Math.random().toString(16).slice(2)}`}`
     const pending: MessengerExchange = {
       ...draft,
       id: exchangeId,
       sentAt: new Date().toISOString(),
       sender: 'daughter',
       returnPage: 'recipient',
-      sourceSeedId: memory?.seed.id,
-      matchReason: reason,
-      resultText: memory?.seed.excerpt ?? '这次没有找到足够相关的旧记录。系统不会猜妈妈会怎么回答，你写下的此刻仍会被好好保存。',
+      backendClientRequestId,
+      backendPending: true,
+      requestedIntensity: recipientData.preferences.intensity,
+      resultText: '信使正在从妈妈留下并授权的真实记录中寻找关联。',
     }
     addDaughterEntry({
       id: exchangeId,
@@ -2501,7 +2604,7 @@ function App() {
     })
     setMessenger((current) => ({
       ...current,
-      daughter: { phase: 'sending', history: current.daughter.history, pending, deliverAt: Date.now() + 2600 },
+      daughter: { phase: 'sending', history: current.daughter.history, pending, deliverAt: Date.now() + 120_000 },
     }))
     showToast(contextMemory ? `已围绕「${contextMemory.seed.title}」交给信鸽` : '已交给信鸽，互动历史会保留这一次往返')
     return true
@@ -2519,6 +2622,17 @@ function App() {
     }
     if (!channel.history.length) return
     if (activeMessengerOwner && activeMessengerOwner !== owner) closeMessengerSheet()
+    const selected = selectedExchangeId
+      ? channel.history.find((exchange) => exchange.id === selectedExchangeId)
+      : channel.history.at(-1)
+    if (selected?.backendInteractionId && !selected.backendPresented) {
+      void markPigeonPresented(selected.backendInteractionId).then(() => {
+        setMessenger((current) => {
+          const daughter = current.daughter
+          return { ...current, daughter: { ...daughter, history: daughter.history.map((item) => item.id === selected.id ? { ...item, backendPresented: true } : item) } }
+        })
+      }).catch(() => showToast('回信可以正常查看；展示确认暂时没有同步到后端'))
+    }
     setMessenger((current) => ({ ...current, [owner]: { phase: 'reading', history: current[owner].history, owner, selectedExchangeId } }))
     setActiveMessengerOwner(owner)
     setToast('')
@@ -2594,6 +2708,10 @@ function App() {
     if (owner === 'daughter' && feedback === '不要再出现' && exchange?.sourceSeedId) {
       setRecipientData((current) => ({ ...current, hiddenMemoryIds: current.hiddenMemoryIds.includes(exchange.sourceSeedId!) ? current.hiddenMemoryIds : [...current.hiddenMemoryIds, exchange.sourceSeedId!] }))
     }
+    if (owner === 'daughter' && exchange?.backendInteractionId) {
+      void submitPigeonFeedback(exchange.backendInteractionId, feedbackCodeByLabel[feedback])
+        .catch(() => showToast('本机已记下；后端暂时没有收到这次反馈'))
+    }
     showToast(feedback === '很相关' ? '已记下：这次关联很合适' : feedback === '不要再出现' ? '这段记忆已从女儿端隐藏' : feedback === '太重了' ? '已切回轻一点的内容强度' : '已记下你的判断，不会改写原始记录')
   }
 
@@ -2649,7 +2767,7 @@ function App() {
     case 'library': content = <LibraryPage seeds={seeds} go={go} onOpen={(seed) => openDetail(seed, 'library')} onCompose={openComposer} initialFilter={libraryFilter} />; break
     case 'detail': content = detail ? <ObjectDetailPage seed={detail} onBack={() => go(detailBack)} onUpdate={updateSeed} /> : <LibraryPage seeds={seeds} go={go} onOpen={(seed) => openDetail(seed, 'library')} onCompose={openComposer} initialFilter={libraryFilter} />; break
     case 'settings': content = <SettingsPage go={go} onCompose={openComposer} onRecipient={() => go('recipient')} memories={allMemories} recipientData={recipientData} onExport={exportAllRecords} quiet={quiet} onQuietChange={setQuiet} />; break
-    case 'recipient': content = <RecipientHome go={go} memories={recipientMemories} data={recipientData} onUpdatePreferences={updateRecipientPreferences} onOpenMemory={(id) => selectRecipientMemory(id, true)} messenger={messenger.daughter} onSend={sendDaughterInline} onPigeon={() => openPigeonHistory('daughter')} onIntentionAction={handleIntentionAction} />; break
+    case 'recipient': content = <RecipientHome go={go} memories={recipientMemories} data={recipientData} onUpdatePreferences={updateRecipientPreferences} onOpenMemory={(id) => selectRecipientMemory(id, true)} messenger={messenger.daughter} latestHrv={latestHrv} latestVoiceDiary={latestVoiceDiary} onSend={sendDaughterInline} onPigeon={() => openPigeonHistory('daughter')} onIntentionAction={handleIntentionAction} />; break
     case 'gallery': content = <GalleryPage onBack={() => go('recipient')} memories={recipientMemories} selectedMemoryId={recipientData.selectedMemoryId} viewedMemoryIds={recipientData.viewedMemoryIds} onSelect={(id) => selectRecipientMemory(id)} messenger={messenger.daughter} onSend={sendDaughterInline} onPigeon={() => openPigeonHistory('daughter')} />; break
     case 'echo': content = <MessengerHubPage onBack={() => go('recipient')} onCompose={() => openDaughterComposer(recipientEchoContextId ?? undefined)} onOpenHistory={(id) => openPigeonHistory('daughter', id)} history={messenger.daughter.history} />; break
     case 'seek': content = selectedRecipientMemory ? <SeekPage onBack={() => go('gallery')} memory={selectedRecipientMemory} onSaveEntry={addDaughterEntry} /> : <GalleryPage onBack={() => go('recipient')} memories={[]} selectedMemoryId={0} viewedMemoryIds={[]} onSelect={() => {}} messenger={messenger.daughter} onSend={() => false} onPigeon={() => {}} />; break

@@ -43,6 +43,7 @@ dependencies:
   device_info_plus: 12.3.0  # Pinned: 12.4.0 calls isiOSAppOnVision (iOS 26.1 SDK only), breaks build on Xcode 26.0 SDK
   intl: ^0.20.2  # 国际化和日期格式化
   flutter_dotenv: ^6.0.0  # 环境变量管理
+  http: ^1.2.0
   package_info_plus: ^9.0.0  # 应用信息获取
   path: ^1.9.1  # 文件路径处理
   flutter_screenutil: ^5.9.3 # 屏幕适配
@@ -73,6 +74,7 @@ flutter:
 
   assets:
     - assets/images/logo.jpeg
+    - .env
 
   # To add assets to your application, add an assets section, like this:
   # assets:

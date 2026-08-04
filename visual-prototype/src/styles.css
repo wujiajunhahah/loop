@@ -377,6 +377,11 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .reply-envelope-banner > span:last-child b { display: block; }
 .reply-envelope-banner > span:last-child small { color: #a08c72; font-size: 7px; }
 .reply-envelope-banner > span:last-child b { margin-top: 3px; color: #4d6268; font: 10px "Songti SC", STSong, serif; }
+.reply-presentation-note { width: fit-content; margin: -5px auto 10px; padding: 4px 10px; border-radius: 999px; color: #778587; background: rgba(223,232,230,.62); font-size: 8px; letter-spacing: .04em; }
+.reply-messenger-sheet.presentation-gentle { --reply-accent: #a7b8b5; }
+.reply-messenger-sheet.presentation-standard-open { --reply-accent: #91a8b2; }
+.reply-messenger-sheet.presentation-gentle .exchange-thread i,
+.reply-messenger-sheet.presentation-gentle .reply-pigeon-art img { animation: none !important; }
 .exchange-history-nav { min-height: 27px; margin: -7px 0 10px; display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center; }
 .exchange-history-nav button { border: 0; color: #718087; background: transparent; font-size: 8px; cursor: pointer; }
 .exchange-history-nav button:first-child { text-align: left; }.exchange-history-nav button:last-child { text-align: right; }
@@ -1879,6 +1884,25 @@ button.settings-list-row:active { background: rgba(229,222,212,.58); }
   font-size: 9px;
   cursor: pointer;
 }
+.recipient-voice-diary-status {
+  margin: 1px 12px 6px;
+  padding: 9px 11px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 3px 10px;
+  border: 1px solid rgba(112,143,137,.18);
+  border-radius: 12px;
+  color: #607574;
+  background: rgba(231,239,236,.58);
+}
+.recipient-voice-diary-status span { display: flex; align-items: center; gap: 6px; font-size: 8px; }
+.recipient-voice-diary-status span i { width: 6px; height: 6px; border-radius: 50%; background: #78a393; box-shadow: 0 0 0 3px rgba(120,163,147,.14); }
+.recipient-voice-diary-status b { color: #536c6c; font-size: 8px; font-weight: 600; }
+.recipient-voice-diary-status small { grid-column: 1 / -1; color: #84918f; font-size: 7px; }
+.recipient-hrv-status { margin-top: 6px; }
+.recipient-hrv-status.is-fresh span i { background: #5e9b83; }
+.recipient-hrv-status.is-stale { border-color: rgba(160,142,111,.18); background: rgba(244,239,228,.58); }
+.recipient-hrv-status.is-stale span i { background: #b9a57d; box-shadow: 0 0 0 3px rgba(185,165,125,.14); }
 .recipient-page-history { margin-top: 24px; }
 .recipient-history-list { padding: 4px 12px 8px; }
 .recipient-history-list > button {

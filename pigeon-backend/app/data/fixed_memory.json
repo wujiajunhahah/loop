@@ -1,0 +1,19 @@
+{
+  "relationship_id": "rel_linlan_linya_001",
+  "creator_id": "person_linlan",
+  "creator_name": "林岚",
+  "recipient_id": "person_linya",
+  "recipient_name": "林崖",
+  "memory_id": "memory_linlan_20130608_001",
+  "title": "没考好那晚的短信",
+  "original_quote": "一次没做好，不等于你不行。今晚先睡，明天再说。",
+  "source_type": "text_message",
+  "source_label": "妈妈原文 · 旧手机短信 · 时间已核对",
+  "date": "2013-06-08",
+  "scene": "成绩公布后的夜晚",
+  "creator_confirmed": true,
+  "recipient_authorized": true,
+  "allowed_flow": "travel_messenger",
+  "excerpt_intensity": "L1",
+  "full_story_intensity": "L2"
+}

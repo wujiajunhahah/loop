@@ -1,0 +1,12 @@
+.env
+.venv/
+__pycache__/
+.pytest_cache/
+.pytest-tmp/
+*.egg-info/
+*.py[cod]
+pigeon.db
+*.db-shm
+*.db-wal
+storage/
+logs/

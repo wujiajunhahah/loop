@@ -4,6 +4,22 @@
 
 妈妈负责留下照片、原文、原声与物件故事；女儿决定何时打开、看多少、是否听声音，以及是否回应。项目依据生命受限创作者版 PRD 与 [Figma 信息架构](https://www.figma.com/design/DEfUNVysNpAa54Okn8PSxc/Untitled?node-id=0-1&p=f) 完成，目前是可交互的纯前端体验原型。
 
+## 女儿端信鸽后端集成
+
+当前 `visual-prototype` 已将女儿端“交给信使”从浏览器本地关键词匹配改为稳定的后端 `/api/v1` 调用。前端只消费回信、证据、呈现模式和反馈选项，因此页面组件可以继续独立迭代。
+
+先启动 `../pigeon-backend/run.cmd`，再在本目录执行：
+
+```powershell
+.\run.cmd
+```
+
+访问：<http://127.0.0.1:5174/>。进入“女儿体验端”并打开体验后，选择“交给信使”。局域网内可使用 `http://运行电脑的IP:5174/`。
+
+前端默认按当前网页的主机名连接 8010 端口，也可以通过 `VITE_PIGEON_API_BASE_URL` 覆盖；示例见 `.env.example`。女儿端 MVP 目前只开放文字输入。
+
+女儿主页还会读取 `GET /api/conversation/voice-diary/recent`，在收到 Alloop/Omi 的 `POST /api/conversation/voice-diary` 后显示最近音频块的大小、格式和接收时间。该状态只代表后端可靠接收，不代表已经转写或完成 AI 分析。
+
 ## 视觉预览
 
 <table>
