@@ -714,16 +714,15 @@ svg {
 }
 
 .statement-grid {
-  display: grid;
-  grid-template-columns: 190px 1fr;
-  gap: 74px;
+  display: block;
 }
 
 .section-kicker {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: center;
   gap: 16px;
-  padding-top: 13px;
+  margin-bottom: 23px;
   color: var(--muted);
   font-size: 12px;
 }
@@ -733,19 +732,21 @@ svg {
   font-family: ui-monospace, monospace;
 }
 
-.section-kicker p { margin: 0; }
+.section-kicker p { margin: 0; white-space: nowrap; }
 
 .statement-copy h2 {
-  font-size: clamp(42px, 5.2vw, 68px);
+  font-size: clamp(40px, 5.2vw, 66px);
+  text-align: center;
 }
 
 .statement-lead {
   max-width: 745px;
-  margin: 38px 0 70px;
+  margin: 38px auto 70px;
   color: var(--ink-soft);
   font-family: var(--serif);
   font-size: 21px;
   line-height: 2;
+  text-align: center;
 }
 
 .truth-grid {
@@ -753,6 +754,7 @@ svg {
   grid-template-columns: repeat(3, 1fr);
   gap: 0;
   border-top: 1px solid var(--line);
+  text-align: left;
 }
 
 .truth-grid article {
@@ -2149,7 +2151,7 @@ svg {
   .desktop-nav { gap: 18px; }
   .hero-grid { grid-template-columns: 0.9fr 1.1fr; gap: 20px; }
   .memory-card { width: 350px; }
-  .statement-grid { grid-template-columns: 140px 1fr; gap: 35px; }
+  .statement-grid { grid-template-columns: 160px minmax(0, 1fr); gap: 35px; }
   .journey-copy { padding: 40px; }
   .boundary-column { padding: 38px 32px; }
   .facts-grid, .faq-grid { gap: 60px; }
@@ -2211,7 +2213,7 @@ svg {
   .hero-bird { right: 3%; }
   .hero::before { top: 38%; width: 100vw; height: 100vw; }
 
-  .statement-grid { grid-template-columns: 1fr; }
+  .statement-grid { grid-template-columns: 150px minmax(0, 1fr); gap: 28px; }
   .section-kicker { padding: 0; }
 
   .messenger-heading { grid-template-columns: 1fr; gap: 28px; }
@@ -2270,7 +2272,7 @@ svg {
   .strip-inner > span { justify-self: center; }
 
   .section { padding-block: 90px; }
-  .statement-grid { gap: 38px; }
+  .statement-grid { grid-template-columns: 1fr; gap: 38px; }
   .section-kicker { gap: 12px; }
   .statement-copy h2, .section-heading h2, .principles-heading h2 { font-size: clamp(38px, 11vw, 52px); }
   .statement-lead { margin: 28px 0 48px; font-size: 17px; }
