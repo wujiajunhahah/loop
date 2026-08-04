@@ -138,7 +138,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .brand-script { margin: 0 0 6px; color: #375866; font: 40px/1.1 "Songti SC", STSong, serif; letter-spacing: .22em; }
 .creator-header h1 { font: 15px/1.6 "Songti SC", STSong, serif; letter-spacing: .08em; margin: 0; color: #374349; }
 .creator-header > p:last-child { margin: 4px 0 0; color: #8a8680; font: 12px "Songti SC", serif; letter-spacing: .08em; }
-.text-search { position: absolute; right: 0; top: 4px; font-size: 29px; border: 0; background: none; color: #3e4b50; cursor: pointer; }
+.text-search { position: absolute; right: 0; top: 4px; width: 34px; height: 34px; display: grid; place-items: center; padding: 0; border: 0; background: none; cursor: pointer; }
 .home-section { margin-top: 23px; }
 .section-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 .section-title h2 { margin: 0; font: 15px "Songti SC", STSong, serif; letter-spacing: .1em; }
@@ -157,8 +157,9 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
   display: grid; grid-template-columns: repeat(3,1fr); align-items: center; padding: 8px 44px 8px 10px;
   background: rgba(248,245,239,.93); backdrop-filter: blur(16px); box-shadow: 0 8px 28px rgba(48,54,54,.18); border: 1px solid rgba(255,255,255,.75);
 }
-.bottom-nav button { border: 0; background: none; color: #777a79; display: grid; place-items: center; gap: 2px; font-size: 9px; cursor: pointer; }
-.bottom-nav button span { font-size: 22px; line-height: 1; }
+.bottom-nav button { border: 0; background: none; color: #777a79; display: grid; place-items: center; gap: 3px; font-size: 9px; line-height: 1; cursor: pointer; }
+.bottom-nav-icon { display: block; width: 24px; height: 24px; object-fit: contain; }
+.bottom-nav button span { font-size: 9px; line-height: 1; }
 .bottom-nav button.active { color: #375a6b; }
 .floating-add { position: absolute; z-index: 22; right: 19px; bottom: 16px; width: 66px; height: 66px; border-radius: 50%; border: 1px solid #ded7cd; background: rgba(250,247,241,.97); box-shadow: 0 8px 24px rgba(50,53,54,.2); font-size: 36px; font-weight: 200; color: #7c7974; cursor: pointer; }
 
@@ -216,8 +217,8 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .library-hero h1 { margin: 0; color: #3b6272; font: 30px/1.2 "Songti SC", STSong, serif; letter-spacing: .16em; }
 .library-hero > p { margin: 6px 0 8px; color: #474b4b; font: 12px/1.5 "Songti SC", STSong, serif; letter-spacing: .08em; }
 .library-search { height: 32px; display: flex; align-items: center; gap: 11px; padding: 0 13px; border: 1px solid #c9bcae; border-radius: 11px; background: rgba(255,253,249,.34); }
-.library-search > span { width: 17px; height: 17px; border: 1.4px solid #5f6667; border-radius: 50%; position: relative; flex: 0 0 auto; }
-.library-search > span::after { content: ""; position: absolute; width: 9px; border-top: 1.5px solid #5f6667; right: -6px; bottom: -3px; transform: rotate(47deg); transform-origin: left center; }
+.library-search-icon { display: block; width: 17px; height: 17px; object-fit: contain; flex: 0 0 auto; opacity: .82; }
+.text-search img { display: block; width: 22px; height: 22px; object-fit: contain; }
 .library-search input { width: 100%; border: 0; background: transparent; color: #3c494d; font: 12px "Songti SC", STSong, serif; letter-spacing: .06em; }
 .library-search input::placeholder { color: #9b9289; }
 .object-filter { display: grid; grid-template-columns: repeat(5, 1fr); align-items: end; margin: 4px -3px 0; }
@@ -532,8 +533,8 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .settings-profile-copy h2 { margin: 10px 0 4px; color: #355064; font: 26px/1.1 "Songti SC", STSong, serif; letter-spacing: .08em; }
 .settings-profile-copy p { margin: 0; color: #7d766e; font: 11px "Songti SC", STSong, serif; letter-spacing: .04em; }
 .settings-profile-copy small { display: flex; align-items: center; gap: 7px; margin-top: 8px; color: #4f6a79; font-size: 9px; font-weight: 600; }
-.settings-lock { position: relative; width: 12px; height: 10px; border: 1.5px solid currentColor; border-radius: 2px; }
-.settings-lock::before { content: ""; position: absolute; left: 2px; top: -7px; width: 6px; height: 7px; border: 1.5px solid currentColor; border-bottom: 0; border-radius: 5px 5px 0 0; }
+.settings-lock { display: block; width: 13px; height: 13px; object-fit: contain; flex: 0 0 auto; }
+
 .settings-profile-halo { position: absolute; z-index: 1; right: 9px; top: 15px; width: 116px; height: 111px; border-radius: 27px; background: linear-gradient(145deg, rgba(255,255,255,.8), rgba(243,236,228,.7)); }
 .settings-profile-card > img { position: absolute; z-index: 2; right: -1px; bottom: -5px; width: 137px; height: 137px; object-fit: contain; filter: drop-shadow(0 7px 8px rgba(73,70,67,.09)); }
 .settings-section { margin-top: 25px; }

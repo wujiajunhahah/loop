@@ -10,6 +10,14 @@ import {
   type HrvLatestStatus,
   type VoiceDiaryChunk,
 } from './api/pigeon'
+import homeIcon from '../icon/首页未选中.svg'
+import homeActiveIcon from '../icon/首页选中.svg'
+import memoryIcon from '../icon/记忆未选中.svg'
+import memoryActiveIcon from '../icon/记忆选中.svg'
+import settingsIcon from '../icon/设置未选中.svg'
+import settingsActiveIcon from '../icon/设置选中.svg'
+import searchIcon from '../icon/搜索.svg'
+import lockIcon from '../icon/锁.svg'
 
 type Page =
   | 'creator'
@@ -28,6 +36,33 @@ type CaptureType = '图片' | '语音' | '文字'
 type Intensity = 'L1' | 'L2'
 type MemoryKind = '照片' | '文字' | '声音' | '物件'
 type LibraryFilter = '全部' | MemoryKind
+
+type MotherTabPage = Extract<Page, 'creator' | 'library' | 'settings'>
+
+const motherTabItems: Array<{ page: MotherTabPage; label: string; icon: string; activeIcon: string }> = [
+  { page: 'creator', label: '首页', icon: homeIcon, activeIcon: homeActiveIcon },
+  { page: 'library', label: '记忆', icon: memoryIcon, activeIcon: memoryActiveIcon },
+  { page: 'settings', label: '设置', icon: settingsIcon, activeIcon: settingsActiveIcon },
+]
+
+function MotherBottomNav({ activePage, go, className = '' }: { activePage: MotherTabPage; go: (page: Page) => void; className?: string }) {
+  const navClassName = ['bottom-nav', className].filter(Boolean).join(' ')
+
+  return (
+    <nav className={navClassName} aria-label="妈妈创作端导航">
+      {motherTabItems.map((item) => {
+        const active = activePage === item.page
+
+        return (
+          <button key={item.page} type="button" className={active ? 'active' : ''} onClick={() => go(item.page)}>
+            <img className="bottom-nav-icon" src={active ? item.activeIcon : item.icon} alt="" aria-hidden="true" />
+            <span>{item.label}</span>
+          </button>
+        )
+      })}
+    </nav>
+  )
+}
 
 type MessengerAttachment = {
   kind: 'image' | 'audio'
@@ -927,7 +962,7 @@ function CreatorHome({
       <div className="ambient ambient-one" />
       <main className="scroll-page creator-content">
         <header className="creator-header">
-          <button className="text-search" onClick={() => onLibrary('全部')} aria-label="搜索记忆">⌕</button>
+          <button className="text-search" onClick={() => onLibrary('全部')} aria-label="搜索记忆"><img src={searchIcon} alt="" aria-hidden="true" /></button>
           <p className="brand-script">我在</p>
           <h1>林岚，这段时间你留下了 {ordinaryMemories.length} 段记忆</h1>
           <p>{memoryCounts.照片} 张照片 · {memoryCounts.文字} 条文字 · {memoryCounts.声音} 段声音 · {memoryCounts.物件} 个物件{wishCount ? ` · ${wishCount} 个愿望` : ''}</p>
@@ -975,11 +1010,7 @@ function CreatorHome({
         </section>
       </main>
 
-      <nav className="bottom-nav" aria-label="妈妈创作端导航">
-        <button className="active" onClick={() => go('creator')}><span>⌂</span>首页</button>
-        <button onClick={() => go('library')}><span>▱</span>记忆</button>
-        <button onClick={() => go('settings')}><span>≡</span>设置</button>
-      </nav>
+      <MotherBottomNav activePage="creator" go={go} />
       {dockStatus ? (
         <PigeonDock owner="mother" status={dockStatus} unread={false} onClick={onPigeon} onDismiss={onDismissPigeon} />
       ) : (
@@ -1340,7 +1371,7 @@ function LibraryPage({ seeds, go, onOpen, onCompose, initialFilter = '全部' }:
         <header className="library-hero">
           <h1>记忆</h1>
           <label className="library-search">
-            <span aria-hidden="true" />
+            <img className="library-search-icon" src={searchIcon} alt="" aria-hidden="true" />
             <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索照片、文字、声音、物件或愿望" aria-label="搜索记忆" />
           </label>
         </header>
@@ -1364,11 +1395,7 @@ function LibraryPage({ seeds, go, onOpen, onCompose, initialFilter = '全部' }:
         </div>
         {filtered.length === 0 && <div className="library-empty"><span>没有找到这段记忆</span><button onClick={() => { setQuery(''); setFilter('全部') }}>查看全部</button></div>}
       </main>
-      <nav className="bottom-nav library-bottom-nav" aria-label="妈妈创作端导航">
-        <button onClick={() => go('creator')}><span>⌂</span>首页</button>
-        <button className="active" onClick={() => go('library')}><span>▱</span>记忆</button>
-        <button onClick={() => go('settings')}><span>≡</span>设置</button>
-      </nav>
+      <MotherBottomNav activePage="library" go={go} className="library-bottom-nav" />
       <button className="floating-add" onClick={onCompose} aria-label="把这一刻交给信使">＋</button>
     </div>
   )
@@ -1509,7 +1536,7 @@ function SettingsPage({
             <span>妈妈的空间</span>
             <h2>林岚</h2>
             <p>妈妈 · 记录者</p>
-            <small><i className="settings-lock" aria-hidden="true" />已授权 {authorizedMemoryCount} 段记忆{authorizedWishCount ? `和 ${authorizedWishCount} 个愿望` : ''}给林崖{draftCount ? ` · ${draftCount} 段仍仅自己可见` : ''}</small>
+            <small><img className="settings-lock" src={lockIcon} alt="" aria-hidden="true" />已授权 {authorizedMemoryCount} 段记忆{authorizedWishCount ? `和 ${authorizedWishCount} 个愿望` : ''}给林崖{draftCount ? ` · ${draftCount} 段仍仅自己可见` : ''}</small>
           </div>
           <div className="settings-profile-halo" aria-hidden="true" />
           <img src={mascotProfileImage} alt="" />
@@ -1563,11 +1590,7 @@ function SettingsPage({
           </div>
         </section>
       </main>
-      <nav className="bottom-nav settings-bottom-nav" aria-label="妈妈创作端导航">
-        <button onClick={() => go('creator')}><span>⌂</span>首页</button>
-        <button onClick={() => go('library')}><span>▱</span>记忆</button>
-        <button className="active" onClick={() => go('settings')}><span>☷</span>设置</button>
-      </nav>
+      <MotherBottomNav activePage="settings" go={go} className="settings-bottom-nav" />
       <button className="floating-add" onClick={onCompose} aria-label="把这一刻交给信使">＋</button>
     </div>
   )
