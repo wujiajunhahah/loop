@@ -122,6 +122,8 @@ npm run build
 | --- | --- |
 | `landing/assets/brand-bird-logo.webp` | 页头、页尾等网页展示，体积优先 |
 | `landing/assets/brand-bird-logo.png` | 透明背景高质量版本 |
+| `landing/assets/brand-symbol-dark.svg` | 品牌提供的深色扁平信鸽标志原件 |
+| `landing/assets/brand-symbol-email.png` | 订阅邮件使用的高分辨率透明 PNG |
 | `landing/assets/birds/` | 信鸽的书写、休息、递送、返回等状态 |
 | `landing/assets/og-cover.png` | 社交平台分享图 |
 | `landing/assets/favicon-*.png` | 浏览器、移动设备与 PWA 图标 |
