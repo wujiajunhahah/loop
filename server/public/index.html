@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>语音日记</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0f0f0f;
+      color: #e0e0e0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .container {
+      width: 100%;
+      max-width: 600px;
+      padding: 24px;
+    }
+    h1 {
+      text-align: center;
+      font-size: 1.5rem;
+      margin-bottom: 24px;
+      color: #7cffb3;
+    }
+    .status {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 20px;
+      font-size: 0.85rem;
+      color: #888;
+    }
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ff4444;
+    }
+    .dot.connected { background: #7cffb3; }
+    .entry {
+      background: #1a1a1a;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+      border-left: 3px solid #7cffb3;
+      animation: slideIn 0.3s ease;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .entry .time {
+      font-size: 0.75rem;
+      color: #666;
+      margin-bottom: 6px;
+    }
+    .entry .text {
+      font-size: 1.05rem;
+      line-height: 1.5;
+    }
+    .empty {
+      text-align: center;
+      color: #444;
+      padding: 60px 0;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎙️ 语音日记</h1>
+    <div class="status">
+      <span class="dot" id="dot"></span>
+      <span id="statusText">等待连接...</span>
+    </div>
+    <div id="entries">
+      <div class="empty">还没有语音记录，开始说话吧</div>
+    </div>
+  </div>
+
+  <script>
+    const dot = document.getElementById('dot');
+    const statusText = document.getElementById('statusText');
+    const entries = document.getElementById('entries');
+    let firstMessage = true;
+
+    function connect() {
+      const ws = new WebSocket('ws://localhost:8080');
+
+      ws.onopen = () => {
+        dot.classList.add('connected');
+        statusText.textContent = '已连接';
+      };
+
+      ws.onclose = () => {
+        dot.classList.remove('connected');
+        statusText.textContent = '断开，5秒后重连...';
+        setTimeout(connect, 5000);
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          if (msg.type === 'diary' && msg.text) {
+            if (firstMessage) {
+              entries.innerHTML = '';
+              firstMessage = false;
+            }
+            const time = new Date(msg.timestamp).toLocaleTimeString('zh-CN');
+            const div = document.createElement('div');
+            div.className = 'entry';
+            div.innerHTML = `<div class="time">${time}</div><div class="text">${msg.text}</div>`;
+            entries.insertBefore(div, entries.firstChild);
+          }
+        } catch (e) {
+          console.log('收到:', event.data);
+        }
+      };
+    }
+
+    connect();
+  </script>
+</body>
+</html>
