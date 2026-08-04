@@ -134,9 +134,6 @@ function formatMessengerTime(value: string) {
 }
 
 type RecipientPreferences = {
-  accepted: boolean
-  duration: 5 | 10 | 15
-  sound: boolean
   intensity: Intensity
   frequency: '仅主动进入' | '每周一次' | '暂停出现'
 }
@@ -156,6 +153,20 @@ type RelationshipReflection = {
   text: string
 }
 
+type RecipientIntention = {
+  id: string
+  kind: '共同约定' | '个人心愿'
+  title: string
+  note: string
+}
+
+const recipientIntentions: RecipientIntention[] = [
+  { id: 'dumpling', kind: '共同约定', title: '再一起包一次外婆的馄饨', note: '你们都知道 · 做法留在记忆里' },
+  { id: 'spring-flowers', kind: '共同约定', title: '春天一起去看一次花', note: '你们都知道 · 时间由你们决定' },
+  { id: 'seaside', kind: '个人心愿', title: '替我去海边坐一个下午', note: '她自己留下 · 到设定时机再出现' },
+  { id: 'trophy', kind: '个人心愿', title: '把奖杯送给一个需要鼓励的人', note: '她自己留下 · 可以选择不做' },
+]
+
 type RecipientData = {
   preferences: RecipientPreferences
   viewedMemoryIds: number[]
@@ -163,22 +174,18 @@ type RecipientData = {
   entries: DaughterEntry[]
   dismissedWishIds: number[]
   hiddenMemoryIds: number[]
-  sessionStartedAt: number | null
-  sessionEndsAt: number | null
-  sessionCompletedAt: number | null
   reflections: RelationshipReflection[]
+  completedIntentionIds: string[]
 }
 
 const defaultRecipientData: RecipientData = {
-  preferences: { accepted: false, duration: 10, sound: false, intensity: 'L1', frequency: '仅主动进入' },
+  preferences: { intensity: 'L1', frequency: '仅主动进入' },
   viewedMemoryIds: [],
   selectedMemoryId: 2,
   entries: [],
   dismissedWishIds: [],
   hiddenMemoryIds: [],
-  sessionStartedAt: null,
-  sessionEndsAt: null,
-  sessionCompletedAt: null,
+  completedIntentionIds: [],
   reflections: [
     { key: 'learned', text: '害怕时，先走一小步' },
     { key: 'keep', text: '对普通日子的认真' },
@@ -193,25 +200,18 @@ function loadRecipientData(): RecipientData {
     const stored = window.localStorage.getItem('wozai-recipient-data-v1')
     if (!stored) return defaultRecipientData
     const parsed = JSON.parse(stored) as Partial<RecipientData>
-    const preferences = { ...defaultRecipientData.preferences, ...(parsed.preferences ?? {}) }
-    const now = Date.now()
-    const sessionStartedAt = typeof parsed.sessionStartedAt === 'number'
-      ? parsed.sessionStartedAt
-      : preferences.accepted ? now : null
-    const sessionEndsAt = typeof parsed.sessionEndsAt === 'number'
-      ? parsed.sessionEndsAt
-      : preferences.accepted ? now + preferences.duration * 60_000 : null
+    const preferences: RecipientPreferences = {
+      intensity: parsed.preferences?.intensity === 'L2' ? 'L2' : 'L1',
+      frequency: parsed.preferences?.frequency === '每周一次' || parsed.preferences?.frequency === '暂停出现' ? parsed.preferences.frequency : '仅主动进入',
+    }
     return {
-      ...defaultRecipientData,
-      ...parsed,
       preferences,
       viewedMemoryIds: Array.isArray(parsed.viewedMemoryIds) ? parsed.viewedMemoryIds : [],
+      selectedMemoryId: typeof parsed.selectedMemoryId === 'number' ? parsed.selectedMemoryId : defaultRecipientData.selectedMemoryId,
       entries: Array.isArray(parsed.entries) ? parsed.entries : [],
       dismissedWishIds: Array.isArray(parsed.dismissedWishIds) ? parsed.dismissedWishIds : [],
       hiddenMemoryIds: Array.isArray(parsed.hiddenMemoryIds) ? parsed.hiddenMemoryIds : [],
-      sessionStartedAt,
-      sessionEndsAt,
-      sessionCompletedAt: typeof parsed.sessionCompletedAt === 'number' ? parsed.sessionCompletedAt : null,
+      completedIntentionIds: Array.isArray(parsed.completedIntentionIds) ? parsed.completedIntentionIds : [],
       reflections: Array.isArray(parsed.reflections) && parsed.reflections.length === 4 ? parsed.reflections : defaultRecipientData.reflections,
     }
   } catch {
@@ -420,6 +420,22 @@ function SourceMark({ children = '妈妈亲自留下' }: { children?: ReactNode 
   return <span className="source-mark"><i />{children}</span>
 }
 
+function CameraIcon() {
+  return <svg className="recipient-ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4.2 7.7h3l1.5-2.2h6.6l1.5 2.2h3a1.7 1.7 0 0 1 1.7 1.7v8.2a1.7 1.7 0 0 1-1.7 1.7H4.2a1.7 1.7 0 0 1-1.7-1.7V9.4a1.7 1.7 0 0 1 1.7-1.7Z" /><circle cx="12" cy="13.4" r="3.5" /></svg>
+}
+
+function AlbumIcon() {
+  return <svg className="recipient-ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3.2" y="3.2" width="17.6" height="17.6" rx="2.6" /><circle cx="8.2" cy="8.2" r="1.5" /><path d="m5.2 18 4.2-4.6 3 3 2.2-2.2 4.2 3.8" /></svg>
+}
+
+function FileIcon() {
+  return <svg className="recipient-ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m8.4 12.8 5.8-5.8a3 3 0 0 1 4.2 4.2l-7.2 7.2a4.4 4.4 0 0 1-6.2-6.2l7-7" /><path d="m9.3 15.7 6.4-6.4" /></svg>
+}
+
+function WaveformIcon() {
+  return <svg className="recipient-ui-icon recipient-waveform-icon" viewBox="0 0 28 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M3 10v4M8.5 6v12M14 2.5v19M19.5 6v12M25 10v4" /></svg>
+}
+
 function PhoneFrame({ children, quiet }: { children: ReactNode; quiet?: boolean }) {
   return (
     <div className={`phone-frame ${quiet ? 'is-quiet' : ''}`}>
@@ -453,7 +469,7 @@ function PrototypeRail({ page, go }: { page: Page; go: (page: Page) => void }) {
           <>
             <button className={page === 'creator' ? 'active' : ''} onClick={() => go('creator')}><b>01</b>采集首页</button>
             <button className={page === 'capture' ? 'active' : ''} onClick={() => go('capture')}><b>02</b>留下片段</button>
-            <button className={page === 'library' ? 'active' : ''} onClick={() => go('library')}><b>03</b>记忆库</button>
+            <button className={page === 'library' ? 'active' : ''} onClick={() => go('library')}><b>03</b>记忆</button>
             <button className={page === 'settings' ? 'active' : ''} onClick={() => go('settings')}><b>04</b>授权与分寸</button>
           </>
         ) : (
@@ -469,7 +485,7 @@ function PrototypeRail({ page, go }: { page: Page; go: (page: Page) => void }) {
       <div className="rail-principles">
         <span>触景生情</span><span>注入真心</span><span>言之有物</span><span>注意分寸</span>
       </div>
-      <small className="rail-note">默认静音 · L1 · 任意流程两步内退出</small>
+      <small className="rail-note">L1 · 任意流程两步内退出</small>
     </aside>
   )
 }
@@ -655,7 +671,7 @@ function MessengerComposeSheet({
       <section className="pigeon-sheet compose-messenger-sheet" role="dialog" aria-modal="true" aria-labelledby="compose-messenger-title">
         <div className="compose-pigeon-art" aria-hidden="true">
           <img src={mascotProfileImage} alt="" />
-          <span className="pigeon-art-speech">{context.owner === 'daughter' ? <>把此刻交给我，<br />我会沿着真实记录去找。</> : <>把这一刻交给我，<br />我会原样收进记忆库。</>}<i>♥</i></span>
+          <span className="pigeon-art-speech">{context.owner === 'daughter' ? <>把此刻交给我，<br />我会沿着真实记录去找。</> : <>把这一刻交给我，<br />我会原样收进记忆。</>}<i>♥</i></span>
         </div>
         <button className="pigeon-sheet-close" onClick={onClose} aria-label="关闭">×</button>
         <header className="pigeon-sheet-title">
@@ -750,8 +766,13 @@ function MessengerThreadSheet({
         </div>
         <button className="pigeon-sheet-close" onClick={onClose} aria-label="关闭">×</button>
         <header className="pigeon-sheet-title">
-          <span>⌁</span><h2 id="reply-messenger-title">信使带回的一段记忆</h2><span>⌁</span>
+          <span>⌁</span><h2 id="reply-messenger-title">信鸽带回的信封</h2><span>⌁</span>
         </header>
+
+        <div className="reply-envelope-banner" aria-hidden="true">
+          <span className="reply-envelope-icon"><i /></span>
+          <span><small>回信已经送到</small><b>打开看看信鸽带回了什么</b></span>
+        </div>
 
         {exchanges.length > 1 && <nav className="exchange-history-nav" aria-label="往返信件"><button disabled={activeIndex === 0} onClick={() => setActiveIndex((index) => Math.max(0, index - 1))}>‹ 上一封</button><span>{activeIndex + 1} / {exchanges.length}</span><button disabled={activeIndex === exchanges.length - 1} onClick={() => setActiveIndex((index) => Math.min(exchanges.length - 1, index + 1))}>下一封 ›</button></nav>}
 
@@ -804,8 +825,8 @@ function PigeonDock({
   const sending = status === 'sending'
   const motherDelivery = owner === 'mother'
   const title = motherDelivery ? '正在收好这一刻' : sending ? '信使出发了' : unread ? '找到一段旧记录' : '查看往返信件'
-  const copy = motherDelivery ? '保存到记忆库，并留给女儿' : sending ? '正在妈妈留下的内容里寻找' : unread ? '点击查看真实来源' : '之前的往返仍在这里'
-  const label = motherDelivery ? '这一刻正在保存到记忆库，无需等待回信' : sending ? '信鸽正在寻找旧记录' : unread ? '找到一段旧记录，点击查看' : '查看往返信件'
+  const copy = motherDelivery ? '保存到记忆，并留给女儿' : sending ? '正在妈妈留下的内容里寻找' : unread ? '点击查看真实来源' : '之前的往返仍在这里'
+  const label = motherDelivery ? '这一刻正在保存到记忆，无需等待回信' : sending ? '信鸽正在寻找旧记录' : unread ? '找到一段旧记录，点击查看' : '查看往返信件'
   return (
     <>
       <button className={`pigeon-dock ${sending ? 'is-sending' : 'is-delivered'} ${motherDelivery ? 'is-delivery' : ''}`} onClick={onClick} aria-live="polite" aria-label={label}>
@@ -907,7 +928,7 @@ function CreatorHome({
 
       <nav className="bottom-nav" aria-label="妈妈创作端导航">
         <button className="active" onClick={() => go('creator')}><span>⌂</span>首页</button>
-        <button onClick={() => go('library')}><span>▱</span>记忆库</button>
+        <button onClick={() => go('library')}><span>▱</span>记忆</button>
         <button onClick={() => go('settings')}><span>≡</span>设置</button>
       </nav>
       {dockStatus ? (
@@ -1219,12 +1240,9 @@ function matchMemoryForDraft(draft: MessengerDraft, memories: MemoryEntry[], con
     { id: 2, pattern: /西湖|湖边|一家人|普通的下午/, reason: '相似的湖边与普通下午' },
   ]
   const matchedRule = rules.find((rule) => rule.pattern.test(text))
-  const memory = matchedRule
-    ? memories.find((item) => item.seed.id === matchedRule.id)
-    : contextSeedId
-      ? memories.find((item) => item.seed.id === contextSeedId)
-      : undefined
-  const reason = matchedRule?.reason ?? (memory ? '回应你正在看的这段记忆' : undefined)
+  const contextMemory = contextSeedId ? memories.find((item) => item.seed.id === contextSeedId) : undefined
+  const memory = contextMemory ?? (matchedRule ? memories.find((item) => item.seed.id === matchedRule.id) : undefined)
+  const reason = contextMemory ? '回应你正在看的这段记忆' : matchedRule?.reason
   return { memory, reason }
 }
 
@@ -1299,11 +1317,10 @@ function LibraryPage({ seeds, go, onOpen, onCompose, initialFilter = '全部' }:
     <div className="screen library-screen">
       <main className="scroll-page library-page">
         <header className="library-hero">
-          <h1>记忆库</h1>
-          <p>照片、文字、声音、物件和明确留下的愿望，都在这里。</p>
+          <h1>记忆</h1>
           <label className="library-search">
             <span aria-hidden="true" />
-            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索照片、文字、声音、物件或愿望" aria-label="搜索记忆库" />
+            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索照片、文字、声音、物件或愿望" aria-label="搜索记忆" />
           </label>
         </header>
         <div className="object-filter" role="tablist" aria-label="记忆类型">
@@ -1328,7 +1345,7 @@ function LibraryPage({ seeds, go, onOpen, onCompose, initialFilter = '全部' }:
       </main>
       <nav className="bottom-nav library-bottom-nav" aria-label="妈妈创作端导航">
         <button onClick={() => go('creator')}><span>⌂</span>首页</button>
-        <button className="active" onClick={() => go('library')}><span>▱</span>记忆库</button>
+        <button className="active" onClick={() => go('library')}><span>▱</span>记忆</button>
         <button onClick={() => go('settings')}><span>≡</span>设置</button>
       </nav>
       <button className="floating-add" onClick={onCompose} aria-label="把这一刻交给信使">＋</button>
@@ -1401,7 +1418,7 @@ function ObjectDetailPage({ seed, onBack, onUpdate }: { seed: Seed; onBack: () =
             <button className="preview-memory" onClick={() => setPreview(true)}><span>◇</span>{seed.delivery.visible ? '查看女儿将看到的样子' : '预演授权后的样子'}</button>
           </div>
         ) : <button className="exit-daughter-preview" onClick={() => setPreview(false)}>退出女儿视角预览</button>}
-        <p className="detail-saved"><span>✓</span> {seed.status === '妈妈已确认' ? '已保存到「记忆库」' : '草稿已保存在本机，尚未开放'}</p>
+        <p className="detail-saved"><span>✓</span> {seed.status === '妈妈已确认' ? '已保存到「记忆」' : '草稿已保存在本机，尚未开放'}</p>
       </main>
     </div>
   )
@@ -1438,9 +1455,7 @@ function SettingsPage({
   const authorizedMemoryCount = authorized.filter((memory) => memory.seed.type !== '愿景').length
   const authorizedWishCount = authorized.length - authorizedMemoryCount
   const authorizedLabel = `${authorizedMemoryCount} 段记忆${authorizedWishCount ? ` · ${authorizedWishCount} 个愿望` : ''}`
-  const sessionLabel = recipientData.preferences.accepted
-    ? `${recipientData.preferences.duration} 分钟 · ${recipientData.preferences.intensity} · ${recipientData.preferences.sound ? '可听原声' : '静音'}`
-    : '等待林崖自主开启'
+  const sessionLabel = recipientData.preferences.intensity
 
   useEffect(() => { window.localStorage.setItem('wozai-setting-smart', String(smartOrganize)) }, [smartOrganize])
   useEffect(() => { window.localStorage.setItem('wozai-setting-face', String(faceUnlock)) }, [faceUnlock])
@@ -1466,7 +1481,6 @@ function SettingsPage({
       <main className="scroll-page settings-page">
         <header className="settings-hero">
           <h1>设置</h1>
-          <p>让记录按你安心的方式，被保存、被看见。</p>
         </header>
 
         <section className="settings-profile-card" aria-label="妈妈的空间">
@@ -1485,7 +1499,7 @@ function SettingsPage({
           <div className="settings-list-card">
             {linkRow('我们的记忆空间', '妈妈与女儿', false, onRecipient)}
             {linkRow('她现在能看到什么', authorizedLabel, false, onRecipient)}
-            {linkRow('她的接收方式', sessionLabel, !recipientData.preferences.accepted, onRecipient)}
+            {linkRow('她的接收方式', sessionLabel, false, onRecipient)}
           </div>
           <div className="settings-delivery-summary"><span>逐段授权</span><span>来源可追溯</span><span>女儿可暂停</span>{recipientData.hiddenMemoryIds.length > 0 && <span>女儿已隐藏 {recipientData.hiddenMemoryIds.length} 段</span>}<small>当前交付方式：{recipientData.preferences.frequency}</small></div>
         </section>
@@ -1530,7 +1544,7 @@ function SettingsPage({
       </main>
       <nav className="bottom-nav settings-bottom-nav" aria-label="妈妈创作端导航">
         <button onClick={() => go('creator')}><span>⌂</span>首页</button>
-        <button onClick={() => go('library')}><span>▱</span>记忆库</button>
+        <button onClick={() => go('library')}><span>▱</span>记忆</button>
         <button className="active" onClick={() => go('settings')}><span>☷</span>设置</button>
       </nav>
       <button className="floating-add" onClick={onCompose} aria-label="把这一刻交给信使">＋</button>
@@ -1542,64 +1556,64 @@ function RecipientHome({
   go,
   memories,
   data,
-  onStart,
-  onEndSession,
   onUpdatePreferences,
   onOpenMemory,
   messenger,
-  onCompose,
+  onSend,
   onPigeon,
+  onIntentionAction,
 }: {
   go: (page: Page) => void
   memories: MemoryEntry[]
   data: RecipientData
-  onStart: (preferences: RecipientPreferences) => void
-  onEndSession: () => void
   onUpdatePreferences: (patch: Partial<RecipientPreferences>) => void
   onOpenMemory: (id: number) => void
   messenger: MessengerChannelState
-  onCompose: (draft?: MessengerDraft) => void
+  onSend: (draft: MessengerDraft) => boolean
   onPigeon: () => void
+  onIntentionAction: (intention: RecipientIntention, action: 'progress' | 'complete') => void
 }) {
-  const [duration, setDuration] = useState<5 | 10 | 15>(data.preferences.duration)
-  const [sound, setSound] = useState(data.preferences.sound)
-  const [level, setLevel] = useState<Intensity>(data.preferences.intensity)
-  const [adjusting, setAdjusting] = useState(false)
-  const [ended, setEnded] = useState(false)
-  const [now, setNow] = useState(Date.now())
+  const [showUploadTray, setShowUploadTray] = useState(false)
   const [chatDraft, setChatDraft] = useState('')
-  const [hardwareDetection, setHardwareDetection] = useState(false)
-  useEffect(() => {
-    if (!data.preferences.accepted || !data.sessionEndsAt) return
-    const timer = window.setInterval(() => setNow(Date.now()), 1000)
-    return () => window.clearInterval(timer)
-  }, [data.preferences.accepted, data.sessionEndsAt])
-  const secondsRemaining = data.sessionEndsAt ? Math.min(data.preferences.duration * 60, Math.max(0, Math.ceil((data.sessionEndsAt - now) / 1000))) : data.preferences.duration * 60
-  const sessionExpired = Boolean(data.preferences.accepted && data.preferences.frequency !== '暂停出现' && data.sessionEndsAt && secondsRemaining <= 0)
-  const remainingLabel = `${Math.floor(secondsRemaining / 60)}:${String(secondsRemaining % 60).padStart(2, '0')}`
-  const currentMemoryIds = new Set(memories.map((memory) => memory.seed.id))
-  const viewedCount = data.viewedMemoryIds.filter((id) => currentMemoryIds.has(id)).length
+  const [uploadError, setUploadError] = useState('')
+  const [recording, setRecording] = useState(false)
+  const [recordSeconds, setRecordSeconds] = useState(0)
+  const [voiceError, setVoiceError] = useState('')
+  const cameraInputRef = useRef<HTMLInputElement | null>(null)
+  const albumInputRef = useRef<HTMLInputElement | null>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const recorderRef = useRef<MediaRecorder | null>(null)
+  const recorderStreamRef = useRef<MediaStream | null>(null)
+  const recorderChunksRef = useRef<Blob[]>([])
+  const recordTimerRef = useRef<number | null>(null)
+  const recordSecondsRef = useRef(0)
+  const discardRecordingRef = useRef(false)
   const daughterHistory = messenger.history
   const daughterSending = messenger.phase === 'sending'
   const daughterDelivered = messenger.phase === 'delivered'
   const motherMemories = memories.filter((memory) => memory.seed.type !== '愿景')
-  const counts = motherMemories.reduce<Record<MemoryKind, number>>((result, memory) => ({ ...result, [memory.kind]: result[memory.kind] + 1 }), { 照片: 0, 文字: 0, 声音: 0, 物件: 0 })
-  const exchangeIds = new Set(daughterHistory.map((exchange) => exchange.id))
+  const pendingExchange = messenger.phase === 'sending' ? messenger.pending : undefined
+  const exchangeIds = new Set([...daughterHistory.map((exchange) => exchange.id), ...(pendingExchange ? [pendingExchange.id] : [])])
   const clipText = (value: string, fallback: string, limit = 20) => {
     const text = value.trim()
     return text ? `${text.slice(0, limit)}${text.length > limit ? '…' : ''}` : fallback
   }
-  const daughterAlbum = [
-    ...daughterHistory.slice().reverse().map((exchange) => ({
+  const exchangeInteractions = [
+    ...(pendingExchange ? [pendingExchange] : []),
+    ...daughterHistory.slice().reverse().filter((exchange) => exchange.id !== pendingExchange?.id),
+  ].map((exchange) => ({
       id: `exchange-${exchange.id}`,
       mode: exchange.mode,
-      title: clipText(exchange.text, exchange.mode === '图片' ? '交给 AI 的一张照片' : exchange.mode === '语音' ? '交给 AI 的一段声音' : '交给 AI 的一句话'),
+      title: clipText(exchange.text, exchange.mode === '图片' ? '一张照片' : exchange.mode === '语音' ? '一段声音' : '一句话'),
       copy: exchange.text || (exchange.mode === '图片' ? exchange.attachment?.name ?? '图片内容已保存' : `${exchange.attachment?.duration ?? 0} 秒语音内容已保存`),
       meta: formatMessengerTime(exchange.sentAt),
       attachment: exchange.attachment,
       exchangeId: exchange.id,
       sourceSeedId: exchange.sourceSeedId,
-    })),
+      status: exchange.id === pendingExchange?.id ? '信鸽正在寻找' : exchange.sourceSeedId ? '带回一段记忆' : '已收好',
+    }))
+  const interactionHistory = [
+    ...exchangeInteractions,
     ...data.entries.filter((entry) => !entry.exchangeId || !exchangeIds.has(entry.exchangeId)).map((entry) => ({
       id: `entry-${entry.id}`,
       mode: '文字' as CaptureType,
@@ -1609,67 +1623,111 @@ function RecipientHome({
       attachment: undefined as MessengerAttachment | undefined,
       exchangeId: undefined as number | undefined,
       sourceSeedId: entry.sourceSeedId,
+      status: '已保存',
     })),
-  ]
-  const chatStatus = daughterSending
-    ? 'AI 正在妈妈授权的真实记录中检索'
-    : daughterDelivered && messenger.unread
-      ? '已找到一段可追溯回忆，点这里查看'
-      : daughterHistory.length
-        ? `${daughterHistory.length} 条对话记录保存在这里`
-        : ''
-  const openChatComposer = (mode: CaptureType) => {
-    if (mode !== '文字' && !hardwareDetection) return
-    const text = mode === '文字' ? chatDraft.trim() : ''
-    onCompose({ mode, text })
+  ].slice(0, 5)
+  const pigeonImage = daughterSending ? mascotDeliveringImage : daughterDelivered && messenger.unread ? mascotReturningImage : mascotProfileImage
+  const pigeonLabel = daughterSending ? '信鸽正在寻找' : daughterDelivered && messenger.unread ? '信鸽带回了新记忆' : '信鸽在输入框旁等待'
+
+  const sendInteraction = (mode: CaptureType, attachment?: MessengerAttachment) => {
+    const draft: MessengerDraft = { mode, text: mode === '文字' ? chatDraft.trim() : '', ...(attachment ? { attachment } : {}) }
+    if (!onSend(draft)) return false
+    setShowUploadTray(false)
+    setUploadError('')
     if (mode === '文字') setChatDraft('')
+    return true
   }
 
-  if (ended || sessionExpired) {
-    return (
-      <div className="screen recipient-screen recipient-ended-screen">
-        <main>
-          <span className="calm-check">好</span>
-          <h1>今天先到这里</h1>
-          <p>没有打开任何声音，也不会自动提醒你继续。什么时候想回来，都由你决定。</p>
-          <button className="primary-button" onClick={() => { onStart(data.preferences); setNow(Date.now()); setEnded(false) }}>重新打开 {data.preferences.duration} 分钟</button>
-          <button className="recipient-text-button" onClick={() => onUpdatePreferences({ accepted: false })}>重新选择接收方式</button>
-          <button className="recipient-text-button" onClick={() => go('creator')}>关闭女儿端预览</button>
-        </main>
-      </div>
-    )
+  const clearRecordTimer = () => {
+    if (recordTimerRef.current !== null) window.clearInterval(recordTimerRef.current)
+    recordTimerRef.current = null
   }
 
-  if (!data.preferences.accepted) {
-    return (
-      <div className="screen recipient-screen recipient-consent-screen">
-        <main className="scroll-page recipient-consent-page">
-          <SourceMark>林岚本人留下并仅授权给你</SourceMark>
-          <header>
-            <span>给林崖</span>
-            <h1>妈妈留给你的<br />一组真实记忆</h1>
-            <p>这是一次接收预览。你可以决定今天看多少、要不要听声音，也可以暂时不打开。</p>
-          </header>
-          <section className="recipient-access-card">
-            <img src={westLakeImage} alt="林岚留给女儿的西湖家庭照片" />
-            <div><small>关系空间</small><h2>林岚 → 林崖</h2><p>{memories.length} 段已确认内容 · 仅你可见</p></div>
-          </section>
-          <section className="recipient-safety-list" aria-label="使用说明">
-            <div><span>一</span><p><b>不会冒充妈妈与你对话</b><small>所有内容都能回到她留下的原图、原文或原声。</small></p></div>
-            <div><span>二</span><p><b>声音不会自动播放</b><small>只有你主动选择后，原声才会开始。</small></p></div>
-            <div><span>三</span><p><b>你可以随时停下</b><small>暂停、降低强度或删除自己的输入，都不需要解释原因。</small></p></div>
-          </section>
-          <section className="recipient-first-settings">
-            <div className="recipient-choice-row"><b>今天想停留多久</b><div>{([5, 10, 15] as const).map((value) => <button key={value} className={duration === value ? 'active' : ''} onClick={() => setDuration(value)}>{value} 分钟</button>)}</div></div>
-            <div className="recipient-choice-row"><b>今天的内容</b><div><button className={level === 'L1' ? 'active' : ''} onClick={() => setLevel('L1')}>轻一点</button><button className={level === 'L2' ? 'active' : ''} onClick={() => setLevel('L2')}>多些细节</button></div></div>
-            <label className="recipient-sound-choice"><span><b>今天可以听原声</b><small>仍需每次主动点击播放</small></span><Toggle value={sound} onChange={setSound} label="今天可以听原声" /></label>
-          </section>
-          <button className="recipient-start-button" onClick={() => onStart({ accepted: true, duration, sound, intensity: level, frequency: data.preferences.frequency })}>打开今天的一小段</button>
-          <button className="recipient-later-button" onClick={() => setEnded(true)}>今天先不打开</button>
-          <p className="recipient-consent-note">本次为妈妈本人预先授权的接收体验，不涉及身份替代，也不会自动生成她没有说过的话。</p>
-        </main>
-      </div>
-    )
+  const stopInlineRecording = () => {
+    clearRecordTimer()
+    if (recorderRef.current?.state === 'recording') recorderRef.current.stop()
+    recorderStreamRef.current?.getTracks().forEach((track) => track.stop())
+    recorderStreamRef.current = null
+    setRecording(false)
+  }
+
+  const startInlineRecording = async () => {
+    if (messenger.phase === 'sending') {
+      setVoiceError('信鸽正在路上，请等它回来再说。')
+      return
+    }
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+      setVoiceError('当前浏览器暂不支持录音，可以切换到文字输入。')
+      return
+    }
+    setShowUploadTray(false)
+    setVoiceError('')
+    discardRecordingRef.current = false
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const recorder = new MediaRecorder(stream)
+      recorderRef.current = recorder
+      recorderStreamRef.current = stream
+      recorderChunksRef.current = []
+      recordSecondsRef.current = 0
+      setRecordSeconds(0)
+      recorder.ondataavailable = (event) => {
+        if (event.data.size) recorderChunksRef.current.push(event.data)
+      }
+      recorder.onstop = () => {
+        if (discardRecordingRef.current) return
+        const blob = new Blob(recorderChunksRef.current, { type: recorder.mimeType || 'audio/webm' })
+        if (!blob.size) {
+          setVoiceError('没有录到声音，请再试一次。')
+          return
+        }
+        const reader = new FileReader()
+        reader.onload = () => sendInteraction('语音', {
+          kind: 'audio',
+          name: `原声-${new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}.webm`,
+          dataUrl: String(reader.result),
+          duration: Math.max(1, recordSecondsRef.current),
+        })
+        reader.readAsDataURL(blob)
+      }
+      recorder.start()
+      setRecording(true)
+      recordTimerRef.current = window.setInterval(() => {
+        recordSecondsRef.current += 1
+        setRecordSeconds(recordSecondsRef.current)
+        if (recordSecondsRef.current >= 60) stopInlineRecording()
+      }, 1000)
+    } catch {
+      recorderStreamRef.current?.getTracks().forEach((track) => track.stop())
+      recorderStreamRef.current = null
+      setVoiceError('没有获得麦克风权限，可以切换到文字输入。')
+    }
+  }
+
+  useEffect(() => () => {
+    discardRecordingRef.current = true
+    clearRecordTimer()
+    if (recorderRef.current?.state === 'recording') recorderRef.current.stop()
+    recorderStreamRef.current?.getTracks().forEach((track) => track.stop())
+  }, [])
+
+  const uploadFromDevice = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+    setUploadError('')
+    try {
+      if (file.type.startsWith('image/')) sendInteraction('图片', await prepareImageAttachment(file))
+      else if (file.type.startsWith('audio/')) sendInteraction('语音', await prepareAudioAttachment(file))
+      else setUploadError('目前支持照片与音频文件。')
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : '这个文件暂时无法读取。')
+    }
+  }
+
+  const sendText = () => {
+    if (!chatDraft.trim()) return
+    sendInteraction('文字')
   }
 
   if (data.preferences.frequency === '暂停出现') {
@@ -1682,92 +1740,124 @@ function RecipientHome({
           <p>不会主动出现，也不会提醒你继续。妈妈留下的内容没有被删除；需要时，你仍可以自己打开。</p>
           <button className="primary-button" onClick={() => go('gallery')}>我想主动看一段记忆</button>
           <button className="secondary-button" onClick={() => go('you')}>只查看我的记录</button>
-          <button className="recipient-text-button" onClick={() => { onUpdatePreferences({ frequency: '仅主动进入' }); onStart({ ...data.preferences, frequency: '仅主动进入' }) }}>恢复为仅主动进入</button>
+          <button className="recipient-text-button" onClick={() => onUpdatePreferences({ frequency: '仅主动进入' })}>恢复为仅主动进入</button>
         </main>
       </div>
     )
   }
 
   return (
-    <div className="screen recipient-screen recipient-album-screen">
+    <div className="screen recipient-screen recipient-mobile-home">
       <div className="tide tide-a" /><div className="tide tide-b" />
-      <main className="scroll-page recipient-home recipient-dashboard">
-        <header className="recipient-header recipient-album-header">
-          <h1>我在</h1>
-          <p>{daughterAlbum.length ? `我的上传 ${daughterAlbum.length} 条 · 妈妈回忆 ${motherMemories.length} 段` : `妈妈回忆 ${motherMemories.length} 段`}</p>
+      <main className="scroll-page recipient-mobile-dashboard">
+        <header className="recipient-mobile-header">
+          <div><span>我在</span><h1>林岚给你的回忆</h1></div>
+          <button className="recipient-exit-preview" onClick={() => go('creator')}><span>×</span>结束预览</button>
         </header>
 
-        <button className="recipient-session-bar" onClick={() => setAdjusting(!adjusting)} aria-expanded={adjusting}>
-          <span>今天还剩 {remainingLabel} · {data.preferences.sound ? '可听原声' : '保持静音'} · {data.preferences.intensity === 'L1' ? '轻一点' : '多些细节'}</span><b>{adjusting ? '收起' : '调整'}</b>
-        </button>
-        {adjusting && (
-          <section className="recipient-session-panel">
-            <div><span>停留时间</span>{([5, 10, 15] as const).map((value) => <button key={value} className={data.preferences.duration === value ? 'active' : ''} onClick={() => onUpdatePreferences({ duration: value })}>{value} 分钟</button>)}</div>
-            <div><span>原声</span><button className={!data.preferences.sound ? 'active' : ''} onClick={() => onUpdatePreferences({ sound: false })}>保持静音</button><button className={data.preferences.sound ? 'active' : ''} onClick={() => onUpdatePreferences({ sound: true })}>可以听</button></div>
-            <div><span>内容强度</span><button className={data.preferences.intensity === 'L1' ? 'active' : ''} onClick={() => onUpdatePreferences({ intensity: 'L1' })}>轻一点</button><button className={data.preferences.intensity === 'L2' ? 'active' : ''} onClick={() => onUpdatePreferences({ intensity: 'L2' })}>多些细节</button></div>
-            <button className="recipient-end-session" onClick={() => { onEndSession(); setEnded(true) }}>结束今天的体验</button>
-            <button className="recipient-reset-access" onClick={() => onUpdatePreferences({ accepted: false })}>重新选择接收方式</button>
-          </section>
-        )}
-
-        {daughterAlbum.length > 0 && (
-          <section className="recipient-album-section" aria-labelledby="daughter-album-title">
-            <div className="recipient-album-heading"><h2 id="daughter-album-title">我的上传</h2><span>{daughterAlbum.length} 条</span></div>
-            <div className="recipient-album-grid recipient-own-grid">
-              {daughterAlbum.slice(0, 6).map((item, index) => (
-                <button key={item.id} className={`recipient-album-card recipient-own-card ${index === 0 ? 'is-wide' : ''} ${item.mode === '图片' ? 'is-image' : item.mode === '语音' ? 'is-audio' : 'is-text'}`} onClick={() => item.exchangeId ? onPigeon() : item.sourceSeedId ? onOpenMemory(item.sourceSeedId) : go('you')}>
-                  <span className="recipient-album-label">{item.mode}</span>
-                  <div className="recipient-own-preview">
-                    {item.mode === '图片' && item.attachment?.kind === 'image' ? (
-                      <img src={item.attachment.dataUrl} alt={item.attachment.name} />
-                    ) : item.mode === '语音' ? (
-                      <span className="recipient-wave-preview" aria-hidden="true"><i /><i /><i /><i /><i /></span>
-                    ) : (
-                      <blockquote>{item.copy}</blockquote>
-                    )}
-                  </div>
-                  <div className="recipient-album-copy"><h3>{item.title}</h3><p>{item.copy}</p><small>{item.meta}</small></div>
-                </button>
-              ))}
-            </div>
-          </section>
-        )}
-
-        <section className="recipient-album-section" aria-labelledby="mother-album-title">
-          <div className="recipient-album-heading"><h2 id="mother-album-title">妈妈上传的回忆</h2><span>{motherMemories.length} 段 · 已看 {viewedCount}</span></div>
-          <div className="recipient-summary-strip"><span>{counts.照片} 照片</span><span>{counts.文字} 文字</span><span>{counts.声音} 语音</span><span>{counts.物件} 物件</span></div>
+        <section className="recipient-memory-shelf" aria-labelledby="recipient-memory-title">
+          <div className="recipient-mobile-section-heading">
+            <div><span>妈妈留下的</span><h2 id="recipient-memory-title">记忆</h2></div>
+            <button onClick={() => go('gallery')}>{motherMemories.length} 段</button>
+          </div>
           {motherMemories.length ? (
-            <div className="recipient-album-grid recipient-mother-grid">
-              {motherMemories.slice(0, 6).map((memory, index) => (
-                <button key={memory.seed.id} className={`recipient-album-card recipient-memory-album-card ${index === 0 ? 'is-wide' : ''}`} onClick={() => onOpenMemory(memory.seed.id)}>
-                  <span className="recipient-album-label">{memory.kind}</span>
-                  <div className="recipient-memory-preview"><MemoryArtwork memory={memory} /></div>
-                  <div className="recipient-album-copy"><h3>{memory.seed.title}</h3><p>{memory.seed.excerpt}</p><small>{memory.date} · {memory.scene}</small></div>
-                </button>
-              ))}
+            <>
+              <button className="recipient-memory-feature" onClick={() => onOpenMemory(motherMemories[0].seed.id)}>
+                <span className="recipient-memory-feature-art"><MemoryArtwork memory={motherMemories[0]} /></span>
+                <span className="recipient-memory-feature-copy"><small>{motherMemories[0].kind} · {motherMemories[0].date}</small><b>{motherMemories[0].seed.title}</b><p>{motherMemories[0].seed.excerpt}</p></span>
+              </button>
+              <div className="recipient-memory-mini-grid">
+                {motherMemories.slice(1, 5).map((memory) => (
+                  <button key={memory.seed.id} onClick={() => onOpenMemory(memory.seed.id)}>
+                    <span><MemoryArtwork memory={memory} /></span>
+                    <b>{memory.seed.title}</b>
+                    <small>{memory.kind}</small>
+                  </button>
+                ))}
+              </div>
+              <button className="recipient-memory-all" onClick={() => go('gallery')}>查看全部记忆 <span>›</span></button>
+            </>
+          ) : <p className="recipient-memory-empty">暂时没有妈妈授权给你的记忆。</p>}
+        </section>
+
+        <section className="recipient-intention-section" aria-labelledby="recipient-intention-title">
+          <div className="recipient-mobile-section-heading">
+            <div><span>你们之间的</span><h2 id="recipient-intention-title">约定与心愿</h2></div>
+            <small>{recipientIntentions.length} 件</small>
+          </div>
+          <div className="recipient-intention-legend" aria-label="内容类型说明"><span>共同约定 · 你们都知道</span><span>个人心愿 · 她自己留下</span></div>
+          <div className="recipient-intention-list">
+            {recipientIntentions.map((intention) => {
+              const completed = data.completedIntentionIds.includes(intention.id)
+              return (
+                <article key={intention.id} className={`recipient-intention-card is-${intention.kind === '共同约定' ? 'promise' : 'wish'} ${completed ? 'is-completed' : ''}`}>
+                  <header><span>{intention.kind}</span>{completed && <b>✓ 已完成</b>}</header>
+                  <h3>{intention.title}</h3>
+                  <p>{intention.note}</p>
+                  <footer>
+                    <button disabled={completed} onClick={() => onIntentionAction(intention, 'progress')}>记下进展</button>
+                    <button disabled={completed} onClick={() => onIntentionAction(intention, 'complete')}>{completed ? '已经告诉她' : '告诉她我完成了'}</button>
+                  </footer>
+                </article>
+              )
+            })}
+          </div>
+        </section>
+
+        <section className="recipient-history-section recipient-page-history" aria-labelledby="interaction-history-title">
+          <div className="recipient-history-card">
+            <div className="recipient-history-pigeon" aria-live="polite">
+              <img src={pigeonImage} alt={pigeonLabel} />
+              <p><b id="interaction-history-title">{daughterSending ? '正在路上' : daughterDelivered && messenger.unread ? '有新的带回' : '信鸽在这里'}</b></p>
+              {daughterHistory.length > 0 && <button onClick={onPigeon}>全部</button>}
             </div>
-          ) : <p className="recipient-empty-copy">暂时没有妈妈授权给你的回忆。</p>}
-          <button className="recipient-album-more" onClick={() => go('gallery')}>查看全部妈妈回忆</button>
+            {interactionHistory.length ? (
+              <div className="recipient-history-list">
+                {interactionHistory.map((item) => (
+                  <button key={item.id} onClick={() => item.exchangeId ? onPigeon() : item.sourceSeedId ? onOpenMemory(item.sourceSeedId) : go('you')}>
+                    <span className={`recipient-history-media is-${item.mode === '图片' ? 'image' : item.mode === '语音' ? 'audio' : 'text'}`}>
+                      {item.mode === '图片' && item.attachment?.kind === 'image' ? <img src={item.attachment.dataUrl} alt="" /> : item.mode === '语音' ? <i><b /><b /><b /><b /></i> : '“'}
+                    </span>
+                    <span className="recipient-history-copy"><b>{item.title}</b><small>{item.meta} · {item.status}</small></span>
+                    <span className="recipient-history-arrow">›</span>
+                  </button>
+                ))}
+              </div>
+            ) : <p className="recipient-history-empty">还没有互动。可以从底部说一句话，或放入一张照片。</p>}
+          </div>
         </section>
       </main>
 
-      <section className="recipient-chat-dock recipient-deepseek-dock" aria-label="AI 对话工具">
-        <div className="recipient-chat-box recipient-deepseek-box">
-          {(daughterSending || daughterDelivered || daughterHistory.length > 0) && (
-            <button className="recipient-chat-context" onClick={onPigeon} disabled={!daughterSending && !daughterDelivered && !daughterHistory.length} aria-live="polite">
-              <span>{daughterSending ? '检索中' : daughterDelivered && messenger.unread ? '新回忆' : '历史'}</span><b>{chatStatus}</b>
-            </button>
-          )}
-          <textarea className="recipient-chat-input" value={chatDraft} rows={1} onChange={(event) => setChatDraft(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey && chatDraft.trim()) { event.preventDefault(); openChatComposer('文字') } }} placeholder="给 AI 发送消息" aria-label="输入要交给 AI 的内容" />
-          <div className="recipient-chat-toolbar" aria-label="输入工具">
-            <button className="recipient-chat-tool recipient-chat-attach" onClick={() => openChatComposer('图片')} disabled={!hardwareDetection} aria-label="图片输入">＋</button>
-            <button className={`recipient-hardware-switch ${hardwareDetection ? 'active' : ''}`} role="switch" aria-checked={hardwareDetection} onClick={() => setHardwareDetection((value) => !value)}>
-              <i /><span>硬件感知</span>
-            </button>
-            <button className="recipient-chat-tool recipient-chat-history" onClick={onPigeon} disabled={!daughterSending && !daughterDelivered && !daughterHistory.length} aria-label="查看往返信件">历史</button>
-            <button className="recipient-chat-tool recipient-chat-voice" onClick={() => openChatComposer('语音')} disabled={!hardwareDetection} aria-label="语音输入">声</button>
-            <button className="recipient-chat-send" disabled={!chatDraft.trim()} onClick={() => openChatComposer('文字')} aria-label="发送文字">↑</button>
+      <section className="recipient-context-dock recipient-global-context-dock" aria-label="围绕全部记忆互动">
+        <div className={`recipient-context-reference ${daughterSending ? 'is-delivering' : daughterDelivered && messenger.unread ? 'is-returned' : 'is-idle'}`}>
+          <button className="recipient-context-pigeon" disabled={!daughterDelivered || !messenger.unread} onClick={onPigeon} aria-label={daughterDelivered && messenger.unread ? '打开信鸽带回的信封' : pigeonLabel}>
+            <img src={pigeonImage} alt="" />
+            {daughterDelivered && messenger.unread && <i aria-hidden="true">✉</i>}
+          </button>
+          <span><small>{recording ? '正在录音' : daughterSending ? '信鸽正在送信' : daughterDelivered && messenger.unread ? '回信到了，点信鸽拆开信封' : '正在聊全部记忆'}</small><b>林岚给你的回忆</b></span>
+          {daughterHistory.length > 0 && <button className="recipient-context-record" onClick={onPigeon}>记录</button>}
+        </div>
+        {showUploadTray && (
+          <div className="recipient-context-upload recipient-global-upload" aria-label="上传多模态内容">
+            <button onClick={() => cameraInputRef.current?.click()}><CameraIcon /><b>拍摄</b></button>
+            <button onClick={() => albumInputRef.current?.click()}><AlbumIcon /><b>相册</b></button>
+            <button onClick={() => fileInputRef.current?.click()}><FileIcon /><b>文件</b></button>
+            <button onClick={startInlineRecording}><WaveformIcon /><b>录音</b></button>
+            {uploadError && <p className="recipient-upload-error" role="alert">{uploadError}</p>}
+            <input ref={cameraInputRef} className="recipient-hidden-file" type="file" accept="image/*" capture="environment" onChange={uploadFromDevice} />
+            <input ref={albumInputRef} className="recipient-hidden-file" type="file" accept="image/*" onChange={uploadFromDevice} />
+            <input ref={fileInputRef} className="recipient-hidden-file" type="file" accept="image/*,audio/*" onChange={uploadFromDevice} />
           </div>
+        )}
+        {voiceError && <p className="recipient-voice-error" role="alert">{voiceError}</p>}
+        <div className="recipient-context-input-row">
+          <button className={`recipient-context-plus ${showUploadTray ? 'active' : ''}`} disabled={recording || daughterSending} onClick={() => { setShowUploadTray((value) => !value); setUploadError('') }} aria-label="上传照片、音频或开始录音"><span aria-hidden="true">＋</span></button>
+          {recording ? (
+            <button className="recipient-global-recording" onClick={stopInlineRecording}><WaveformIcon /><b>录音中 {recordSeconds} 秒 · 点击发送</b></button>
+          ) : (
+            <textarea value={chatDraft} rows={1} onChange={(event) => setChatDraft(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); sendText() } }} placeholder="问问全部记忆" aria-label="围绕全部记忆输入内容" />
+          )}
+          <button className="recipient-context-send" disabled={!chatDraft.trim() || recording || daughterSending} onClick={sendText} aria-label="发送">↑</button>
         </div>
       </section>
     </div>
@@ -1776,45 +1866,99 @@ function RecipientHome({
 
 function GalleryPage({
   onBack,
-  go,
   memories,
   selectedMemoryId,
   viewedMemoryIds,
-  soundEnabled,
   onSelect,
-  onViewed,
-  onRespond,
+  messenger,
+  onSend,
+  onPigeon,
 }: {
   onBack: () => void
-  go: (page: Page) => void
   memories: MemoryEntry[]
   selectedMemoryId: number
   viewedMemoryIds: number[]
-  soundEnabled: boolean
   onSelect: (id: number) => void
-  onViewed: (id: number) => void
-  onRespond: (id: number) => void
+  messenger: MessengerChannelState
+  onSend: (draft: MessengerDraft, contextSeedId: number) => boolean
+  onPigeon: () => void
 }) {
   const [played, setPlayed] = useState(false)
-  const [showSource, setShowSource] = useState(false)
+  const [contextDraft, setContextDraft] = useState('')
+  const [contextPigeonStage, setContextPigeonStage] = useState<'idle' | 'sent' | 'delivering' | 'returned'>('idle')
+  const [showContextUpload, setShowContextUpload] = useState(false)
+  const [contextUploadError, setContextUploadError] = useState('')
+  const contextCameraRef = useRef<HTMLInputElement | null>(null)
+  const contextAlbumRef = useRef<HTMLInputElement | null>(null)
+  const contextFileRef = useRef<HTMLInputElement | null>(null)
   const memory = memories.find((item) => item.seed.id === selectedMemoryId) ?? memories.find((item) => item.seed.type !== '愿景') ?? memories[0]
 
   useEffect(() => {
     setPlayed(false)
-    setShowSource(false)
+    setContextDraft('')
+    setShowContextUpload(false)
+    setContextUploadError('')
   }, [selectedMemoryId])
 
-  if (!memory) return <div className="screen gallery-screen"><BackHeader title="妈妈的记忆" onBack={onBack} /><main className="empty-recipient-memory">暂时没有已授权的内容</main></div>
+  const memoryId = memory?.seed.id
+  const contextSending = messenger.phase === 'sending' && messenger.pending.sourceSeedId === memoryId
+  const contextHistory = messenger.history.filter((exchange) => exchange.sourceSeedId === memoryId)
+  const contextReturned = messenger.phase === 'delivered' && messenger.unread && contextHistory.length > 0
+  useEffect(() => {
+    if (contextSending) {
+      setContextPigeonStage('sent')
+      const departureTimer = window.setTimeout(() => setContextPigeonStage('delivering'), 650)
+      return () => window.clearTimeout(departureTimer)
+    }
+    setContextPigeonStage(contextReturned ? 'returned' : 'idle')
+  }, [contextSending, contextReturned, memoryId])
 
-  const viewed = viewedMemoryIds.includes(memory.seed.id)
+  if (!memory) return <div className="screen gallery-screen"><BackHeader title="回忆" onBack={onBack} /><main className="empty-recipient-memory">暂时没有已授权的内容</main></div>
+
+  const contextPigeonImage = contextPigeonStage === 'delivering'
+    ? mascotDeliveringImage
+    : contextPigeonStage === 'returned'
+      ? mascotReturningImage
+      : mascotProfileImage
+  const contextPigeonStatus = contextPigeonStage === 'sent'
+    ? '已收到，信鸽准备出发'
+    : contextPigeonStage === 'delivering'
+      ? '信鸽正在送信'
+      : contextPigeonStage === 'returned'
+        ? '回信到了，点信鸽拆开信封'
+        : `正在聊这段${memory.kind}`
+  const sendContextMessage = () => {
+    const text = contextDraft.trim()
+    if (!text) return
+    if (onSend({ mode: '文字', text }, memory.seed.id)) setContextDraft('')
+  }
+  const uploadContextMedia = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+    setContextUploadError('')
+    try {
+      const attachment = file.type.startsWith('image/')
+        ? await prepareImageAttachment(file)
+        : file.type.startsWith('audio/')
+          ? await prepareAudioAttachment(file)
+          : undefined
+      if (!attachment) {
+        setContextUploadError('目前支持照片与音频文件。')
+        return
+      }
+      const mode: CaptureType = attachment.kind === 'image' ? '图片' : '语音'
+      if (onSend({ mode, text: '', attachment }, memory.seed.id)) setShowContextUpload(false)
+    } catch (error) {
+      setContextUploadError(error instanceof Error ? error.message : '这个文件暂时无法读取。')
+    }
+  }
+
   return (
     <div className="screen gallery-screen">
-      <BackHeader title="妈妈的记忆" eyebrow="本人确认 · 仅你可见" onBack={onBack} action={<Pill tone="paper">{soundEnabled ? '原声可用' : '静音'}</Pill>} />
+      <BackHeader title="回忆" onBack={onBack} />
       <main className="scroll-page gallery-page recipient-gallery-page">
-        <div className="safe-banner"><b>这里仅显示林岚明确授权给你的内容</b><p>每段都可以查看原始来源；未经确认或属于其他人的内容不会出现。</p></div>
-
         <section className="recipient-memory-picker">
-          <header><h2>选择一段记忆</h2><span>{memories.length} 段</span></header>
           <div>
             {memories.map((item) => (
               <button key={item.seed.id} className={item.seed.id === memory.seed.id ? 'active' : ''} onClick={() => onSelect(item.seed.id)}>
@@ -1831,26 +1975,38 @@ function GalleryPage({
           <h1>{memory.seed.title}</h1>
           <p className="recipient-memory-meta">{memory.date} · {memory.scene}</p>
           <blockquote>“{memory.seed.excerpt}”</blockquote>
-          <section className="recipient-story-copy"><span>妈妈为什么留下它</span><p>{memory.story}</p></section>
 
           {memory.duration && (
-            soundEnabled ? (
-              memory.audioSrc ? <div className="recipient-real-audio"><span>妈妈留下的原声 · 需主动播放</span><audio controls src={memory.audioSrc} /></div> : <button className={`audio-control ${played ? 'playing' : ''}`} onClick={() => setPlayed(!played)}><span>{played ? 'Ⅱ' : '▶'}</span><div><b>{played ? '原声播放状态演示中' : '查看原声播放演示'}</b><small>{memory.duration} · 原型暂无实际音频</small></div><i /></button>
-            ) : (
-              <button className="audio-control is-muted" disabled><span>◇</span><div><b>今天保持静音</b><small>可以回到首页调整本次声音设置</small></div><i /></button>
-            )
+            memory.audioSrc ? <div className="recipient-real-audio"><span>妈妈留下的原声 · 需主动播放</span><audio controls src={memory.audioSrc} /></div> : <button className={`audio-control ${played ? 'playing' : ''}`} onClick={() => setPlayed(!played)}><span>{played ? 'Ⅱ' : '▶'}</span><div><b>{played ? '原声播放状态演示中' : '查看原声播放演示'}</b><small>{memory.duration} · 原型暂无实际音频</small></div><i /></button>
           )}
-
-          <button className="recipient-source-toggle" onClick={() => setShowSource(!showSource)} aria-expanded={showSource}>{showSource ? '收起原始依据' : '查看原始依据与授权'} <b>›</b></button>
-          {showSource && <div className="recipient-source-panel"><p><b>原始来源</b>{memory.origin}</p><p><b>接收范围</b>仅林崖 · 母女关系空间</p><p><b>可用方式</b>查看、关联回应、线索探索；声音必须主动播放</p><p><b>内容说明</b>故事为 AI 整理，已由林岚本人确认；引文保持原文。</p></div>}
-
-          <div className="recipient-memory-actions">
-            <button className={viewed ? 'is-viewed' : ''} onClick={() => onViewed(memory.seed.id)}>{viewed ? '✓ 已放回记忆馆' : '我看完了'}</button>
-            <button disabled={!memory.seed.delivery.flows.includes('探索')} onClick={() => go('seek')}>{memory.seed.delivery.flows.includes('探索') ? '顺着线索看看' : '未开放线索探索'}</button>
-          </div>
         </article>
       </main>
-      <div className="sticky-actions gallery-actions"><button className="secondary-button" onClick={onBack}>今天到这里</button><button className="primary-button" disabled={!memory.seed.delivery.flows.includes('回应')} onClick={() => onRespond(memory.seed.id)}>{memory.seed.delivery.flows.includes('回应') ? '写下我的回应' : '此段仅开放查看'}</button></div>
+      <section className="recipient-context-dock" aria-label={`围绕${memory.seed.title}互动`}>
+        <div className={`recipient-context-reference is-${contextPigeonStage}`}>
+          <button className="recipient-context-pigeon" disabled={!contextReturned} onClick={onPigeon} aria-label={contextReturned ? '打开信鸽带回的信封' : contextPigeonStatus}>
+            <img src={contextPigeonImage} alt="" />
+            {contextReturned && <i aria-hidden="true">✉</i>}
+          </button>
+          <span><small>{contextPigeonStatus}</small><b>{memory.seed.title}</b></span>
+          {contextHistory.length > 0 && <button className="recipient-context-record" onClick={onPigeon}>记录</button>}
+        </div>
+        {showContextUpload && (
+          <div className="recipient-context-upload" aria-label="上传多模态内容">
+            <button onClick={() => contextCameraRef.current?.click()}><CameraIcon /><b>拍摄</b></button>
+            <button onClick={() => contextAlbumRef.current?.click()}><AlbumIcon /><b>相册</b></button>
+            <button onClick={() => contextFileRef.current?.click()}><FileIcon /><b>文件</b></button>
+            <input ref={contextCameraRef} className="recipient-hidden-file" type="file" accept="image/*" capture="environment" onChange={uploadContextMedia} />
+            <input ref={contextAlbumRef} className="recipient-hidden-file" type="file" accept="image/*" onChange={uploadContextMedia} />
+            <input ref={contextFileRef} className="recipient-hidden-file" type="file" accept="image/*,audio/*" onChange={uploadContextMedia} />
+            {contextUploadError && <p role="alert">{contextUploadError}</p>}
+          </div>
+        )}
+        <div className="recipient-context-input-row">
+          <button className={`recipient-context-plus ${showContextUpload ? 'active' : ''}`} disabled={contextSending} onClick={() => { setShowContextUpload((value) => !value); setContextUploadError('') }} aria-label="上传照片或音频"><span aria-hidden="true">＋</span></button>
+          <textarea value={contextDraft} rows={1} onChange={(event) => setContextDraft(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); sendContextMessage() } }} placeholder={`问问「${memory.seed.title}」`} aria-label={`围绕${memory.seed.title}输入内容`} />
+          <button className="recipient-context-send" disabled={!contextDraft.trim() || contextSending} onClick={sendContextMessage} aria-label="发送">↑</button>
+        </div>
+      </section>
     </div>
   )
 }
@@ -1947,9 +2103,9 @@ function WishPage({ onBack, go, wish, dismissed, onSaveEntry, onDecline }: { onB
   )
   return (
     <div className="screen wish-screen">
-      <BackHeader title="我在，你做" eyebrow="遗愿到轻行动" onBack={onBack} action={<Pill tone="paper">无提醒</Pill>} />
+      <BackHeader title="我在，你做" eyebrow="她留下的个人心愿" onBack={onBack} action={<Pill tone="paper">无提醒</Pill>} />
       <main className="scroll-page wish-page">
-        <article className="wish-original"><SourceMark>妈妈原始愿望 · 本人确认可行动化</SourceMark><span className="quote-mark">“</span><h2>{wish.seed.excerpt}</h2><p>{wish.seed.source} · 只给女儿</p></article>
+        <article className="wish-original"><SourceMark>妈妈个人心愿 · 本人确认可行动化</SourceMark><span className="quote-mark">“</span><h2>{wish.seed.excerpt}</h2><p>{wish.seed.source} · 只给女儿</p></article>
         <section className="action-choices"><h3>如果今天合适，可以把它改轻一点</h3>{[
           ['5 分钟', '下楼站一会儿', '低体力 · 无花费'],
           ['10 分钟', '走到熟悉的路口', '轻体力 · 可独自'],
@@ -2043,7 +2199,6 @@ function YouPage({
 }
 
 const validPages: Page[] = ['creator', 'capture', 'library', 'detail', 'settings', 'recipient', 'gallery', 'echo', 'seek', 'wish', 'you']
-const recipientPages: Page[] = ['recipient', 'gallery', 'echo', 'seek', 'wish', 'you']
 
 function loadCurrentPage(): Page {
   if (typeof window === 'undefined') return 'creator'
@@ -2094,7 +2249,7 @@ function App() {
             if (currentChannel.phase !== 'sending' || currentChannel.pending.id !== pending.id) return current
             return { ...current, mother: { phase: 'idle', history: currentChannel.history } }
           })
-          showToast('这一刻已收进记忆库，并按授权留给林崖。妈妈端无需等待回信。', 3000)
+          showToast('这一刻已收进记忆，并按授权留给林崖。妈妈端无需等待回信。', 3000)
           return
         }
         setMessenger((current) => {
@@ -2176,16 +2331,6 @@ function App() {
     return () => window.removeEventListener('storage', syncAcrossTabs)
   }, [activeMessengerOwner])
 
-  useEffect(() => {
-    if (!recipientData.preferences.accepted || recipientData.preferences.frequency === '暂停出现' || !recipientData.sessionEndsAt) return
-    const delay = Math.max(0, recipientData.sessionEndsAt - Date.now())
-    const timer = window.setTimeout(() => {
-      setRecipientData((current) => ({ ...current, sessionCompletedAt: current.sessionEndsAt }))
-      setPage((current) => recipientPages.includes(current) ? 'recipient' : current)
-    }, Math.min(delay, 2_147_000_000))
-    return () => window.clearTimeout(timer)
-  }, [recipientData.preferences.accepted, recipientData.preferences.frequency, recipientData.sessionEndsAt])
-
   const closeMessengerSheet = () => {
     const owner = activeMessengerOwner
     if (!owner) return
@@ -2201,7 +2346,7 @@ function App() {
   const beginCompose = (owner: MessengerOwner, contextSeedId?: number, draftOverride?: MessengerDraft) => {
     const channel = messenger[owner]
     if (channel.phase === 'sending') {
-      showToast(owner === 'daughter' ? '信使正在路上，可以先在女儿首页等待' : '上一段内容正在保存到记忆库，请稍后再留一段')
+      showToast(owner === 'daughter' ? '信使正在路上，可以先在女儿首页等待' : '上一段内容正在保存到记忆，请稍后再留一段')
       return false
     }
     if (activeMessengerOwner && activeMessengerOwner !== owner) closeMessengerSheet()
@@ -2217,8 +2362,7 @@ function App() {
   }
 
   const go = (next: Page) => {
-    const sessionExpired = Boolean(recipientData.preferences.accepted && recipientData.preferences.frequency !== '暂停出现' && recipientData.sessionEndsAt && recipientData.sessionEndsAt <= Date.now())
-    const guardedNext = recipientPages.includes(next) && next !== 'recipient' && (!recipientData.preferences.accepted || sessionExpired) ? 'recipient' : next
+    const guardedNext = next
     if (guardedNext === 'seek' && !selectedRecipientMemory?.seed.delivery.flows.includes('探索')) {
       showToast('当前这段记忆没有开放线索探索')
       setPage('gallery')
@@ -2258,7 +2402,7 @@ function App() {
 
   const saveSeed = (seed: Seed, confirmed: boolean) => {
     setSeeds((current) => [seed, ...current.filter((item) => item.id !== seed.id)])
-    showToast(confirmed ? '已确认、逐段授权并保存到记忆库' : '草稿已保存在本机，尚未对女儿开放', 2600)
+    showToast(confirmed ? '已确认、逐段授权并保存到记忆' : '草稿已保存在本机，尚未对女儿开放', 2600)
     go('creator')
   }
 
@@ -2310,7 +2454,7 @@ function App() {
       sourceSeedId: memory?.seed.id,
       matchReason: reason,
       resultText: owner === 'mother'
-        ? '这一刻会原样保存到记忆库，并按妈妈确认的授权留给女儿。'
+        ? '这一刻会原样保存到记忆，并按妈妈确认的授权留给女儿。'
         : memory?.seed.excerpt ?? '这次没有找到足够相关的旧记录。系统不会猜妈妈会怎么回答，你写下的此刻仍会被好好保存。',
     }
     setSavedMessengerDrafts((current) => { const next = { ...current }; delete next[owner]; return next })
@@ -2329,10 +2473,44 @@ function App() {
     window.setTimeout(() => document.querySelector('.phone-screen')?.scrollTo({ top: 0, behavior: quiet ? 'auto' : 'smooth' }), 0)
   }
 
+  const sendDaughterInline = (draft: MessengerDraft, contextSeedId?: number) => {
+    if (messenger.daughter.phase === 'sending') {
+      showToast('信鸽正在路上，请等它回来再继续')
+      return false
+    }
+    const eligibleMemories = contextSeedId ? recipientMemories : recipientMemories.filter((item) => item.seed.delivery.flows.includes('回应'))
+    const { memory, reason } = matchMemoryForDraft(draft, eligibleMemories, contextSeedId)
+    const contextMemory = contextSeedId ? recipientMemories.find((item) => item.seed.id === contextSeedId) : undefined
+    const exchangeId = Date.now()
+    const pending: MessengerExchange = {
+      ...draft,
+      id: exchangeId,
+      sentAt: new Date().toISOString(),
+      sender: 'daughter',
+      returnPage: 'recipient',
+      sourceSeedId: memory?.seed.id,
+      matchReason: reason,
+      resultText: memory?.seed.excerpt ?? '这次没有找到足够相关的旧记录。系统不会猜妈妈会怎么回答，你写下的此刻仍会被好好保存。',
+    }
+    addDaughterEntry({
+      id: exchangeId,
+      exchangeId,
+      kind: '我的此刻',
+      title: contextMemory ? `关于「${contextMemory.seed.title}」的回应` : draft.mode === '文字' ? '交给信鸽的一句话' : draft.mode === '图片' ? '交给信鸽的一张照片' : '交给信鸽的一段声音',
+      text: draft.text || (draft.mode === '图片' ? `今天放入了「${draft.attachment?.name ?? '一张照片'}」。` : `今天留下了一段 ${draft.attachment?.duration ?? ''} 秒声音。`),
+    })
+    setMessenger((current) => ({
+      ...current,
+      daughter: { phase: 'sending', history: current.daughter.history, pending, deliverAt: Date.now() + 2600 },
+    }))
+    showToast(contextMemory ? `已围绕「${contextMemory.seed.title}」交给信鸽` : '已交给信鸽，互动历史会保留这一次往返')
+    return true
+  }
+
   const openPigeonHistory = (owner: MessengerOwner, selectedExchangeId?: number) => {
     const channel = messenger[owner]
     if (owner === 'mother') {
-      showToast(channel.phase === 'sending' ? '正在保存到记忆库，无需等待信使回信' : '妈妈端是单向交付，不会生成回信')
+      showToast(channel.phase === 'sending' ? '正在保存到记忆，无需等待信使回信' : '妈妈端是单向交付，不会生成回信')
       return
     }
     if (channel.phase === 'sending') {
@@ -2376,48 +2554,17 @@ function App() {
   const dismissPigeonDock = (owner: MessengerOwner) => {
     if (owner === 'mother') setPigeonDockDismissed(true)
     showToast(owner === 'mother'
-      ? '已收起，内容仍会在后台保存到记忆库'
+      ? '已收起，内容仍会在后台保存到记忆'
       : messenger[owner].phase === 'sending' ? '已收起，信使仍会在后台送达' : '已收起，可从往返信件再次查看')
   }
 
   const updateRecipientPreferences = (patch: Partial<RecipientPreferences>) => {
-    setRecipientData((current) => {
-      const preferences = { ...current.preferences, ...patch }
-      if (patch.duration && current.preferences.accepted) {
-        const now = Date.now()
-        return { ...current, preferences, sessionStartedAt: now, sessionEndsAt: now + patch.duration * 60_000, sessionCompletedAt: null }
-      }
-      return { ...current, preferences }
-    })
-  }
-
-  const startRecipientExperience = (preferences: RecipientPreferences) => {
-    const now = Date.now()
-    setRecipientData((current) => ({ ...current, preferences, sessionStartedAt: now, sessionEndsAt: now + preferences.duration * 60_000, sessionCompletedAt: null }))
-  }
-
-  const endRecipientSession = () => {
-    const now = Date.now()
-    setRecipientData((current) => ({ ...current, sessionEndsAt: now, sessionCompletedAt: now }))
+    setRecipientData((current) => ({ ...current, preferences: { ...current.preferences, ...patch } }))
   }
 
   const selectRecipientMemory = (id: number, open = false) => {
     setRecipientData((current) => ({ ...current, selectedMemoryId: id }))
     if (open) go('gallery')
-  }
-
-  const respondToRecipientMemory = (id: number) => {
-    const memory = recipientMemories.find((item) => item.seed.id === id)
-    if (!memory?.seed.delivery.flows.includes('回应')) {
-      showToast('这段记忆目前只开放查看，没有开放关联回应')
-      return
-    }
-    setRecipientData((current) => ({ ...current, selectedMemoryId: id }))
-    openDaughterComposer(id)
-  }
-
-  const markRecipientMemoryViewed = (id: number) => {
-    setRecipientData((current) => ({ ...current, viewedMemoryIds: current.viewedMemoryIds.includes(id) ? current.viewedMemoryIds : [...current.viewedMemoryIds, id] }))
   }
 
   const removeDaughterEntry = (id: number) => {
@@ -2454,6 +2601,20 @@ function App() {
     setRecipientData((current) => ({ ...current, dismissedWishIds: current.dismissedWishIds.includes(id) ? current.dismissedWishIds : [...current.dismissedWishIds, id] }))
   }
 
+  const handleIntentionAction = (intention: RecipientIntention, action: 'progress' | 'complete') => {
+    if (action === 'complete') {
+      setRecipientData((current) => ({
+        ...current,
+        completedIntentionIds: current.completedIntentionIds.includes(intention.id) ? current.completedIntentionIds : [...current.completedIntentionIds, intention.id],
+      }))
+      addDaughterEntry({ kind: '轻行动', title: `我完成了「${intention.title}」`, text: `${intention.kind} · 已向她留下完成回应。` })
+      showToast('已经告诉她：这件事完成了，也留在互动历史里')
+      return
+    }
+    addDaughterEntry({ kind: '轻行动', title: `关于「${intention.title}」的进展`, text: `${intention.kind} · 我已经开始做这件事。` })
+    showToast('这次进展已经记下，也会出现在互动历史里')
+  }
+
   const updateReflection = (reflection: RelationshipReflection) => {
     setRecipientData((current) => ({ ...current, reflections: current.reflections.map((item) => item.key === reflection.key ? reflection : item) }))
   }
@@ -2488,10 +2649,10 @@ function App() {
     case 'library': content = <LibraryPage seeds={seeds} go={go} onOpen={(seed) => openDetail(seed, 'library')} onCompose={openComposer} initialFilter={libraryFilter} />; break
     case 'detail': content = detail ? <ObjectDetailPage seed={detail} onBack={() => go(detailBack)} onUpdate={updateSeed} /> : <LibraryPage seeds={seeds} go={go} onOpen={(seed) => openDetail(seed, 'library')} onCompose={openComposer} initialFilter={libraryFilter} />; break
     case 'settings': content = <SettingsPage go={go} onCompose={openComposer} onRecipient={() => go('recipient')} memories={allMemories} recipientData={recipientData} onExport={exportAllRecords} quiet={quiet} onQuietChange={setQuiet} />; break
-    case 'recipient': content = <RecipientHome go={go} memories={recipientMemories} data={recipientData} onStart={startRecipientExperience} onEndSession={endRecipientSession} onUpdatePreferences={updateRecipientPreferences} onOpenMemory={(id) => selectRecipientMemory(id, true)} messenger={messenger.daughter} onCompose={(draft) => openDaughterComposer(undefined, draft)} onPigeon={() => openPigeonHistory('daughter')} />; break
-    case 'gallery': content = <GalleryPage onBack={() => go('recipient')} go={go} memories={recipientMemories} selectedMemoryId={recipientData.selectedMemoryId} viewedMemoryIds={recipientData.viewedMemoryIds} soundEnabled={recipientData.preferences.sound} onSelect={(id) => selectRecipientMemory(id)} onViewed={markRecipientMemoryViewed} onRespond={respondToRecipientMemory} />; break
+    case 'recipient': content = <RecipientHome go={go} memories={recipientMemories} data={recipientData} onUpdatePreferences={updateRecipientPreferences} onOpenMemory={(id) => selectRecipientMemory(id, true)} messenger={messenger.daughter} onSend={sendDaughterInline} onPigeon={() => openPigeonHistory('daughter')} onIntentionAction={handleIntentionAction} />; break
+    case 'gallery': content = <GalleryPage onBack={() => go('recipient')} memories={recipientMemories} selectedMemoryId={recipientData.selectedMemoryId} viewedMemoryIds={recipientData.viewedMemoryIds} onSelect={(id) => selectRecipientMemory(id)} messenger={messenger.daughter} onSend={sendDaughterInline} onPigeon={() => openPigeonHistory('daughter')} />; break
     case 'echo': content = <MessengerHubPage onBack={() => go('recipient')} onCompose={() => openDaughterComposer(recipientEchoContextId ?? undefined)} onOpenHistory={(id) => openPigeonHistory('daughter', id)} history={messenger.daughter.history} />; break
-    case 'seek': content = selectedRecipientMemory ? <SeekPage onBack={() => go('gallery')} memory={selectedRecipientMemory} onSaveEntry={addDaughterEntry} /> : <GalleryPage onBack={() => go('recipient')} go={go} memories={[]} selectedMemoryId={0} viewedMemoryIds={[]} soundEnabled={false} onSelect={() => {}} onViewed={() => {}} onRespond={() => {}} />; break
+    case 'seek': content = selectedRecipientMemory ? <SeekPage onBack={() => go('gallery')} memory={selectedRecipientMemory} onSaveEntry={addDaughterEntry} /> : <GalleryPage onBack={() => go('recipient')} memories={[]} selectedMemoryId={0} viewedMemoryIds={[]} onSelect={() => {}} messenger={messenger.daughter} onSend={() => false} onPigeon={() => {}} />; break
     case 'wish': content = <WishPage onBack={() => go('recipient')} go={go} wish={recipientWish} dismissed={recipientWish ? recipientData.dismissedWishIds.includes(recipientWish.seed.id) : false} onSaveEntry={addDaughterEntry} onDecline={dismissRecipientWish} />; break
     case 'you': content = <YouPage onBack={() => go('recipient')} entries={recipientData.entries} reflections={recipientData.reflections} frequency={recipientData.preferences.frequency} onSaveEntry={addDaughterEntry} onRemoveEntry={removeDaughterEntry} onFrequencyChange={(frequency) => updateRecipientPreferences({ frequency })} onUpdateReflection={updateReflection} onOpenMemory={(id) => selectRecipientMemory(id, true)} hiddenMemoryCount={recipientData.hiddenMemoryIds.length} onRestoreHiddenMemories={() => { setRecipientData((current) => ({ ...current, hiddenMemoryIds: [] })); showToast('已恢复显示，你仍可以再次隐藏任何一段') }} />; break
   }
