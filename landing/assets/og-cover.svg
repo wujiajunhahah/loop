@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <radialGradient id="wash" cx="72%" cy="43%" r="54%"><stop offset="0" stop-color="#b8d4e4" stop-opacity=".8"/><stop offset="1" stop-color="#f3efe5" stop-opacity="0"/></radialGradient>
+    <filter id="shadow" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="22" stdDeviation="28" flood-color="#162b3c" flood-opacity=".14"/></filter>
+    <pattern id="grain" width="120" height="120" patternUnits="userSpaceOnUse"><circle cx="12" cy="18" r=".7" fill="#162b3c" opacity=".08"/><circle cx="65" cy="72" r=".6" fill="#162b3c" opacity=".07"/><circle cx="98" cy="31" r=".8" fill="#162b3c" opacity=".06"/></pattern>
+  </defs>
+  <rect width="1200" height="630" fill="#f3efe5"/>
+  <rect width="1200" height="630" fill="url(#wash)"/>
+  <rect width="1200" height="630" fill="url(#grain)"/>
+  <g transform="translate(76 42)">
+    <image href="brand-bird-logo.webp" x="0" y="0" width="82" height="84"/>
+    <text x="82" y="61" fill="#162b3c" font-size="34" font-weight="700" font-family="Songti SC, STSong, serif" letter-spacing="5">我在</text>
+  </g>
+  <text x="76" y="250" fill="#162b3c" font-size="78" font-weight="600" font-family="Songti SC, STSong, serif">把想说的话，</text>
+  <text x="76" y="346" fill="#2c61d6" font-size="88" font-weight="600" font-family="Songti SC, STSong, serif">好好留下。</text>
+  <text x="82" y="412" fill="#40515c" font-size="24" font-family="PingFang SC, Microsoft YaHei, sans-serif">真实地留下，交给对的人，在未来有分寸地出现。</text>
+  <g transform="translate(755 112) rotate(3 150 205)" filter="url(#shadow)">
+    <rect width="310" height="410" rx="16" fill="#fffdf8" stroke="#162b3c" stroke-opacity=".08"/>
+    <rect x="24" y="24" width="78" height="26" rx="13" fill="#e9effd"/>
+    <text x="41" y="42" fill="#204aa7" font-size="12" font-family="PingFang SC, sans-serif">仅给女儿</text>
+    <g transform="translate(90 82) rotate(-7 68 36)">
+      <rect width="136" height="72" fill="#bbd7e6"/>
+      <path d="M9 55c18-22 31 9 48-12s28 14 69-19" fill="none" stroke="#326ab8" stroke-width="3" stroke-linecap="round"/>
+      <text x="12" y="19" fill="#326ab8" font-size="10" font-family="monospace">1998</text>
+    </g>
+    <text x="155" y="196" fill="#747a78" text-anchor="middle" font-size="11" font-family="PingFang SC, sans-serif">一张被留了二十多年的公交票</text>
+    <text x="155" y="238" fill="#162b3c" text-anchor="middle" font-size="19" font-weight="600" font-family="Songti SC, STSong, serif">“那天你第一次自己买票，</text>
+    <text x="155" y="271" fill="#162b3c" text-anchor="middle" font-size="19" font-weight="600" font-family="Songti SC, STSong, serif">我才发现你已经开始</text>
+    <text x="155" y="304" fill="#162b3c" text-anchor="middle" font-size="19" font-weight="600" font-family="Songti SC, STSong, serif">走向自己的世界。”</text>
+    <rect x="24" y="339" width="262" height="46" rx="9" fill="#eef3f5"/>
+    <circle cx="48" cy="362" r="14" fill="#2c61d6"/>
+    <path d="M45 356l9 6-9 6z" fill="#fff"/>
+    <path d="M77 362h12m7-7v14m8-10v6m8-13v20m8-16v12m8-9v6m8-12v18m8-11v4m8-8v12m8-15v20m8-13v6m8-10v14m8-8v4m8-12v20" fill="none" stroke="#7892a0" stroke-width="2" stroke-linecap="round"/>
+  </g>
+  <image href="birds/messenger-profile.webp" x="1010" y="70" width="190" height="190"/>
+  <text x="82" y="562" fill="#747a78" font-size="17" font-family="PingFang SC, sans-serif">不是数字复活 · 不生成你的新话 · 每一段都可追溯</text>
+  <text x="1118" y="570" fill="#2c61d6" text-anchor="end" font-size="18" font-family="monospace">wozai.space</text>
+</svg>
