@@ -1,6 +1,27 @@
 const header = document.querySelector('[data-header]');
 const menuToggle = document.querySelector('.menu-toggle');
 const mobileNav = document.querySelector('#mobile-nav');
+const currentLanguage = document.documentElement.lang.toLowerCase().startsWith('zh') ? 'zh' : 'en';
+const uiCopy = {
+  zh: {
+    openMenu: '打开菜单',
+    closeMenu: '关闭菜单',
+    playDemo: '播放页面演示',
+    pauseDemo: '暂停页面演示',
+    submitting: '正在安全提交，请稍候……',
+    submitError: '暂时没有提交成功，请稍后再试。',
+    loading: '正在发送…',
+  },
+  en: {
+    openMenu: 'Open menu',
+    closeMenu: 'Close menu',
+    playDemo: 'Play page demo',
+    pauseDemo: 'Pause page demo',
+    submitting: 'Submitting securely. Please wait…',
+    submitError: 'We could not submit this just now. Please try again later.',
+    loading: 'Sending…',
+  },
+}[currentLanguage];
 
 const setHeaderState = () => {
   header?.classList.toggle('is-scrolled', window.scrollY > 12);
@@ -13,14 +34,14 @@ if (menuToggle && mobileNav) {
   menuToggle.addEventListener('click', () => {
     const isOpen = menuToggle.getAttribute('aria-expanded') === 'true';
     menuToggle.setAttribute('aria-expanded', String(!isOpen));
-    menuToggle.setAttribute('aria-label', isOpen ? '打开菜单' : '关闭菜单');
+    menuToggle.setAttribute('aria-label', isOpen ? uiCopy.openMenu : uiCopy.closeMenu);
     mobileNav.hidden = isOpen;
   });
 
   mobileNav.querySelectorAll('a').forEach((link) => {
     link.addEventListener('click', () => {
       menuToggle.setAttribute('aria-expanded', 'false');
-      menuToggle.setAttribute('aria-label', '打开菜单');
+      menuToggle.setAttribute('aria-label', uiCopy.openMenu);
       mobileNav.hidden = true;
     });
   });
@@ -53,55 +74,96 @@ playDemo?.addEventListener('click', () => {
   const playing = playDemo.getAttribute('aria-pressed') === 'true';
   window.clearTimeout(demoTimer);
   playDemo.setAttribute('aria-pressed', String(!playing));
-  playDemo.setAttribute('aria-label', playing ? '播放页面演示' : '暂停页面演示');
+  playDemo.setAttribute('aria-label', playing ? uiCopy.playDemo : uiCopy.pauseDemo);
   audioDemo?.classList.toggle('is-playing', !playing);
 
   if (!playing) {
     demoTimer = window.setTimeout(() => {
       playDemo.setAttribute('aria-pressed', 'false');
-      playDemo.setAttribute('aria-label', '播放页面演示');
+      playDemo.setAttribute('aria-label', uiCopy.playDemo);
       audioDemo?.classList.remove('is-playing');
     }, 5200);
   }
 });
 
-const journeyData = {
-  look: {
-    overline: '我在，你看',
-    title: '拾起一段真实的记忆',
-    description: '每张票根、每个物件，背后都是一段本人确认的内容。先看静态故事，再由你决定要不要听见声音。',
-    points: ['声音默认关闭', '每段内容都有来源', '随时结束，今天到这里'],
-    visual: '<div class="gallery-wall"><span class="gallery-sticker gs-one">1998<br>车票</span><span class="gallery-sticker gs-two">桂花</span><span class="gallery-sticker gs-three">一段<br>原声</span></div>',
+const journeyDataByLanguage = {
+  zh: {
+    look: {
+      overline: '我在，你看',
+      title: '拾起一段真实的记忆',
+      description: '每张票根、每个物件，背后都是一段本人确认的内容。先看静态故事，再由你决定要不要听见声音。',
+      points: ['声音默认关闭', '每段内容都有来源', '随时结束，今天到这里'],
+      visual: '<div class="gallery-wall"><span class="gallery-sticker gs-one">1998<br>车票</span><span class="gallery-sticker gs-two">桂花</span><span class="gallery-sticker gs-three">一段<br>原声</span></div>',
+    },
+    speak: {
+      overline: '我在，你说',
+      title: '让今天，遇见一段过去',
+      description: '你可以放进今天的一张照片、一句话或一段声音。系统在授权记录中寻找关联。',
+      points: ['关联清楚可见', '不使用聊天气泡制造在线错觉', '没有依据时保持沉默'],
+      visual: '<div class="mode-visual echo-visual"><div class="echo-card"><small>今天 · 你留下的</small><p>第一次一个人出差，到了海边。</p></div><span class="echo-link">≈</span><div class="echo-card blue"><small>1998 · 本人原声</small><p>系统找到一段“相似的第一次”。</p></div></div>',
+    },
+    seek: {
+      overline: '我在，你寻',
+      title: '问答之间，找回记忆的轮廓',
+      description: '从一张局部照片、一件物品或一句原话出发，慢慢探索一段珍贵经历。',
+      points: ['答案只来自真实记录', '随时可以查看完整故事', '重要回忆永不褪色'],
+      visual: '<div class="mode-visual seek-visual"><small>记忆线索 · 01</small><h4>为什么一张普通的公交票，<br>会被保存二十多年？</h4><div class="seek-choices"><span>问时间</span><span>问地点</span><span>直接看故事</span></div></div>',
+    },
+    do: {
+      overline: '我在，你做',
+      title: '把愿望，变成前进动力',
+      description: '只有创作者明确留下的愿望，才会被整理成小行动，可选择也可以拒绝，愿望从来不是义务。',
+      points: ['不做也完全可以', '默认不提醒、不打卡', '行动原动力属于你'],
+      visual: '<div class="mode-visual do-visual"><small>一份本人留下的愿望</small><blockquote>“心里乱的时候，就出去走一小段。”</blockquote><div class="do-options"><span>走 5 分钟</span><span>出门溜达</span><span>以后再说</span><span>我不想做</span></div></div>',
+    },
+    live: {
+      overline: '你在',
+      title: '重新成为今天的主角',
+      description: '你在看、说、寻找和行动中留下新记忆，会逐渐成为自己的生活记录。过去被收藏，而你继续创造新的今天。',
+      points: ['新内容归接收者自己所有', '系统主动降低频率', '可独立导出回忆'],
+      visual: '<div class="mode-visual live-visual"><span class="sun-disc"></span><div class="life-card"><small>今天 · 属于你的 Context</small><p>“带着回忆，大胆向前走吧。”</p></div></div>',
+    },
   },
-  speak: {
-    overline: '我在，你说',
-    title: '让今天，遇见一段过去',
-    description: '你可以放进今天的一张照片、一句话或一段声音。系统在授权记录中寻找关联。',
-    points: ['关联清楚可见', '不使用聊天气泡制造在线错觉', '没有依据时保持沉默'],
-    visual: '<div class="mode-visual echo-visual"><div class="echo-card"><small>今天 · 你留下的</small><p>第一次一个人出差，到了海边。</p></div><span class="echo-link">≈</span><div class="echo-card blue"><small>1998 · 本人原声</small><p>系统找到一段“相似的第一次”。</p></div></div>',
-  },
-  seek: {
-    overline: '我在，你寻',
-    title: '问答之间，找回记忆的轮廓',
-    description: '从一张局部照片、一件物品或一句原话出发，慢慢探索一段珍贵经历。',
-    points: ['答案只来自真实记录', '随时可以查看完整故事', '重要回忆永不褪色'],
-    visual: '<div class="mode-visual seek-visual"><small>记忆线索 · 01</small><h4>为什么一张普通的公交票，<br>会被保存二十多年？</h4><div class="seek-choices"><span>问时间</span><span>问地点</span><span>直接看故事</span></div></div>',
-  },
-  do: {
-    overline: '我在，你做',
-    title: '把愿望，变成前进动力',
-    description: '只有创作者明确留下的愿望，才会被整理成小行动，可选择也可以拒绝，愿望从来不是义务。',
-    points: ['不做也完全可以', '默认不提醒、不打卡', '行动原动力属于你'],
-    visual: '<div class="mode-visual do-visual"><small>一份本人留下的愿望</small><blockquote>“心里乱的时候，就出去走一小段。”</blockquote><div class="do-options"><span>走 5 分钟</span><span>出门溜达</span><span>以后再说</span><span>我不想做</span></div></div>',
-  },
-  live: {
-    overline: '你在',
-    title: '重新成为今天的主角',
-    description: '你在看、说、寻找和行动中留下新记忆，会逐渐成为自己的生活记录。过去被收藏，而你继续创造新的今天。',
-    points: ['新内容归接收者自己所有', '系统主动降低频率', '可独立导出回忆'],
-    visual: '<div class="mode-visual live-visual"><span class="sun-disc"></span><div class="life-card"><small>今天 · 属于你的 Context</small><p>“带着回忆，大胆向前走吧。”</p></div></div>',
+  en: {
+    look: {
+      overline: 'Wozai · You view',
+      title: 'Pick up an authentic memory',
+      description: 'Behind every ticket and object is content confirmed by its creator. See the quiet story first, then decide whether to hear the voice.',
+      points: ['Sound is off by default', 'Every piece has a source', 'Stop at any time; this is enough for today'],
+      visual: '<div class="gallery-wall"><span class="gallery-sticker gs-one">1998<br>Ticket</span><span class="gallery-sticker gs-two">Osmanthus</span><span class="gallery-sticker gs-three">A voice<br>recording</span></div>',
+    },
+    speak: {
+      overline: 'Wozai · You speak',
+      title: 'Let today meet a moment from the past',
+      description: 'Add a photo, a few words, or a voice recording from today. The system looks for connections only within authorized records.',
+      points: ['Connections are clearly shown', 'No chat bubbles that imitate a live presence', 'Silence when there is no evidence'],
+      visual: '<div class="mode-visual echo-visual"><div class="echo-card"><small>Today · What you left</small><p>My first solo work trip took me to the shore.</p></div><span class="echo-link">≈</span><div class="echo-card blue"><small>1998 · Creator\'s voice</small><p>The system found a similar “first time.”</p></div></div>',
+    },
+    seek: {
+      overline: 'Wozai · You explore',
+      title: 'Find the shape of a memory through questions',
+      description: 'Begin with part of a photo, an object, or an original sentence, then gently explore a meaningful experience.',
+      points: ['Answers come only from authentic records', 'The full story is always available', 'Important memories keep their source'],
+      visual: '<div class="mode-visual seek-visual"><small>MEMORY CLUE · 01</small><h4>Why was an ordinary bus ticket<br>kept for more than twenty years?</h4><div class="seek-choices"><span>Ask when</span><span>Ask where</span><span>See the story</span></div></div>',
+    },
+    do: {
+      overline: 'Wozai · You act',
+      title: 'Let a wish become gentle momentum',
+      description: 'Only wishes explicitly left by the creator may become small actions. You can accept or decline; a wish is never an obligation.',
+      points: ['Choosing not to act is always okay', 'No reminders or streaks by default', 'Your motivation belongs to you'],
+      visual: '<div class="mode-visual do-visual"><small>A WISH LEFT BY THE CREATOR</small><blockquote>“When your mind feels tangled, go outside for a short walk.”</blockquote><div class="do-options"><span>Walk 5 minutes</span><span>Take a stroll</span><span>Maybe later</span><span>I don\'t want to</span></div></div>',
+    },
+    live: {
+      overline: 'You are here',
+      title: 'Become the center of today again',
+      description: 'New memories created as you view, speak, explore, and act gradually become your own life record. The past is held while you continue creating today.',
+      points: ['New content belongs to the recipient', 'The system proactively reduces frequency', 'Your memories can be exported independently'],
+      visual: '<div class="mode-visual live-visual"><span class="sun-disc"></span><div class="life-card"><small>Today · Your own context</small><p>“Carry the memories and move forward boldly.”</p></div></div>',
+    },
   },
 };
+
+const journeyData = journeyDataByLanguage[currentLanguage];
 
 const journey = document.querySelector('[data-journey]');
 const panel = journey?.querySelector('.journey-panel');
@@ -169,13 +231,14 @@ const submitForm = async ({ form, endpoint, statusNode, loadingLabel }) => {
   const formData = new FormData(form);
   const payload = Object.fromEntries(formData.entries());
   payload.consent = formData.get('consent') === 'on';
+  payload.locale = currentLanguage;
 
   if (button) {
     button.disabled = true;
     button.setAttribute('aria-busy', 'true');
     button.textContent = loadingLabel;
   }
-  setFormStatus(statusNode, 'pending', '正在安全提交，请稍候……');
+  setFormStatus(statusNode, 'pending', uiCopy.submitting);
 
   try {
     const response = await fetch(endpoint, {
@@ -185,14 +248,14 @@ const submitForm = async ({ form, endpoint, statusNode, loadingLabel }) => {
     });
     const result = await response.json().catch(() => ({}));
     if (!response.ok || !result.ok) {
-      throw new Error(result.message || '暂时没有提交成功，请稍后再试。');
+      throw new Error(result.message || uiCopy.submitError);
     }
 
     form.reset();
     setFormStatus(statusNode, 'success', result.message);
     return true;
   } catch (error) {
-    setFormStatus(statusNode, 'error', error.message || '暂时没有提交成功，请稍后再试。');
+    setFormStatus(statusNode, 'error', error.message || uiCopy.submitError);
     return false;
   } finally {
     if (button) {
@@ -211,7 +274,7 @@ subscribeForm?.addEventListener('submit', (event) => {
     form: subscribeForm,
     endpoint: '/api/subscribe',
     statusNode: subscribeForm.querySelector('[data-subscribe-status]'),
-    loadingLabel: '正在发送…',
+    loadingLabel: uiCopy.loading,
   });
 });
 

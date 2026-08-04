@@ -16,6 +16,18 @@ function clean(value, maxLength) {
   return String(value ?? '').trim().slice(0, maxLength);
 }
 
+function resolveLocale(input, request) {
+  const requested = clean(input?.locale, 16).toLowerCase();
+  if (requested.startsWith('zh')) return 'zh';
+  if (requested.startsWith('en')) return 'en';
+  const accepted = clean(request.headers['accept-language'], 200).toLowerCase();
+  return accepted.startsWith('zh') ? 'zh' : 'en';
+}
+
+function localized(locale, chinese, english) {
+  return locale === 'zh' ? chinese : english;
+}
+
 function toBase64Url(value) {
   return Buffer.from(value, 'utf8').toString('base64url');
 }
@@ -132,9 +144,13 @@ module.exports = async function handler(request, response) {
     return reply(response, { ok: false, message: 'Method not allowed' }, 405);
   }
 
+  let locale = resolveLocale(null, request);
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
-    return reply(response, { ok: false, message: '订阅服务尚未配置，请稍后再试。' }, 503);
+    return reply(response, {
+      ok: false,
+      message: localized(locale, '订阅服务尚未配置，请稍后再试。', 'The subscription service is not configured yet. Please try again later.'),
+    }, 503);
   }
 
   let input;
@@ -142,16 +158,27 @@ module.exports = async function handler(request, response) {
     input = typeof request.body === 'string' ? JSON.parse(request.body) : request.body;
     if (!input || typeof input !== 'object') throw new Error('Invalid body');
   } catch {
-    return reply(response, { ok: false, message: '提交内容格式不正确。' }, 400);
+    return reply(response, {
+      ok: false,
+      message: localized(locale, '提交内容格式不正确。', 'The submitted data is not valid.'),
+    }, 400);
   }
 
+  locale = resolveLocale(input, request);
+
   if (clean(input.website, 200)) {
-    return reply(response, { ok: true, message: '确认邮件已经发送，请查看邮箱。' });
+    return reply(response, {
+      ok: true,
+      message: localized(locale, '确认邮件已经发送，请查看邮箱。', 'Confirmation email sent. Please check your inbox.'),
+    });
   }
 
   const email = clean(input.email, 254).toLowerCase();
   if (!EMAIL_PATTERN.test(email) || input.consent !== true) {
-    return reply(response, { ok: false, message: '请输入有效邮箱并确认订阅授权。' }, 400);
+    return reply(response, {
+      ok: false,
+      message: localized(locale, '请输入有效邮箱并确认订阅授权。', 'Enter a valid email address and confirm your subscription consent.'),
+    }, 400);
   }
 
   const expires = Date.now() + 24 * 60 * 60 * 1000;
@@ -174,8 +201,18 @@ module.exports = async function handler(request, response) {
     });
   } catch {
     console.error('Subscription confirmation failed');
-    return reply(response, { ok: false, message: '确认邮件暂时没有发出，请稍后再试。' }, 502);
+    return reply(response, {
+      ok: false,
+      message: localized(locale, '确认邮件暂时没有发出，请稍后再试。', 'We could not send the confirmation email just now. Please try again later.'),
+    }, 502);
   }
 
-  return reply(response, { ok: true, message: '确认邮件已经发送，请在 24 小时内完成确认。Confirmation email sent — please confirm within 24 hours.' });
+  return reply(response, {
+    ok: true,
+    message: localized(
+      locale,
+      '确认邮件已经发送，请在 24 小时内完成确认。',
+      'Confirmation email sent — please confirm within 24 hours.',
+    ),
+  });
 };

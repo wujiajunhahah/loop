@@ -23,6 +23,11 @@
   --sans: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC", system-ui, sans-serif;
 }
 
+html[lang="en"] {
+  --serif: Georgia, "Times New Roman", serif;
+  --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
 *,
 *::before,
 *::after {
@@ -211,6 +216,28 @@ svg {
 .desktop-nav a:hover,
 .footer-links a:hover {
   color: var(--blue);
+}
+
+.language-switch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 38px;
+  min-height: 38px;
+  margin-right: 10px;
+  color: var(--ink-soft);
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.language-switch:hover {
+  color: var(--blue);
+  background: rgba(255, 253, 248, 0.72);
+  border-color: rgba(44, 97, 214, 0.35);
 }
 
 .nav-cta {
@@ -2134,6 +2161,7 @@ svg {
 
 @media (max-width: 900px) {
   .desktop-nav, .nav-cta { display: none; }
+  .nav-shell > .language-switch { display: none; }
 
   .menu-toggle {
     display: grid;
