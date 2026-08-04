@@ -807,7 +807,7 @@ svg {
 
 .process-grid {
   display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
 }
 
@@ -827,10 +827,10 @@ svg {
 }
 
 .process-card-wide {
-  grid-column: 1 / -1;
-  grid-template-columns: 1.22fr 0.78fr;
-  grid-template-rows: 1fr;
-  min-height: 410px;
+  grid-column: auto;
+  grid-template-columns: 1fr;
+  grid-template-rows: 300px auto;
+  min-height: 520px;
   background: #e6e0d3;
 }
 
@@ -859,11 +859,8 @@ svg {
 }
 
 .process-card-wide .process-card-copy {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  border-top: 0;
-  border-left: 1px solid rgba(22, 43, 60, 0.08);
+  border-top: 1px solid rgba(22, 43, 60, 0.08);
+  border-left: 0;
 }
 
 .process-card-copy h3 {
