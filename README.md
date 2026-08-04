@@ -96,7 +96,9 @@ npm run build
 - 清晰的品牌定位、产品原则、使用路径、FAQ 与共创入口。
 - 用户提供的白鸽主视觉，以及产品原有的多状态信鸽素材。
 - 响应式布局、键盘可访问性、减少动态效果偏好和基础安全响应头。
-- 联系表单通过用户本机邮件客户端发送至 `hello@wozai.space`，当前不收集或存储表单数据。
+- 共创表单通过 Vercel Function 和 Resend 发送至 `hello@wozai.space`，并向申请者发送回执。
+- 独立的近况订阅采用确认邮件：只有点击确认链接后，邮箱才会进入 Resend Contacts。
+- 共创授权与营销订阅分开处理；提交共创申请不会自动订阅推广邮件。
 
 更详细的文件说明、内容更新方式和上线检查见 [`landing/README.md`](./landing/README.md)。
 
@@ -145,7 +147,7 @@ curl -I https://www.wozai.space/sitemap.xml
 curl -I https://www.wozai.space/llms.txt
 ```
 
-如需手动部署，可在 `landing/` 中使用 Vercel CLI，并确认链接到团队 `geekthon` 下的项目 `loop`。
+如需手动部署，可在 `landing/` 中使用 Vercel CLI，并确认链接到团队 `geekthon` 下的项目 `loop`。表单上线还需要在 Vercel 配置 `RESEND_API_KEY`；完整变量说明见 [`landing/.env.example`](./landing/.env.example)，真实密钥不得提交到 Git。
 
 ## 产品边界
 

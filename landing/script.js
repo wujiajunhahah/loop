@@ -157,22 +157,87 @@ journey?.querySelector('.journey-tabs')?.addEventListener('keydown', (event) => 
 
 const contactForm = document.querySelector('[data-contact-form]');
 
+const setFormStatus = (statusNode, state, message) => {
+  if (!statusNode) return;
+  statusNode.dataset.state = state;
+  statusNode.textContent = message;
+};
+
+const submitForm = async ({ form, endpoint, statusNode, loadingLabel }) => {
+  if (!form.reportValidity()) return false;
+
+  const button = form.querySelector('button[type="submit"]');
+  const originalLabel = button?.innerHTML;
+  const formData = new FormData(form);
+  const payload = Object.fromEntries(formData.entries());
+  payload.consent = formData.get('consent') === 'on';
+
+  if (button) {
+    button.disabled = true;
+    button.setAttribute('aria-busy', 'true');
+    button.textContent = loadingLabel;
+  }
+  setFormStatus(statusNode, 'pending', '正在安全提交，请稍候……');
+
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.ok) {
+      throw new Error(result.message || '暂时没有提交成功，请稍后再试。');
+    }
+
+    form.reset();
+    setFormStatus(statusNode, 'success', result.message);
+    return true;
+  } catch (error) {
+    setFormStatus(statusNode, 'error', error.message || '暂时没有提交成功，请稍后再试。');
+    return false;
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.removeAttribute('aria-busy');
+      button.innerHTML = originalLabel;
+    }
+  }
+};
+
 contactForm?.addEventListener('submit', (event) => {
   event.preventDefault();
-  if (!contactForm.reportValidity()) return;
-
-  const data = new FormData(contactForm);
-  const name = String(data.get('name') || '').trim();
-  const role = String(data.get('role') || '').trim();
-  const contact = String(data.get('contact') || '').trim();
-  const message = String(data.get('message') || '').trim();
-  const subject = encodeURIComponent(`我在共创申请｜${name}`);
-  const body = encodeURIComponent(
-    `怎么称呼：${name}\n身份：${role}\n联系方式：${contact}\n\n想说的话：\n${message || '暂未填写'}\n\n—— 来自 wozai.space`,
-  );
-
-  window.location.href = `mailto:hello@wozai.space?subject=${subject}&body=${body}`;
+  submitForm({
+    form: contactForm,
+    endpoint: '/api/contact',
+    statusNode: contactForm.querySelector('[data-contact-status]'),
+    loadingLabel: '正在提交…',
+  });
 });
+
+const subscribeForm = document.querySelector('[data-subscribe-form]');
+
+subscribeForm?.addEventListener('submit', (event) => {
+  event.preventDefault();
+  submitForm({
+    form: subscribeForm,
+    endpoint: '/api/subscribe',
+    statusNode: subscribeForm.querySelector('[data-subscribe-status]'),
+    loadingLabel: '正在发送…',
+  });
+});
+
+const subscriptionState = new URLSearchParams(window.location.search).get('subscription');
+const subscriptionStatus = subscribeForm?.querySelector('[data-subscribe-status]');
+if (subscriptionState === 'confirmed') {
+  setFormStatus(subscriptionStatus, 'success', '订阅已经确认。谢谢你愿意保持一点联系。');
+} else if (subscriptionState === 'expired') {
+  setFormStatus(subscriptionStatus, 'error', '确认链接已经过期，请重新填写邮箱订阅。');
+} else if (subscriptionState === 'invalid') {
+  setFormStatus(subscriptionStatus, 'error', '这个确认链接无效，请重新填写邮箱订阅。');
+} else if (subscriptionState === 'error') {
+  setFormStatus(subscriptionStatus, 'error', '确认时遇到问题，请稍后重新订阅。');
+}
 
 document.querySelectorAll('[data-year]').forEach((node) => {
   node.textContent = String(new Date().getFullYear());
