@@ -1,10 +1,87 @@
-# Loop Software MVP
+# Loop｜关系记忆产品原型
+
+> 真实地留下，逐段授权；由接收者决定何时打开、看多少，以及是否回应。
+
+本仓库包含两套相互补充的可运行实现：
+
+| 入口 | 重点 | 运行方式 |
+| --- | --- | --- |
+| [`visual-prototype/`](./visual-prototype/) | 最新高保真移动端视觉、妈妈/女儿双端交互、记忆库与信鸽体验 | `cd visual-prototype && pnpm install && pnpm dev` |
+| 根目录 `src/` | Relationship Agent、权限策略、硬件模拟器、OMI/戒指与 Capacitor iOS | `npm install && npm run dev` |
+
+## 最新高保真前端：「我在」
+
+「我在」围绕母女关系设计。妈妈留下照片、原文、原声与物件故事；女儿决定何时打开、是否听声音、接收多少细节，以及是否回应。它不是模拟妈妈在线说话的聊天机器人，所有内容都必须能回到真实来源与明确授权。
+
+<table>
+  <tr>
+    <td align="center"><img src="./visual-prototype/docs/images/creator-home.png" width="240" alt="妈妈端首页" /><br /><b>妈妈端首页</b></td>
+    <td align="center"><img src="./visual-prototype/docs/images/memory-library.png" width="240" alt="混合媒体记忆库" /><br /><b>混合媒体记忆库</b></td>
+    <td align="center"><img src="./visual-prototype/docs/images/pigeon-compose.png" width="240" alt="信鸽记录编辑器" /><br /><b>信鸽记录编辑器</b></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="./visual-prototype/docs/images/daughter-home.png" width="240" alt="女儿端首页" /><br /><b>女儿端首页</b></td>
+    <td align="center"><img src="./visual-prototype/docs/images/daughter-memory.png" width="240" alt="女儿端记忆详情" /><br /><b>记忆与原始来源</b></td>
+    <td align="center"><img src="./visual-prototype/docs/images/daughter-reply.png" width="240" alt="女儿端信鸽回信" /><br /><b>女儿端信鸽回信</b></td>
+  </tr>
+</table>
+
+### 妈妈端：单向保存与授权
+
+```text
+首页 → 点击加号 → 照片 / 原声 / 文字
+→ 交给信使 → 自动返回首页并显示保存状态
+→ 进入记忆库并按授权留给女儿
+```
+
+妈妈发送后不需要等待回信，也不会出现「信使带回的一段记忆」或关联反馈。图片、声音和文字会原样入库；发送中刷新会恢复进度并保证只入库一次。
+
+### 女儿端：主动打开与关系往返
+
+```text
+接收说明 → 选择停留时间 / 声音 / 内容强度
+→ 看记忆 / 写信 / 找线索 / 处理可拒绝的愿望
+→ 保存到「我的」或随时退出
+```
+
+女儿写给信使的内容只会在妈妈已确认、已授权的真实记录中寻找关联。她可以判断关联是否合适、隐藏内容、暂停出现或删除自己的记录；她的内容不会反写成妈妈的表达。
+
+### 视觉语言
+
+- 米白纸张底色，深蓝灰主色，鼠尾草绿与暖陶色作为关系和情绪提示。
+- `Songti SC / STSong` 承担叙事标题、引文与故事，系统字体用于操作控件。
+- 纸张卡片、手写标签、缝线、柔和阴影和半透明导航构成主要质感。
+- 信鸽不是装饰图，而是静候、保存、寻找与带回记忆的状态反馈。
+- 照片、文字、声音和物件拥有不同卡片模板；声音卡使用波形与多组氛围色。
+
+### 前端内容
+
+- React 19 + TypeScript 5.9 + Vite 7 + 原生 CSS。
+- 11 个页面状态，覆盖妈妈端 `creator / capture / library / detail / settings` 与女儿端 `recipient / gallery / echo / seek / wish / you`。
+- Canvas 图片压缩、FileReader / Data URL 本地媒体保存、MediaRecorder 浏览器录音。
+- 23 项混合媒体演示内容：2 张照片、9 条文字、7 段声音、4 个物件和 1 个愿望。
+- 记忆搜索、类型数量、逐段授权、L1/L2 内容过滤、原始来源、女儿反馈和 JSON 导出。
+- 大屏为产品侧栏 + 430 px 手机框；820 px 以下切换为移动端全屏，并适配安全区和矮屏。
+- 主要数据持久化在 localStorage，并监听同源多标签页同步。
+
+完整视觉说明、前端目录和本地状态表见 [`visual-prototype/README.md`](./visual-prototype/README.md)。
+
+### 视觉素材目录
+
+```text
+visual-prototype/public/assets/
+├── figma/    # 页面参考图与裁切源图
+├── mascot/   # 信鸽透明状态素材
+└── demo/     # 家庭照片、道路、手写笔记与织物纹理
+```
+
+## Software MVP：Agent、硬件与 iOS
 
 > 记录者设计未来如何陪伴，Agent 让真实内容恰当地出现，接收者决定是否打开，硬件让这份关系真正被托付。
 
 Loop 是一个面向香港 Physical Hackathon 的实体情感产品原型。它不是通用录音工具，也不是模拟逝者自由说话的聊天机器人；它保存真实内容，按关系和授权边界组织 Context，并通过实体硬件入口把内容交到特定接收者手中。
 
-本仓库实现了一个无需后端、无需模型 API、无需真实硬件也能完整演示的 Software MVP。
+根目录实现了一个无需后端、无需模型 API、无需真实硬件也能完整演示的 Software MVP。
 
 ## 已经做出的产品
 
