@@ -155,8 +155,6 @@ journey?.querySelector('.journey-tabs')?.addEventListener('keydown', (event) => 
   tabs[nextIndex].click();
 });
 
-const contactForm = document.querySelector('[data-contact-form]');
-
 const setFormStatus = (statusNode, state, message) => {
   if (!statusNode) return;
   statusNode.dataset.state = state;
@@ -205,16 +203,6 @@ const submitForm = async ({ form, endpoint, statusNode, loadingLabel }) => {
   }
 };
 
-contactForm?.addEventListener('submit', (event) => {
-  event.preventDefault();
-  submitForm({
-    form: contactForm,
-    endpoint: '/api/contact',
-    statusNode: contactForm.querySelector('[data-contact-status]'),
-    loadingLabel: '正在提交…',
-  });
-});
-
 const subscribeForm = document.querySelector('[data-subscribe-form]');
 
 subscribeForm?.addEventListener('submit', (event) => {
@@ -226,18 +214,6 @@ subscribeForm?.addEventListener('submit', (event) => {
     loadingLabel: '正在发送…',
   });
 });
-
-const subscriptionState = new URLSearchParams(window.location.search).get('subscription');
-const subscriptionStatus = subscribeForm?.querySelector('[data-subscribe-status]');
-if (subscriptionState === 'confirmed') {
-  setFormStatus(subscriptionStatus, 'success', '订阅已经确认。谢谢你愿意保持一点联系。');
-} else if (subscriptionState === 'expired') {
-  setFormStatus(subscriptionStatus, 'error', '确认链接已经过期，请重新填写邮箱订阅。');
-} else if (subscriptionState === 'invalid') {
-  setFormStatus(subscriptionStatus, 'error', '这个确认链接无效，请重新填写邮箱订阅。');
-} else if (subscriptionState === 'error') {
-  setFormStatus(subscriptionStatus, 'error', '确认时遇到问题，请稍后重新订阅。');
-}
 
 document.querySelectorAll('[data-year]').forEach((node) => {
   node.textContent = String(new Date().getFullYear());

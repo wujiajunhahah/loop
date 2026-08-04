@@ -43,7 +43,7 @@
 
 | 入口 | 用途 | 本地启动 |
 | --- | --- | --- |
-| `landing/` | 对外品牌官网、SEO/GEO、共创联系入口 | `cd landing && python3 -m http.server 4173` |
+| `landing/` | 对外品牌官网、SEO/GEO、邮箱订阅入口 | `cd landing && python3 -m http.server 4173` |
 | `visual-prototype/` | 最新高保真双端产品体验 | `cd visual-prototype && pnpm install && pnpm dev` |
 | 根目录 `src/` | Relationship Agent、权限策略、硬件模拟与 iOS Web App | `npm ci && npm run dev` |
 
@@ -93,12 +93,12 @@ npm run build
 
 官网位于 [`landing/`](./landing/)，主要包含：
 
-- 清晰的品牌定位、产品原则、使用路径、FAQ 与共创入口。
+- 清晰的品牌定位、产品原则、使用路径、FAQ 与早期共创订阅入口。
 - 用户提供的白鸽主视觉，以及产品原有的多状态信鸽素材。
 - 响应式布局、键盘可访问性、减少动态效果偏好和基础安全响应头。
-- 共创表单通过 Vercel Function 和 Resend 发送至 `hello@wozai.space`，并向申请者发送回执。
-- 独立的近况订阅采用确认邮件：只有点击确认链接后，邮箱才会进入 Resend Contacts。
-- 共创授权与营销订阅分开处理；提交共创申请不会自动订阅推广邮件。
+- 共创叙事区只收集邮箱，不再要求姓名、身份或留言。
+- 近况订阅采用带 Logo 的中英双语双重确认：只有点击 24 小时内有效的链接后，邮箱才会进入 Resend Contacts。
+- 首次确认会发送双语欢迎邮件，并进入独立的双语订阅成功页。
 
 更详细的文件说明、内容更新方式和上线检查见 [`landing/README.md`](./landing/README.md)。
 
