@@ -613,54 +613,27 @@
           <div class="join-copy" data-reveal>
             <p class="eyebrow eyebrow-light">从一段话开始</p>
             <h2 id="join-title">不必一次说完，<br /><em>今天留下一小段，也已经完整。</em></h2>
-            <p>「我在」正在邀请首批创作者与专业合作伙伴参与封闭共创。告诉我们你是谁、想为谁留下，我们会认真读完每一封来信。</p>
+            <p>「我在」正在邀请首批创作者与专业合作伙伴参与封闭共创。留下一个邮箱，偶尔收到产品进展、共创邀请与认真写下的新内容。</p>
             <div class="join-meta">
               <span>适合创作者个人</span><span>也欢迎医疗、社工、保险与家庭传承机构</span>
             </div>
           </div>
 
-          <form class="join-form" data-contact-form data-reveal novalidate>
-            <div class="field-row">
-              <label>怎么称呼你？<input name="name" autocomplete="name" required placeholder="你的名字或称呼" /></label>
-              <label>你的身份是？
-                <select name="role" required>
-                  <option value="" selected disabled>请选择</option>
-                  <option>想为重要的人留下内容</option>
-                  <option>家属 / 陪伴者</option>
-                  <option>医疗 / 社工专业者</option>
-                  <option>机构合作伙伴</option>
-                  <option>其他</option>
-                </select>
-              </label>
+          <form class="join-form join-subscribe-form" data-subscribe-form data-reveal novalidate>
+            <div class="join-form-intro">
+              <p>保持一点联系 · STAY IN TOUCH</p>
+              <h3>只留一个邮箱，就好。</h3>
+              <span>不会频繁打扰，也不会把其他共创联系自动加入订阅。</span>
             </div>
-            <label>你的邮箱<input type="email" name="email" autocomplete="email" required inputmode="email" placeholder="name@example.com" /></label>
-            <label>你想为谁留下，或希望和我们聊什么？<textarea name="message" rows="4" placeholder="不必写得很完整，几句话就好"></textarea></label>
-            <label class="trap-field" aria-hidden="true">网站<input name="website" tabindex="-1" autocomplete="off" /></label>
-            <label class="consent-field"><input type="checkbox" name="consent" required /><span>我同意将以上信息用于本次共创联系，不用于广告推送。</span></label>
-            <button class="button button-light button-large" type="submit">提交并开始对话 <span aria-hidden="true">↗</span></button>
-            <p class="form-status" data-contact-status aria-live="polite"></p>
-            <p class="form-note">提交后信息会安全发送给「我在」团队，并向你的邮箱发送回执；不会自动订阅推广邮件。</p>
-          </form>
-        </div>
-      </section>
-
-      <section class="subscribe-section" id="subscribe" aria-labelledby="subscribe-title">
-        <div class="shell subscribe-card" data-reveal>
-          <div class="subscribe-copy">
-            <p class="eyebrow">保持一点联系</p>
-            <h2 id="subscribe-title">偶尔收到「我在」的近况</h2>
-            <p>产品进展、共创邀请与认真写下的新内容。不会频繁打扰，也不会把共创来信自动加入订阅。</p>
-          </div>
-          <form class="subscribe-form" data-subscribe-form novalidate>
             <div class="subscribe-controls">
-              <label class="sr-only" for="subscribe-email">你的邮箱</label>
-              <input id="subscribe-email" type="email" name="email" autocomplete="email" inputmode="email" required placeholder="你的邮箱" />
-              <button class="button button-primary" type="submit">订阅近况 <span aria-hidden="true">→</span></button>
+              <label class="sr-only" for="join-email">你的邮箱</label>
+              <input id="join-email" type="email" name="email" autocomplete="email" inputmode="email" required placeholder="你的邮箱 / Email address" />
+              <button class="button button-light" type="submit">订阅最新消息 <span aria-hidden="true">→</span></button>
             </div>
-            <label class="trap-field" aria-hidden="true">网站<input name="website" tabindex="-1" autocomplete="off" /></label>
-            <label class="subscribe-consent"><input type="checkbox" name="consent" required /><span>我同意接收「我在」的产品近况与共创消息，并可随时退订。</span></label>
+            <input class="trap-field" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" />
+            <label class="subscribe-consent"><input type="checkbox" name="consent" required /><span>我同意接收「我在」的产品近况与共创消息，并可随时退订。<small>I agree to receive Wozai updates and can unsubscribe at any time.</small></span></label>
             <p class="form-status" data-subscribe-status aria-live="polite"></p>
-            <p class="subscribe-note">为确认是你本人订阅，我们会先发送一封确认邮件。</p>
+            <p class="subscribe-note">我们会先发送一封中英双语确认邮件。<span lang="en">We'll send a bilingual confirmation email first.</span></p>
           </form>
         </div>
       </section>

@@ -1,6 +1,6 @@
 # 「我在」Landing Page
 
-这是 [www.wozai.space](https://www.wozai.space/) 的生产环境官网。页面部分使用原生 HTML、CSS 和 JavaScript；`api/` 中的 Vercel Functions 负责共创联系和 Resend 邮件订阅。
+这是 [www.wozai.space](https://www.wozai.space/) 的生产环境官网。页面部分使用原生 HTML、CSS 和 JavaScript；`api/` 中的 Vercel Functions 负责 Resend 双重确认邮件订阅。
 
 ## 本地预览
 
@@ -17,10 +17,12 @@ python3 -m http.server 4173
 landing/
 ├── index.html          # 页面内容、meta、JSON-LD
 ├── styles.css          # 响应式视觉与动画
-├── script.js           # 导航、滚动显现、邮件联系表单
+├── script.js           # 导航、滚动显现、邮箱订阅表单
+├── subscribed.html     # 双语订阅成功与异常状态页
+├── subscription.css    # 订阅结果页样式
+├── subscription-result.js # 订阅结果状态文案
 ├── api/
-│   ├── contact.js      # 接收共创申请并发送通知与回执
-│   ├── subscribe.js    # 发送 24 小时有效的订阅确认邮件
+│   ├── subscribe.js    # 发送 24 小时有效的双语订阅确认邮件
 │   └── confirm-subscription.js # 确认后写入 Resend Contacts
 ├── assets/             # Logo、信鸽、favicon、分享图
 ├── robots.txt          # 爬虫规则与 sitemap 地址
@@ -36,8 +38,8 @@ landing/
 
 - 页面文案与 FAQ：修改 `index.html`。
 - 颜色、排版和响应式：修改 `styles.css` 顶部变量及对应组件。
-- 联系交互：前端状态位于 `script.js`，服务端处理位于 `api/contact.js`，默认收件地址为 `hello@wozai.space`。
-- 邮件订阅：`api/subscribe.js` 先发送品牌化确认邮件；用户点击后由 `api/confirm-subscription.js` 写入 Resend Contacts，并向首次确认者发送欢迎邮件。
+- 邮件订阅：共创叙事区内只收集邮箱；`api/subscribe.js` 先发送带 Logo 的中英双语确认邮件，用户点击后由 `api/confirm-subscription.js` 写入 Resend Contacts，并向首次确认者发送双语欢迎邮件。
+- 订阅结果：确认成功跳转到 `/subscribed`；过期、无效或服务异常也由同一页面提供双语提示和重新订阅入口。
 - 品牌主视觉：优先使用 `assets/brand-bird-logo.webp`；透明高质量源为 `assets/brand-bird-logo.png`。
 - 分享图：更新 `assets/og-cover.png` 后，同时核对 `index.html` 中的 Open Graph 和 Twitter Card 地址。
 
@@ -79,7 +81,6 @@ RESEND_API_KEY=re_xxxxxxxxx
 可选变量见 [`.env.example`](./.env.example)：
 
 - `RESEND_FROM_EMAIL`：发件人，默认 `我在 <hello@wozai.space>`。
-- `CONTACT_TO_EMAIL`：共创申请收件人，默认 `hello@wozai.space`。
 - `SITE_URL`：可选的确认链接固定域名；未配置时使用当前部署的请求域名。
 - `SUBSCRIBE_TOKEN_SECRET`：订阅确认链接签名密钥；建议独立配置。
 - `RESEND_SEGMENT_ID`、`RESEND_TOPIC_ID`：可选的 Resend 分组与订阅主题。
@@ -89,19 +90,16 @@ RESEND_API_KEY=re_xxxxxxxxx
 ### 表单数据流
 
 ```text
-共创申请 → /api/contact → hello@wozai.space 通知 + 申请者回执
-
 订阅邮箱 → /api/subscribe → 24 小时确认邮件
          → /api/confirm-subscription → Resend Contacts + 官网订阅 Segment
-                                     → 首次确认欢迎邮件
+                                     → 首次确认欢迎邮件 + /subscribed 成功页
 ```
 
-共创申请和营销订阅使用两个独立的授权选项。共创邮箱会以未订阅 Broadcast 的状态保留在 Resend Contacts，留言保留在收件邮箱与 Resend 邮件日志中；如需结构化检索、状态跟进或长期审计，应再接入 Supabase/Neon。
+只有用户勾选订阅授权、提交邮箱并点击 24 小时内有效的确认链接后，邮箱才会进入 Resend Contacts 与官网订阅 Segment。
 
 ## 当前限制
 
-- 共创申请目前没有独立业务数据库，结构化 CRM/跟进状态尚未实现。
 - Subscribe 使用 24 小时有效的双重确认；后续 Broadcast 应保留 Resend 退订入口。
-- 确认邮件与欢迎邮件使用 `assets/brand-symbol-email.png`；源 Logo 保留为 `brand-symbol-dark.svg` / `brand-symbol-light.svg`。
+- 确认邮件、欢迎邮件与成功页使用 `assets/brand-symbol-email.png`；源 Logo 保留为 `brand-symbol-dark.svg` / `brand-symbol-light.svg`。
 - SEO/GEO 配置不能保证排名或引用；仍需要站长平台提交、持续发布高质量内容和获得可信外部提及。
 - 上线前应确认 `hello@wozai.space` 邮箱可以正常收信。
