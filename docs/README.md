@@ -6,7 +6,7 @@
 
 | 层级 | 回答的问题 | 主要入口 |
 | --- | --- | --- |
-| 官方产品表达 | 「我在」是谁、为谁服务、坚持什么边界 | [官方网站](https://www.wozai.space/) / [根 README](../README.md) |
+| 官方产品表达 | 「我在」是谁、为谁服务、坚持什么边界 | [官方网站](https://www.wozai.space/) / [宣传传单](https://www.wozai.space/assets/documents/wozai-flyer.zh-CN.pdf) / [根 README](../README.md) |
 | Hackathon 垂直切片 | Alloop 戒指、HRV、对话与反馈如何构成闭环 | [赛题对齐说明](./hackathon/alloop-track-alignment.md) |
 | 当前实现 | 哪些界面、接口和设备通路今天可以运行 | [视觉原型](../visual-prototype/README.md) / [信鸽后端](../pigeon-backend/README.md) |
 

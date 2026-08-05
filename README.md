@@ -9,6 +9,8 @@
   ·
   <a href="https://www.wozai.space/#story">观看 46 秒概念短片</a>
   ·
+  <a href="https://www.wozai.space/assets/documents/wozai-flyer.zh-CN.pdf">查看宣传传单</a>
+  ·
   <a href="./docs/README.md">阅读项目文档</a>
   ·
   <a href="./visual-prototype/README.md">查看交互原型</a>
@@ -28,7 +30,7 @@
 - AI 可以整理什么、不能代替人表达什么；
 - 产品如何让每一次呈现都能回到真实来源。
 
-官网同时提供[中英双语页面](https://www.wozai.space/en/)、共创订阅，以及一支明确标注为 AI 生成、并非功能录屏的[项目概念短片](https://www.wozai.space/#story)。官网源码与内容维护说明见 [`landing/`](./landing/README.md)。
+官网同时提供[中英双语页面](https://www.wozai.space/en/)、[项目宣传传单](https://www.wozai.space/assets/documents/wozai-flyer.zh-CN.pdf)、共创订阅，以及一支明确标注为 AI 生成、并非功能录屏的[项目概念短片](https://www.wozai.space/#story)。官网源码与内容维护说明见 [`landing/`](./landing/README.md)。
 
 ## 用户与双视角
 

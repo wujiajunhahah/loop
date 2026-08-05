@@ -28,7 +28,8 @@ landing/
 ├── api/
 │   ├── subscribe.js    # 按界面语言发送 24 小时有效的订阅确认邮件
 │   └── confirm-subscription.js # 确认后写入 Resend Contacts
-├── assets/             # Logo、信鸽、favicon、分享图与概念短片
+├── assets/             # Logo、信鸽、favicon、分享图与公开资料
+│   ├── documents/      # 项目宣传传单 PDF
 │   └── video/          # H.264 MP4 与视频 poster
 ├── robots.txt          # 爬虫规则与 sitemap 地址
 ├── sitemap.xml         # 搜索引擎页面清单
@@ -48,6 +49,7 @@ landing/
 - 订阅结果：确认成功跳转到 `/subscribed`；过期、无效或服务异常也由同一页面提供双语提示和重新订阅入口。
 - 品牌主视觉：优先使用 `assets/brand-bird-logo.webp`；透明高质量源为 `assets/brand-bird-logo.png`。
 - 概念短片：网页使用 `assets/video/wozai-concept-film.mp4`，封面为同目录 poster；短片必须继续标注为 AI 概念内容，不能写成功能录屏。
+- 宣传传单：公开文件为 `assets/documents/wozai-flyer.zh-CN.pdf`；更新时保留稳定文件名，并同步检查中英文首页与根 README 的入口。
 - 分享图：更新 `assets/og-cover.png` 后，同时核对 `index.html` 中的 Open Graph 和 Twitter Card 地址。
 
 如果修改品牌定位、域名、邮箱或 FAQ，请同步检查 `index.html` 的可见内容与 JSON-LD、`llms.txt`、`sitemap.xml` 和本 README，确保机器可读信息与页面正文一致。

@@ -344,8 +344,10 @@ svg {
 
 .hero-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 28px;
+  row-gap: 16px;
   margin-top: 36px;
 }
 
