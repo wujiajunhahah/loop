@@ -71,6 +71,7 @@ Alloop 的 HRV 在这里是辅助状态信号，不用于诊断情绪，也不�
 | 双视角交互原型 | 可本地运行 | 记录、确认、授权、接收视角预览、信使交互与反馈 |
 | 信鸽后端 | 已接入原型 | 稳定 `/api/v1`、有来源的回信、HRV 呈现策略、反馈与 outcome |
 | Alloop / Omi 输入 | 接口与演示链路已具备 | HRV 上报、语音分块接收与最近接收状态；真实设备联调需在现场网络复验 |
+| 充电器硬件模型 | 已提交 Rhino 7 源模型 | 毫米单位的可编辑 `.3dm` 文件；制造与装配仍需实物验证 |
 | AI 概念短片 | 已进入官网 | 46 秒母女与信鸽叙事，用于表达产品愿景，不作为功能 Demo |
 
 ## 仓库导航
@@ -84,7 +85,7 @@ Alloop 的 HRV 在这里是辅助状态信号，不用于诊断情绪，也不�
 ├── omi_simple/         # Omi 语音分块转发示例
 ├── src/                # Relationship Agent / 权限策略 Software MVP
 ├── ios/                # Capacitor iOS 工程
-└── docs/               # Hackathon、产品与硬件文档入口
+└── docs/               # Hackathon、产品、硬件文档与充电器 CAD 模型
 ```
 
 建议按以下顺序阅读：
@@ -94,6 +95,7 @@ Alloop 的 HRV 在这里是辅助状态信号，不用于诊断情绪，也不�
 3. [`visual-prototype/README.md`](./visual-prototype/README.md)：了解现场交互。
 4. [`pigeon-backend/README.md`](./pigeon-backend/README.md)：了解 AI、HRV 与反馈契约。
 5. [`docs/hardware/architecture.md`](./docs/hardware/architecture.md)：了解设备与软件边界。
+6. [`docs/hardware/models/README.md`](./docs/hardware/models/README.md)：查看充电器 Rhino 7 模型与几何信息。
 
 ## 本地体验
 

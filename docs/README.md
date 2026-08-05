@@ -18,6 +18,7 @@
 - [`hardware/architecture.md`](./hardware/architecture.md)：戒指、手机、后端与前端的系统关系。
 - [`hardware/support-matrix.md`](./hardware/support-matrix.md)：不同硬件输入的支持范围。
 - [`hardware/smart-ring.md`](./hardware/smart-ring.md)：智能戒指接入说明。
+- [`hardware/models/README.md`](./hardware/models/README.md)：充电器 / 外壳 Rhino 7 CAD 模型、尺寸与完整性信息。
 - [`hardware/omi.md`](./hardware/omi.md)：Omi 语音输入通路。
 - [`hardware/ios-validation.md`](./hardware/ios-validation.md)：iOS 验证记录。
 
