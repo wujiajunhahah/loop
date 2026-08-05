@@ -1,22 +1,22 @@
-# 女儿端“远行信使”后端 MVP
+# 接收视角“远行信使”后端 MVP
 
-这是一个与前端分离的 FastAPI 后端。前端只需按照稳定的 HTTP 契约提交文字、展示返回结果并提交主观反馈；页面组件、路由和视觉样式可以独立迭代。
+这是一个与前端分离的 FastAPI 后端。前端只需按照稳定的 HTTP 契约提交文字、展示返回结果并提交主观反馈；页面组件、路由和视觉样式可以独立迭代。当前原型中，它同时服务于记录者的“未来接收视角预览”和 Hackathon 的状态敏感呈现 Demo。
 
 当前固定设定：林岚—林崖母女；唯一已核对原文为：
 
 > 一次没做好，不等于你不行。今晚先睡，明天再说。
 
-模型只负责判断这条原文与遗族输入的关系，并编排中性的“信使/系统叙述”。后端校验器会拒绝改写原文、伪造林岚表态或把 HRV 解释成情绪。
+模型只负责判断这条原文与接收视角输入的关系，并编排中性的“信使/系统叙述”。后端校验器会拒绝改写原文、伪造林岚表态或把 HRV 解释成情绪。
 
 ## 安装与启动
 
-在 PowerShell 中进入本目录：
+在仓库根目录进入本模块：
 
-```powershell
-cd "C:\Users\Chris\.codex\.chatgpt-projects\g-p-6a6bf058467881919b29115f92ba48cb\loop\pigeon-backend"
+```bash
+cd pigeon-backend
 ```
 
-首次安装：
+Windows PowerShell 首次安装与启动：
 
 ```powershell
 python -m venv .venv
@@ -35,13 +35,20 @@ python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install --upgrade pip
 ```
 
-启动：
-
 ```powershell
 .\run.cmd
 ```
 
-启动后，当前 PowerShell 窗口会持续被服务占用，这是正常现象；不要关闭这个窗口。后端不会自动打开浏览器，也不会让 `http://127.0.0.1:5173` 的前端页面自行发生变化。请手动访问 `http://127.0.0.1:8010/docs` 查看和测试接口。如需执行 HRV 或发信演示命令，请另开一个 PowerShell 窗口。
+macOS / Linux 首次安装与启动：
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -e ".[dev]"
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8010
+```
+
+启动后，当前终端窗口会持续被服务占用，这是正常现象；不要关闭这个窗口。后端不会自动打开浏览器，也不会让 `http://127.0.0.1:5173` 的前端页面自行发生变化。请手动访问 `http://127.0.0.1:8010/docs` 查看和测试接口。如需执行 HRV 或发信演示命令，请另开一个终端窗口。
 
 如果看到 `[Errno 10048]`，表示 8010 已经被一个服务占用。若健康检查仍能打开，通常只是后端已经启动，不需要重复执行 `run.cmd`。新版 `run.cmd` 会先检查健康接口，并在服务已运行时直接给出提示。
 

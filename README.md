@@ -1,66 +1,108 @@
-# 我在（wozai.space）
+# 我在（Wozai）
 
 > 真实地留下，交给对的人，在未来有分寸地出现。
 
-「我在」是一个面向生命受限创作者与重要关系接收者的数字记忆产品。它保存真实的文字、照片、声音与物件故事，并以逐段授权、来源可追溯和接收者主动打开为基本边界；它不是模拟某个人继续在线说话的聊天机器人。
+「我在」是一款以生命记录与关系托付为核心的情感陪伴产品。它帮助仍在生活中的记录者，用原声、影像、照片与文字留下真实的自己，亲自确认内容将给谁、如何出现、可以怎样使用；它不是数字复活，也不让 AI 代替任何人继续说话。
 
 <p>
-  <a href="https://www.wozai.space/"><strong>访问官网</strong></a>
+  <a href="https://www.wozai.space/"><strong>访问官方网站</strong></a>
   ·
-  <a href="https://vercel.com/geekthon/loop">Vercel 项目</a>
+  <a href="https://www.wozai.space/#story">观看 46 秒概念短片</a>
   ·
-  <a href="./landing/README.md">Landing Page 文档</a>
+  <a href="./docs/README.md">阅读项目文档</a>
+  ·
+  <a href="./visual-prototype/README.md">查看交互原型</a>
 </p>
 
-<img src="./landing/assets/og-cover.png" alt="我在——把想说的话，好好留下" width="100%" />
+<a href="https://www.wozai.space/">
+  <img src="./landing/assets/og-cover.png" alt="我在——把想说的话，好好留下" width="100%" />
+</a>
 
-## 线上版本
+## 先从官网认识「我在」
 
-| 项目 | 配置 |
+[www.wozai.space](https://www.wozai.space/) 是项目当前最完整的公开入口，集中说明：
+
+- 为什么要在还来得及的时候留下生命故事；
+- 记录者如何保存原始内容、逐段确认并按关系授权；
+- 接收者未来如何主动打开、暂停、跳过或关闭；
+- AI 可以整理什么、不能代替人表达什么；
+- 产品如何让每一次呈现都能回到真实来源。
+
+官网同时提供[中英双语页面](https://www.wozai.space/en/)、共创订阅，以及一支明确标注为 AI 生成、并非功能录屏的[项目概念短片](https://www.wozai.space/#story)。官网源码与内容维护说明见 [`landing/`](./landing/README.md)。
+
+## 用户与双视角
+
+当前产品首先服务于仍在生活中的记录者，例如希望在有限时间里梳理生命内容、关系和托付方式的妈妈。
+
+原型中的“女儿体验端”不是另一个独立获客端。现阶段它首先是一扇给记录者看的窗口：妈妈可以提前理解自己的内容会怎样抵达、接收者拥有什么选择、自己的生命资产将怎样产生关系价值，因此更安心地记录与授权。未来进入真实托付阶段后，同一套接收视角才由被授权的人主动使用。
+
+```text
+记录者留下原始内容
+  → 本人确认与逐段授权
+  → 从接收视角预览未来呈现
+  → 调整内容、权限与托付方式
+  → 未来由接收者自主打开
+```
+
+## Physical AI Hackathon：我们怎样扣题
+
+本项目参加香港 Physical AI Hackathon 的 alloop 智能戒指赛道，选择“以人为本 / 人的状态识别与主动支持”。我们没有把完整产品硬改成健康管理工具，而是截取一条可以现场演示的垂直链路：**让生命记忆的对话与呈现，根据人的当下负荷变得更有分寸。**
+
+Alloop 的 HRV 在这里是辅助状态信号，不用于诊断情绪，也不用于判断哪段记忆“更重要”。系统把它与用户的主动反馈放在一起，完成以下闭环：
+
+| 闭环阶段 | 在「我在」中的实现 |
 | --- | --- |
-| 正式域名 | [www.wozai.space](https://www.wozai.space/) |
-| 裸域名 | `wozai.space`，自动跳转到 `www` |
-| 生产分支 | `main` |
-| Vercel 项目 | `geekthon/loop` |
-| Vercel Root Directory | `landing` |
-| 官网技术栈 | 原生 HTML、CSS、JavaScript，无运行时依赖 |
+| 感知 | 接收 Alloop HRV 读数，以及用户在信使中的文字/语音交互 |
+| 理解 | 从记录者已经确认的内容中寻找有证据的关联；HRV 只影响当次呈现强度 |
+| 反馈 | 根据状态采用轻柔或标准模式，返回可追溯的原话与中性信使说明 |
+| 改善 | 收集“很相关、太重了、不要再出现、这不是她的意思”等主观反馈，并结合交互前后 HRV 结果调整后续策略 |
 
-`main` 分支发生变更后，Vercel 会自动从 `landing/` 构建和发布官网。仓库根目录的 React/Vite 产品原型不会作为官网部署。
+这里的“学习”是学习**什么情境下适合检索哪类真实内容、以多大强度呈现**，不是学习生成更多“妈妈会说的话”。当前后端已经实现 HRV 分档、交互前后结果记录，以及“太重了 / 隐藏 / 只看原文”等安全偏好；基于正向结果提升相似情境排序，是下一步明确的策略扩展。
 
-## 仓库结构
+更完整的赛题对齐、AI 边界与演示口径见 [`docs/hackathon/alloop-track-alignment.md`](./docs/hackathon/alloop-track-alignment.md)。
+
+## 当前可演示的内容
+
+| 模块 | 当前状态 | 说明 |
+| --- | --- | --- |
+| 官方网站 | 可公开访问 | 产品定位、关系托付、边界、FAQ、共创入口与概念短片 |
+| 双视角交互原型 | 可本地运行 | 记录、确认、授权、接收视角预览、信使交互与反馈 |
+| 信鸽后端 | 已接入原型 | 稳定 `/api/v1`、有来源的回信、HRV 呈现策略、反馈与 outcome |
+| Alloop / Omi 输入 | 接口与演示链路已具备 | HRV 上报、语音分块接收与最近接收状态；真实设备联调需在现场网络复验 |
+| AI 概念短片 | 已进入官网 | 46 秒母女与信鸽叙事，用于表达产品愿景，不作为功能 Demo |
+
+## 仓库导航
 
 ```text
 .
-├── landing/            # wozai.space 正式官网
-├── visual-prototype/   # 「我在」妈妈端 / 女儿端高保真交互原型
-├── src/                # Loop Software MVP：Agent、权限、硬件模拟
+├── landing/            # wozai.space 官方网站与概念短片
+├── visual-prototype/   # 记录者端 + 接收视角高保真原型
+├── pigeon-backend/     # FastAPI 信鸽交互、HRV、反馈与 outcome
+├── app/                # Alloop Kit Flutter / BLE 起始工程
+├── omi_simple/         # Omi 语音分块转发示例
+├── src/                # Relationship Agent / 权限策略 Software MVP
 ├── ios/                # Capacitor iOS 工程
-├── docs/               # 产品、硬件、隐私与验收文档
-└── package.json        # 根目录 React/Vite 原型脚本
+└── docs/               # Hackathon、产品与硬件文档入口
 ```
 
-三套入口彼此独立：
+建议按以下顺序阅读：
 
-| 入口 | 用途 | 本地启动 |
-| --- | --- | --- |
-| `landing/` | 对外品牌官网、SEO/GEO、邮箱订阅入口 | `cd landing && python3 -m http.server 4173` |
-| `visual-prototype/` | 最新高保真双端产品体验 | `cd visual-prototype && pnpm install && pnpm dev` |
-| 根目录 `src/` | Relationship Agent、权限策略、硬件模拟与 iOS Web App | `npm ci && npm run dev` |
+1. [官方网站](https://www.wozai.space/)：先理解产品。
+2. [`docs/README.md`](./docs/README.md)：区分官网事实、当前实现与产品愿景。
+3. [`visual-prototype/README.md`](./visual-prototype/README.md)：了解现场交互。
+4. [`pigeon-backend/README.md`](./pigeon-backend/README.md)：了解 AI、HRV 与反馈契约。
+5. [`docs/hardware/architecture.md`](./docs/hardware/architecture.md)：了解设备与软件边界。
 
-## 快速开始
+## 本地体验
 
-### 预览官网
-
-官网没有 npm 依赖。在仓库根目录执行：
+官网无需安装前端依赖：
 
 ```bash
 cd landing
 python3 -m http.server 4173
 ```
 
-然后打开 [http://localhost:4173](http://localhost:4173)。不要直接双击 `index.html`；本地 HTTP 服务更接近线上资源加载方式。
-
-### 运行高保真视觉原型
+高保真原型：
 
 ```bash
 cd visual-prototype
@@ -68,101 +110,16 @@ pnpm install
 pnpm dev
 ```
 
-详细页面状态、素材目录和交互说明见 [`visual-prototype/README.md`](./visual-prototype/README.md)。
-
-### 运行 Software MVP
-
-环境要求：Node.js 22+、npm 10+。
-
-```bash
-npm ci
-npm run dev
-```
-
-打开 Vite 输出的本地地址，通常为 `http://localhost:5173`。项目使用 hash router，页面地址形如 `/#/capture`、`/#/recipient`。
-
-常用校验命令：
-
-```bash
-npm run typecheck
-npm run test
-npm run build
-```
-
-## Landing Page
-
-官网位于 [`landing/`](./landing/)，主要包含：
-
-- 清晰的品牌定位、产品原则、使用路径、FAQ 与早期共创订阅入口。
-- 用户提供的白鸽主视觉，以及产品原有的多状态信鸽素材。
-- 响应式布局、键盘可访问性、减少动态效果偏好和基础安全响应头。
-- 共创叙事区只收集邮箱，不再要求姓名、身份或留言。
-- 近况订阅采用带 Logo 的中英双语双重确认：只有点击 24 小时内有效的链接后，邮箱才会进入 Resend Contacts。
-- 首次确认会发送双语欢迎邮件，并进入独立的双语订阅成功页。
-
-更详细的文件说明、内容更新方式和上线检查见 [`landing/README.md`](./landing/README.md)。
-
-## SEO 与 GEO
-
-官网当前已配置：
-
-- 唯一的 `title`、meta description、canonical 与 `hreflang`。
-- Open Graph、Twitter Card 和 1200 × 630 分享图。
-- `Organization`、`WebSite`、`FAQPage` JSON-LD 结构化数据。
-- 语义化 HTML、单一 H1、可抓取的正文内容和图片替代文本。
-- [`robots.txt`](./landing/robots.txt) 与 [`sitemap.xml`](./landing/sitemap.xml)。
-- [`llms.txt`](./landing/llms.txt)，向生成式搜索系统提供简明的品牌事实、边界和官方页面。
-- 稳定的品牌名称、正式域名、联系邮箱与“不模拟逝者自由对话”的一致表述。
-
-这些配置提供了良好的技术基础，但搜索或生成式引擎是否收录、何时收录及最终排名由各平台决定。
-
-## 品牌素材
-
-| 文件 | 用途 |
-| --- | --- |
-| `landing/assets/brand-bird-logo.webp` | 页头、页尾等网页展示，体积优先 |
-| `landing/assets/brand-bird-logo.png` | 透明背景高质量版本 |
-| `landing/assets/brand-symbol-dark.svg` | 品牌提供的深色扁平信鸽标志原件 |
-| `landing/assets/brand-symbol-email.png` | 订阅邮件使用的高分辨率透明 PNG |
-| `landing/assets/birds/` | 信鸽的书写、休息、递送、返回等状态 |
-| `landing/assets/og-cover.png` | 社交平台分享图 |
-| `landing/assets/favicon-*.png` | 浏览器、移动设备与 PWA 图标 |
-
-替换品牌主图时，请同时检查页头、页尾、JSON-LD、Open Graph 分享图、favicon 与 `site.webmanifest`，避免线上品牌形象不一致。
-
-## 部署
-
-正常发布只需提交并推送 `main`：
-
-```bash
-git add landing README.md .gitignore
-git commit -m "feat: publish 我在 landing page"
-git push origin main
-```
-
-Vercel 自动部署完成后，至少检查：
-
-```bash
-curl -I https://www.wozai.space/
-curl -I https://www.wozai.space/robots.txt
-curl -I https://www.wozai.space/sitemap.xml
-curl -I https://www.wozai.space/llms.txt
-```
-
-如需手动部署，可在 `landing/` 中使用 Vercel CLI，并确认链接到团队 `geekthon` 下的项目 `loop`。表单上线还需要在 Vercel 配置 `RESEND_API_KEY`；完整变量说明见 [`landing/.env.example`](./landing/.env.example)，真实密钥不得提交到 Git。
+信鸽后端的启动、环境变量和接口示例见 [`pigeon-backend/README.md`](./pigeon-backend/README.md)。
 
 ## 产品边界
 
-无论官网还是产品原型，都遵循以下约束：
-
-- 内容必须能够回到真实来源与明确授权。
-- 私密内容不会进入可呈现的 Agent Context。
-- AI 整理与原始内容分开展示，并保留来源信息。
-- 不生成创作者未表达过的新记忆、新承诺或新意志。
-- 接收者主动进入后才呈现内容，并可延后、跳过或永久关闭。
-- 接收者的回应归接收者所有，不会被反写为创作者的表达。
-
-更完整的产品与硬件文档位于 [`docs/`](./docs/)；iOS 验证说明见 [`docs/hardware/ios-validation.md`](./docs/hardware/ios-validation.md)。
+- 原始内容始终保留，AI 整理结果与记录者原话分开展示。
+- 内容必须经过记录者确认，并按关系与内容逐段授权。
+- HRV 只作为相对状态与呈现强度参考，不做医学或情绪诊断。
+- AI 可以做检索、关联、分段和中性说明，但不能伪造新记忆、新承诺或新意志。
+- 接收者主动进入后才呈现内容，并可以延后、跳过、隐藏或永久关闭。
+- 接收者的回应属于接收者，不会被反写成记录者的表达。
 
 ## 联系
 

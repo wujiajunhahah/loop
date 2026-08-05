@@ -1,6 +1,8 @@
 # 「我在」Landing Page
 
-这是 [www.wozai.space](https://www.wozai.space/) 的生产环境官网。页面部分使用原生 HTML、CSS 和 JavaScript；`api/` 中的 Vercel Functions 负责 Resend 双重确认邮件订阅。
+这是 [www.wozai.space](https://www.wozai.space/) 的官方网站源码，也是外界理解「我在」产品定位、关系托付方式与 AI 边界的首要入口。
+
+官网当前包含中英双语产品叙事、46 秒 AI 概念短片、使用路径、未来接收体验、产品原则、FAQ 与首批共创订阅。概念短片用于表达母女、信鸽和记忆托付的愿景，页面已明确说明它不是功能 Demo。
 
 ## 本地预览
 
@@ -26,7 +28,8 @@ landing/
 ├── api/
 │   ├── subscribe.js    # 按界面语言发送 24 小时有效的订阅确认邮件
 │   └── confirm-subscription.js # 确认后写入 Resend Contacts
-├── assets/             # Logo、信鸽、favicon、分享图
+├── assets/             # Logo、信鸽、favicon、分享图与概念短片
+│   └── video/          # H.264 MP4 与视频 poster
 ├── robots.txt          # 爬虫规则与 sitemap 地址
 ├── sitemap.xml         # 搜索引擎页面清单
 ├── llms.txt            # 面向生成式搜索的品牌事实与边界
@@ -44,6 +47,7 @@ landing/
 - 邮件订阅：共创叙事区内只收集邮箱；`api/subscribe.js` 先按用户当前界面语言发送带 Logo 的精简确认邮件，用户点击后由 `api/confirm-subscription.js` 写入 Resend Contacts，并向首次确认者发送双语欢迎邮件。
 - 订阅结果：确认成功跳转到 `/subscribed`；过期、无效或服务异常也由同一页面提供双语提示和重新订阅入口。
 - 品牌主视觉：优先使用 `assets/brand-bird-logo.webp`；透明高质量源为 `assets/brand-bird-logo.png`。
+- 概念短片：网页使用 `assets/video/wozai-concept-film.mp4`，封面为同目录 poster；短片必须继续标注为 AI 概念内容，不能写成功能录屏。
 - 分享图：更新 `assets/og-cover.png` 后，同时核对 `index.html` 中的 Open Graph 和 Twitter Card 地址。
 
 如果修改品牌定位、域名、邮箱或 FAQ，请同步检查 `index.html` 的可见内容与 JSON-LD、`llms.txt`、`sitemap.xml` 和本 README，确保机器可读信息与页面正文一致。
@@ -58,7 +62,7 @@ landing/
 - 站内正式 URL 统一使用 `https://www.wozai.space/`。
 - 移动端 360 px 宽度无横向滚动，键盘可操作导航与表单。
 
-## 部署
+## 维护附录：上线配置
 
 Vercel 项目 `geekthon/loop` 的 Root Directory 必须保持为 `landing`，Framework Preset 为 `Other`。生产分支为 GitHub 仓库 `wujiajunhahah/loop` 的 `main`。
 
