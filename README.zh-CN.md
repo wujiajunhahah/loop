@@ -150,6 +150,14 @@ python -m uvicorn app.main:app --host 0.0.0.0 --port 8010
   <a href="https://github.com/wujiajunhahah/loop/discussions"><img alt="发起 Discussion" src="https://img.shields.io/badge/发起_Discussion-打开_GitHub_Discussions-2c61d6?style=for-the-badge&logo=github&logoColor=white"></a>
 </p>
 
+## 团队
+
+<p align="center">
+  <img src="./docs/assets/team/wozai-team-physical-ai-hackathon-2026.jpg" alt="我在团队参加 2026 Physical AI Hackathon 的现场合影" width="100%" />
+</p>
+
+<p align="center"><em>一起在 2026 Physical AI Hackathon 现场创造「我在」的团队。</em></p>
+
 ## 产品边界
 
 - 原始内容始终保留，AI 整理结果与记录者原话分开展示。

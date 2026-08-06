@@ -150,6 +150,14 @@ Please do not post real medical records, private family memories, credentials, d
   <a href="https://github.com/wujiajunhahah/loop/discussions"><img alt="Start a Discussion" src="https://img.shields.io/badge/Start_a_Discussion-Open_GitHub_Discussions-2c61d6?style=for-the-badge&logo=github&logoColor=white"></a>
 </p>
 
+## Team
+
+<p align="center">
+  <img src="./docs/assets/team/wozai-team-physical-ai-hackathon-2026.jpg" alt="The Wozai team at the 2026 Physical AI Hackathon" width="100%" />
+</p>
+
+<p align="center"><em>The people building Wozai at the 2026 Physical AI Hackathon.</em></p>
+
 ## Product boundaries
 
 - Original material remains available; AI organization is always distinguished from the creator’s own words.
