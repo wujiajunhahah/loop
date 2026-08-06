@@ -29,8 +29,10 @@
 
 <p align="center">
   <a href="https://www.wozai.space/en/"><strong>Website</strong></a>
+  · <a href="#ui-walkthrough">UI walkthrough</a>
   · <a href="https://www.wozai.space/#story">46-second concept film</a>
   · <a href="https://www.wozai.space/assets/documents/wozai-flyer.zh-CN.pdf">Project flyer</a>
+  · <a href="./docs/presentation/wozai-physical-ai-hackathon-final-pitch.pptx">Final pitch deck</a>
   · <a href="./docs/README.md">Documentation</a>
   · <a href="./visual-prototype/README.md">Experience prototype</a>
 </p>
@@ -46,6 +48,14 @@ Wozai is an emotional companion product built around authentic life records and 
 It is not digital resurrection. AI may organize, retrieve, connect, and explain evidence, but it must never invent a new memory, promise, intention, or sentence on behalf of the creator.
 
 The best place to understand the product is the bilingual [official website](https://www.wozai.space/en/). It brings together the product story, entrustment flow, future recipient experience, AI boundaries, [concept film](https://www.wozai.space/#story), and [project flyer](https://www.wozai.space/assets/documents/wozai-flyer.zh-CN.pdf).
+
+## UI walkthrough
+
+<p align="center">
+  <img src="./docs/assets/demo/wozai-ui-walkthrough.gif" alt="Wozai creator and future recipient-view UI walkthrough" width="100%" />
+</p>
+
+<p align="center"><em>A walkthrough of the creator experience and the future recipient-view preview in the visual prototype.</em></p>
 
 ## One product, two perspectives
 
@@ -95,6 +105,9 @@ The repository keeps the website, product experiences, Physical AI inputs, analy
 | [`src/`](./src/) + [`ios/`](./ios/) | Relationship Agent, permissions, hardware contracts, simulator, and Capacitor iOS shell | Root Vite app |
 | [`docs/hardware/models/`](./docs/hardware/models/README.md) | Editable Rhino 7 charger/enclosure CAD source | `.3dm` model |
 | [`docs/`](./docs/README.md) | Hackathon, product, architecture, hardware, privacy, and demo documentation | Documentation map |
+| [`config/`](./config/README.md) | Archived Flutter, Firebase, and Android reference configuration | Configuration map |
+| [`artifacts/relay/`](./artifacts/relay/README.md) | Packaged Android relay demo and offline utilities | Delivery archive |
+| [`scripts/`](./scripts/README.md) | Small cross-platform maintenance helpers | Script notes |
 | [`.loop/`](./.loop/) | Design decisions, risks, interface requests, audits, and implementation task records | Project records |
 
 ## Quick start
@@ -171,7 +184,9 @@ Please do not post real medical records, private family memories, credentials, d
 
 - Official website: [www.wozai.space](https://www.wozai.space/en/)
 - Concept film: [watch online](https://www.wozai.space/#story)
+- UI walkthrough: [animated prototype demo](./docs/assets/demo/wozai-ui-walkthrough.gif)
 - Project flyer: [Chinese PDF](https://www.wozai.space/assets/documents/wozai-flyer.zh-CN.pdf)
+- Final pitch deck: [Physical AI Hackathon presentation](./docs/presentation/wozai-physical-ai-hackathon-final-pitch.pptx)
 - Charger/enclosure model: [Rhino 7 source](./docs/hardware/models/wozai-charger-model.rhino7.3dm)
 - Documentation map: [`docs/README.md`](./docs/README.md)
 

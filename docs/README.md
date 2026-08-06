@@ -28,13 +28,20 @@
 - [`product/loop-core-personas-dual-stage-one-day-mock.zh-CN.md`](./product/loop-core-personas-dual-stage-one-day-mock.zh-CN.md)：双阶段人物与单日体验样例。
 - [`product/loop-creator-data-mock-v2.json`](./product/loop-creator-data-mock-v2.json)：创作者模拟数据。
 - [`../visual-prototype/README.md`](../visual-prototype/README.md)：记录者端与接收视角预览的页面、状态和交互。
+- [`presentation/README.md`](./presentation/README.md)：Physical AI Hackathon 决赛路演 PPT。
 
 ## 代码模块
 
 - [`../landing/README.md`](../landing/README.md)：官方网站内容与维护方式。
 - [`../pigeon-backend/README.md`](../pigeon-backend/README.md)：FastAPI 契约、HRV 分档、信使回信和反馈 outcome。
 - [`../app/README.zh-CN.md`](../app/README.zh-CN.md)：Alloop Kit Flutter / BLE 起始工程。
-- [`../HRV_INTEGRATION.md`](../HRV_INTEGRATION.md)：Software MVP 的 HRV 集成说明。
+- [`hardware/integration/alloop-hrv.md`](./hardware/integration/alloop-hrv.md)：Software MVP 的 HRV 集成说明。
+
+## 工程协作资料
+
+- [`project/README.md`](./project/README.md)：项目上下文、协作工作流与 Agent 启动提示导航。
+- [`../config/README.md`](../config/README.md)：从根目录归档的 Flutter、Firebase 与 Android 参考配置。
+- [`../artifacts/relay/README.md`](../artifacts/relay/README.md)：Android relay 演示交付包说明。
 
 ## 统一术语
 

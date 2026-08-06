@@ -1,6 +1,9 @@
 node_modules/
 dist/
 coverage/
+.venv/
+__pycache__/
+*.py[cod]
 .env
 .env.*
 !.env.example
@@ -9,3 +12,4 @@ coverage/
 *.tsbuildinfo
 .DS_Store
 .vercel/
+server/uploads/

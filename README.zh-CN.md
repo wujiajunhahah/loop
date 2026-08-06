@@ -29,8 +29,10 @@
 
 <p align="center">
   <a href="https://www.wozai.space/"><strong>官方网站</strong></a>
+  · <a href="#ui-演示">UI 演示</a>
   · <a href="https://www.wozai.space/#story">46 秒概念短片</a>
   · <a href="https://www.wozai.space/assets/documents/wozai-flyer.zh-CN.pdf">宣传传单</a>
+  · <a href="./docs/presentation/wozai-physical-ai-hackathon-final-pitch.pptx">决赛路演 PPT</a>
   · <a href="./docs/README.md">项目文档</a>
   · <a href="./visual-prototype/README.md">交互原型</a>
 </p>
@@ -46,6 +48,14 @@
 它不是数字复活。AI 可以整理、检索、关联和解释证据，但不能替记录者创造一段新的回忆、承诺、意志或从未说过的话。
 
 理解产品最完整的入口是中英双语的[官方网站](https://www.wozai.space/)。官网集中呈现产品故事、托付流程、未来接收体验、AI 边界、[概念短片](https://www.wozai.space/#story)和[项目宣传传单](https://www.wozai.space/assets/documents/wozai-flyer.zh-CN.pdf)。
+
+## UI 演示
+
+<p align="center">
+  <img src="./docs/assets/demo/wozai-ui-walkthrough.gif" alt="我在记录者端与未来接收视角 UI 演示" width="100%" />
+</p>
+
+<p align="center"><em>高保真视觉原型中的记录者体验，以及面向记录者展示的未来接收视角预览。</em></p>
 
 ## 一个产品，两种视角
 
@@ -95,6 +105,9 @@ Alloop HRV 在这里是辅助状态信号，不用于诊断情绪，也不用于
 | [`src/`](./src/) + [`ios/`](./ios/) | Relationship Agent、权限、硬件契约、模拟器与 Capacitor iOS 外壳 | 根目录 Vite 应用 |
 | [`docs/hardware/models/`](./docs/hardware/models/README.md) | 可编辑的 Rhino 7 充电器 / 外壳 CAD 源模型 | `.3dm` 模型 |
 | [`docs/`](./docs/README.md) | Hackathon、产品、架构、硬件、隐私与演示文档 | 文档导航 |
+| [`config/`](./config/README.md) | 归档的 Flutter、Firebase 与 Android 参考配置 | 配置导航 |
+| [`artifacts/relay/`](./artifacts/relay/README.md) | 已打包的 Android relay 演示与离线工具 | 交付归档 |
+| [`scripts/`](./scripts/README.md) | 小型跨平台维护脚本 | 脚本说明 |
 | [`.loop/`](./.loop/) | 设计决策、风险、接口请求、审计与开发任务记录 | 项目记录 |
 
 ## 快速体验
@@ -171,7 +184,9 @@ python -m uvicorn app.main:app --host 0.0.0.0 --port 8010
 
 - 官方网站：[www.wozai.space](https://www.wozai.space/)
 - 概念短片：[在线观看](https://www.wozai.space/#story)
+- UI 演示：[动态原型演示](./docs/assets/demo/wozai-ui-walkthrough.gif)
 - 项目传单：[中文 PDF](https://www.wozai.space/assets/documents/wozai-flyer.zh-CN.pdf)
+- 决赛路演 PPT：[Physical AI Hackathon 演示文稿](./docs/presentation/wozai-physical-ai-hackathon-final-pitch.pptx)
 - 充电器 / 外壳模型：[Rhino 7 源文件](./docs/hardware/models/wozai-charger-model.rhino7.3dm)
 - 文档导航：[`docs/README.md`](./docs/README.md)
 

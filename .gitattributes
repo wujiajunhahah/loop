@@ -1,0 +1,7 @@
+# Keep large project media and editable deliverables out of textual diffs.
+*.3dm binary
+*.gif binary
+*.mp4 binary
+*.pdf binary
+*.pptx binary
+*.zip binary

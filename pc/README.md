@@ -11,17 +11,17 @@ pip install -r requirements.txt
 
 ## 目录结构
 
-```
-E:\alloop\
-├── app\                 # 官方 Flutter Demo 工程（拷贝自交付包）
-├── data\sample_data\    # 14 天样例 CSV（与 App 导出格式一致）
-└── pc\
-    ├── loader.py            # 统一读取器（样例/真机导出通用）
+```text
+loop/
+├── app/                 # Alloop Kit Flutter / BLE 工程
+├── data/sample_data/    # 14 天样例 CSV（与 App 导出格式一致）
+└── pc/
+    ├── loader.py            # 统一读取器（样例 / 真机导出通用）
     ├── eda.py               # 数据概览 + 图表
-    ├── emotion_features.py  # 情绪/压力特征（核心算法）
+    ├── emotion_features.py  # 情绪 / 压力特征（核心算法）
     ├── build_baseline.py    # 生成情绪基线表 + 图表
     ├── requirements.txt
-    └── output\              # 生成结果
+    └── output/              # 生成结果
 ```
 
 ## 运行
@@ -60,7 +60,7 @@ python build_baseline.py   # 30 分钟窗特征 + stress_index + 情绪状态
 
 ## 真机数据接入（重要）
 
-- App 历史同步导出的 CSV 与样例格式**完全一致**，把导出文件放到 `E:\alloop\data\` 下，改脚本里 `meas_path` / `act_path` 即可复用同一套管线。
+- App 历史同步导出的 CSV 与样例格式**完全一致**，把导出文件放到仓库内的 `data/` 下，改脚本里的 `meas_path` / `act_path` 即可复用同一套管线。
 - `loader.py` 已做列名容错（大小写、`respRate`/`resprate`），真机导出可直接喂入。
 
 ## 后续 A 方案接入点
