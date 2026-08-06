@@ -1,6 +1,6 @@
 """B 方案核心：生成情绪/压力基线。
 
-用法（在 pc/ 目录下）：
+用法（在 tools/wearable-analysis/ 目录下）：
     python build_baseline.py
 
 产出：
@@ -20,7 +20,7 @@ import pandas as pd
 from emotion_features import STATE_LABELS, build_features
 
 ROOT = Path(__file__).resolve().parent
-DATA_DIR = ROOT.parent / "data" / "sample_data"
+DATA_DIR = ROOT.parents[1] / "data" / "sample_data"
 OUT = ROOT / "output"
 OUT.mkdir(exist_ok=True)
 

@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | 官方产品表达 | 「我在」是谁、为谁服务、坚持什么边界 | [官方网站](https://www.wozai.space/) / [宣传传单](https://www.wozai.space/assets/documents/wozai-flyer.zh-CN.pdf) / [根 README](../README.md) |
 | Hackathon 垂直切片 | Alloop 戒指、HRV、对话与反馈如何构成闭环 | [赛题对齐说明](./hackathon/alloop-track-alignment.md) |
-| 当前实现 | 哪些界面、接口和设备通路今天可以运行 | [视觉原型](../visual-prototype/README.md) / [信鸽后端](../pigeon-backend/README.md) |
+| 当前实现 | 哪些界面、接口和设备通路今天可以运行 | [视觉原型](../apps/visual-prototype/README.md) / [信鸽后端](../services/pigeon-backend/README.md) |
 
 阅读任何方案时，建议先确认它属于“已实现”“可用模拟数据演示”“现场待联调”还是“产品愿景”。
 
@@ -27,14 +27,15 @@
 - [`product/guided-collection-spec.md`](./product/guided-collection-spec.md)：引导式生命内容采集规范。
 - [`product/loop-core-personas-dual-stage-one-day-mock.zh-CN.md`](./product/loop-core-personas-dual-stage-one-day-mock.zh-CN.md)：双阶段人物与单日体验样例。
 - [`product/loop-creator-data-mock-v2.json`](./product/loop-creator-data-mock-v2.json)：创作者模拟数据。
-- [`../visual-prototype/README.md`](../visual-prototype/README.md)：记录者端与接收视角预览的页面、状态和交互。
+- [`../apps/visual-prototype/README.md`](../apps/visual-prototype/README.md)：记录者端与接收视角预览的页面、状态和交互。
 - [`presentation/README.md`](./presentation/README.md)：Physical AI Hackathon 决赛路演 PPT。
 
 ## 代码模块
 
 - [`../landing/README.md`](../landing/README.md)：官方网站内容与维护方式。
-- [`../pigeon-backend/README.md`](../pigeon-backend/README.md)：FastAPI 契约、HRV 分档、信使回信和反馈 outcome。
-- [`../app/README.zh-CN.md`](../app/README.zh-CN.md)：Alloop Kit Flutter / BLE 起始工程。
+- [`../services/pigeon-backend/README.md`](../services/pigeon-backend/README.md)：FastAPI 契约、HRV 分档、信使回信和反馈 outcome。
+- [`../apps/alloop-kit/README.zh-CN.md`](../apps/alloop-kit/README.zh-CN.md)：Alloop Kit Flutter / BLE 起始工程。
+- [`../apps/software-mvp/README.md`](../apps/software-mvp/README.md)：Relationship Agent、硬件抽象与 Capacitor iOS MVP。
 - [`hardware/integration/alloop-hrv.md`](./hardware/integration/alloop-hrv.md)：Software MVP 的 HRV 集成说明。
 
 ## 工程协作资料

@@ -76,8 +76,8 @@ If a permission is denied or manually revoked while running, the scan/connect fe
 Goal: get "Scan + Connect" running within 5 minutes.
 
 ```bash
-# 1. Unzip the delivery package and enter the project directory
-cd alloop-hackathon-demo
+# 1. Enter the Alloop client from the repository root
+cd apps/alloop-kit
 
 # 2. Fetch dependencies (includes the bundled device communication SDK, no extra config needed)
 flutter pub get

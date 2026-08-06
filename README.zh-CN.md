@@ -34,7 +34,7 @@
   · <a href="https://www.wozai.space/assets/documents/wozai-flyer.zh-CN.pdf">宣传传单</a>
   · <a href="./docs/presentation/wozai-physical-ai-hackathon-final-pitch.pptx">决赛路演 PPT</a>
   · <a href="./docs/README.md">项目文档</a>
-  · <a href="./visual-prototype/README.md">交互原型</a>
+  · <a href="./apps/visual-prototype/README.md">交互原型</a>
 </p>
 
 <a href="https://www.wozai.space/">
@@ -90,19 +90,29 @@ Alloop HRV 在这里是辅助状态信号，不用于诊断情绪，也不用于
 
 ## 项目工具箱
 
-仓库将官网、产品体验、Physical AI 输入、数据分析实验、硬件资料和项目记录放在一起，让整个 Hackathon 方案可以被理解、运行和检查。
+仓库将官方网站保留在顶层，作为对外产品入口；可运行客户端、后端服务和分析工具分别归入 `apps/`、`services/` 与 `tools/`，让根目录清楚，同时保留完整的 Hackathon 工作成果。
+
+```text
+loop/
+├── landing/       # 官方网站
+├── apps/          # 产品应用与设备客户端
+├── services/      # 正式接口与转发实验
+├── tools/         # 离线分析工具
+├── data/          # 有说明的样例数据
+├── docs/          # 产品、赛题、硬件与路演资料
+├── config/        # 集成参考配置
+├── artifacts/     # 二进制交付归档
+├── scripts/       # 维护脚本
+└── .loop/         # 工程决策与历史记录
+```
 
 | 路径 | 包含内容 | 入口 |
 | --- | --- | --- |
 | [`landing/`](./landing/README.md) | 中英双语官网、概念短片、宣传传单、FAQ 与共创订阅 | [www.wozai.space](https://www.wozai.space/) |
-| [`visual-prototype/`](./visual-prototype/README.md) | 记录者视角、接收视角预览、记忆采集、授权、信使互动和反馈 | `pnpm dev` |
-| [`pigeon-backend/`](./pigeon-backend/README.md) | FastAPI 信使接口、原文证据、HRV 呈现策略、反馈与互动结果 | `8010` 端口的 `/docs` |
-| [`app/`](./app/README.zh-CN.md) | Alloop Kit Flutter/BLE 应用与设备 SDK 起始工程 | `flutter run` |
-| [`omi_simple/`](./omi_simple/) | Omi 语音日记分块转发示例 | 模块源码 |
-| [`pc/`](./pc/README.md) | 14 天可穿戴 CSV 数据的离线分析实验 | Python 脚本 |
+| [`apps/`](./apps/README.md) | 视觉原型、Alloop Flutter 客户端、Omi 记录端和 Vite/Capacitor Software MVP | 应用导航 |
+| [`services/`](./services/README.md) | FastAPI 信使后端与早期本地转发实验 | 服务导航 |
+| [`tools/`](./tools/README.md) | 14 天可穿戴 CSV 数据的离线分析实验 | 工具导航 |
 | [`data/sample_data/`](./data/sample_data/README.zh-CN.md) | 测量与活动量模拟数据 | 数据字典 |
-| [`server/`](./server/) | 本地 WebSocket、文件上传和记忆转发实验 | `npm start` |
-| [`src/`](./src/) + [`ios/`](./ios/) | Relationship Agent、权限、硬件契约、模拟器与 Capacitor iOS 外壳 | 根目录 Vite 应用 |
 | [`docs/hardware/models/`](./docs/hardware/models/README.md) | 可编辑的 Rhino 7 充电器 / 外壳 CAD 源模型 | `.3dm` 模型 |
 | [`docs/`](./docs/README.md) | Hackathon、产品、架构、硬件、隐私与演示文档 | 文档导航 |
 | [`config/`](./config/README.md) | 归档的 Flutter、Firebase 与 Android 参考配置 | 配置导航 |
@@ -124,7 +134,7 @@ python3 -m http.server 4173
 ### 高保真体验原型
 
 ```bash
-cd visual-prototype
+cd apps/visual-prototype
 pnpm install
 pnpm dev
 ```
@@ -134,14 +144,14 @@ pnpm dev
 ### 信鸽后端
 
 ```bash
-cd pigeon-backend
+cd services/pigeon-backend
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -e ".[dev]"
 python -m uvicorn app.main:app --host 0.0.0.0 --port 8010
 ```
 
-打开 <http://127.0.0.1:8010/docs>。Windows 启动方式、环境变量、HRV 示例和稳定的 `/api/v1` 契约见 [`pigeon-backend/README.md`](./pigeon-backend/README.md)。
+打开 <http://127.0.0.1:8010/docs>。Windows 启动方式、环境变量、HRV 示例和稳定的 `/api/v1` 契约见 [`services/pigeon-backend/README.md`](./services/pigeon-backend/README.md)。
 
 ## Discussions 与共同开发
 

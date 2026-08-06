@@ -10,7 +10,7 @@
 
 当前 `visual-prototype` 已将女儿端“交给信使”从浏览器本地关键词匹配改为稳定的后端 `/api/v1` 调用。前端只消费回信、证据、呈现模式和反馈选项，因此页面组件可以继续独立迭代。
 
-先启动 [`../pigeon-backend/`](../pigeon-backend/README.md)，再在本目录运行前端。Windows 可以直接使用：
+先启动 [`../../services/pigeon-backend/`](../../services/pigeon-backend/README.md)，再在本目录运行前端。Windows 可以直接使用：
 
 ```powershell
 .\run.cmd

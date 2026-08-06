@@ -5,6 +5,7 @@
 ## 环境
 
 ```bash
+cd tools/wearable-analysis
 pip install -r requirements.txt
 # pandas numpy scipy matplotlib（已在本机装好）
 ```
@@ -13,9 +14,9 @@ pip install -r requirements.txt
 
 ```text
 loop/
-├── app/                 # Alloop Kit Flutter / BLE 工程
+├── apps/alloop-kit/     # Alloop Kit Flutter / BLE 工程
 ├── data/sample_data/    # 14 天样例 CSV（与 App 导出格式一致）
-└── pc/
+└── tools/wearable-analysis/
     ├── loader.py            # 统一读取器（样例 / 真机导出通用）
     ├── eda.py               # 数据概览 + 图表
     ├── emotion_features.py  # 情绪 / 压力特征（核心算法）

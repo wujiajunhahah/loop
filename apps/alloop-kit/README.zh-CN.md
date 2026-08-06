@@ -76,8 +76,8 @@ Demo 已在 `AndroidManifest.xml` 中声明所需权限，首次运行时会向�
 目标：5 分钟内跑通"扫描 + 连接"。
 
 ```bash
-# 1. 解压交付包后进入工程目录
-cd alloop-hackathon-demo
+# 1. 从仓库根目录进入 Alloop 客户端
+cd apps/alloop-kit
 
 # 2. 拉取依赖（包含内置的设备通信 SDK，无需额外配置）
 flutter pub get

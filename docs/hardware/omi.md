@@ -2,7 +2,7 @@
 
 ## Scope and validation status
 
-`src/devices/adapters/omi` implements the source-documented OMI audio profile on
+`apps/software-mvp/src/devices/adapters/omi` implements the source-documented OMI audio profile on
 the existing `DeviceAdapter` and `DeviceTransportSession` contracts. It performs
 discovery matching, reads the codec characteristic before subscribing, parses
 the official three-byte audio header, and emits normalized metadata without raw

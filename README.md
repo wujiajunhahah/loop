@@ -34,7 +34,7 @@
   · <a href="https://www.wozai.space/assets/documents/wozai-flyer.zh-CN.pdf">Project flyer</a>
   · <a href="./docs/presentation/wozai-physical-ai-hackathon-final-pitch.pptx">Final pitch deck</a>
   · <a href="./docs/README.md">Documentation</a>
-  · <a href="./visual-prototype/README.md">Experience prototype</a>
+  · <a href="./apps/visual-prototype/README.md">Experience prototype</a>
 </p>
 
 <a href="https://www.wozai.space/en/">
@@ -90,19 +90,29 @@ Here, learning means improving **retrieval, ranking, and presentation policy**. 
 
 ## Project toolbox
 
-The repository keeps the website, product experiences, Physical AI inputs, analysis experiments, hardware assets, and project records together so the complete hackathon story remains inspectable.
+The repository keeps the official website at the top level as the public product entry. Runnable clients, backend services, and analysis utilities are grouped under `apps/`, `services/`, and `tools/`, so the root remains readable without hiding the complete Hackathon work.
+
+```text
+loop/
+├── landing/       # official website
+├── apps/          # product and device clients
+├── services/      # maintained APIs and relay experiments
+├── tools/         # offline analysis
+├── data/          # documented sample data
+├── docs/          # product, Hackathon, hardware, and presentation material
+├── config/        # integration reference configuration
+├── artifacts/     # packaged binary deliveries
+├── scripts/       # maintenance helpers
+└── .loop/         # engineering decisions and historical records
+```
 
 | Path | What it contains | Start here |
 | --- | --- | --- |
 | [`landing/`](./landing/README.md) | Official bilingual website, concept film, flyer, FAQ, and co-creation subscription | [www.wozai.space](https://www.wozai.space/en/) |
-| [`visual-prototype/`](./visual-prototype/README.md) | Creator view and recipient-view preview, memory capture, authorization, messenger interaction, and feedback | `pnpm dev` |
-| [`pigeon-backend/`](./pigeon-backend/README.md) | FastAPI messenger API, grounded evidence, HRV presentation policy, feedback, and interaction outcomes | `/docs` on port `8010` |
-| [`app/`](./app/README.zh-CN.md) | Alloop Kit Flutter/BLE application and device SDK starter | `flutter run` |
-| [`omi_simple/`](./omi_simple/) | Omi voice-diary chunk forwarding example | Module source |
-| [`pc/`](./pc/README.md) | Offline exploration of the 14-day wearable CSV dataset | Python scripts |
+| [`apps/`](./apps/README.md) | Visual prototype, Alloop Flutter client, Omi recorder, and the Vite/Capacitor software MVP | Application map |
+| [`services/`](./services/README.md) | FastAPI messenger backend and the early local relay experiment | Service map |
+| [`tools/`](./tools/README.md) | Offline exploration of the 14-day wearable CSV dataset | Tool map |
 | [`data/sample_data/`](./data/sample_data/README.md) | Measurement and activity sample data | Data dictionary |
-| [`server/`](./server/) | Local WebSocket, upload, and memory relay experiment | `npm start` |
-| [`src/`](./src/) + [`ios/`](./ios/) | Relationship Agent, permissions, hardware contracts, simulator, and Capacitor iOS shell | Root Vite app |
 | [`docs/hardware/models/`](./docs/hardware/models/README.md) | Editable Rhino 7 charger/enclosure CAD source | `.3dm` model |
 | [`docs/`](./docs/README.md) | Hackathon, product, architecture, hardware, privacy, and demo documentation | Documentation map |
 | [`config/`](./config/README.md) | Archived Flutter, Firebase, and Android reference configuration | Configuration map |
@@ -124,7 +134,7 @@ Open <http://localhost:4173>.
 ### Experience prototype
 
 ```bash
-cd visual-prototype
+cd apps/visual-prototype
 pnpm install
 pnpm dev
 ```
@@ -134,14 +144,14 @@ Open <http://127.0.0.1:5174/>.
 ### Pigeon backend
 
 ```bash
-cd pigeon-backend
+cd services/pigeon-backend
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -e ".[dev]"
 python -m uvicorn app.main:app --host 0.0.0.0 --port 8010
 ```
 
-Open <http://127.0.0.1:8010/docs>. Windows commands, environment variables, HRV examples, and the stable `/api/v1` contract are documented in [`pigeon-backend/README.md`](./pigeon-backend/README.md).
+Open <http://127.0.0.1:8010/docs>. Windows commands, environment variables, HRV examples, and the stable `/api/v1` contract are documented in [`services/pigeon-backend/README.md`](./services/pigeon-backend/README.md).
 
 ## Discussions and building together
 

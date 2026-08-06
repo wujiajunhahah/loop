@@ -13,7 +13,7 @@
 在仓库根目录进入本模块：
 
 ```bash
-cd pigeon-backend
+cd services/pigeon-backend
 ```
 
 Windows PowerShell 首次安装与启动：
@@ -122,7 +122,7 @@ X-Timestamp: <ISO 8601时间>
 X-Source: omi_simple
 ```
 
-它与 `omi_simple/lib/voice_forwarder.dart` 的五秒音频分块协议一致。当前 MVP 会将音频块保存在 `storage/voice-diary/<session_id>/`，并把字节数、格式、时间和校验摘要写入 SQLite；暂不自动转写，也不从声音推断情绪。
+它与 [`apps/omi-simple/lib/voice_forwarder.dart`](../../apps/omi-simple/lib/voice_forwarder.dart) 的五秒音频分块协议一致。当前 MVP 会将音频块保存在 `storage/voice-diary/<session_id>/`，并把字节数、格式、时间和校验摘要写入 SQLite；暂不自动转写，也不从声音推断情绪。
 
 本机验收命令：
 

@@ -8,7 +8,7 @@
 
 ```text
 Alloop 戒指
-→ app/ 内的官方 alloop_blue_lite SDK
+→ apps/alloop-kit/ 内的官方 alloop_blue_lite SDK
 → syncHistory(deviceId)
 → 最新一条有效 MeasurementRecord.hrv
 → POST /api/v1/hrv/readings
@@ -31,7 +31,7 @@ HRV 只调节内容强度和节奏，不用于医学诊断，也不用于断言�
 正式 Alloop 客户端的配置文件是：
 
 ```text
-app/.env
+apps/alloop-kit/.env
 ```
 
 内容应为：
@@ -42,13 +42,13 @@ PIGEON_HRV_DEVICE_ID=alloop-demo-001
 PIGEON_HRV_DEVICE_TOKEN=change-this-device-token
 ```
 
-电脑网络改变后，如果 WLAN 地址变化，只修改 `PIGEON_HRV_URL` 中的 IP，然后重新构建/运行 Flutter App。`PIGEON_HRV_DEVICE_TOKEN` 必须与 `pigeon-backend/.env` 的 `ALLOOP_DEVICE_TOKENS` 保持一致。
+电脑网络改变后，如果 WLAN 地址变化，只修改 `PIGEON_HRV_URL` 中的 IP，然后重新构建/运行 Flutter App。`PIGEON_HRV_DEVICE_TOKEN` 必须与 `services/pigeon-backend/.env` 的 `ALLOOP_DEVICE_TOKENS` 保持一致。
 
 ## 实际戒指联调步骤
 
-1. 在 `pigeon-backend/` 运行 `run.cmd`，后端必须监听 `0.0.0.0:8010`。
+1. 在 `services/pigeon-backend/` 运行 `run.cmd`，后端必须监听 `0.0.0.0:8010`。
 2. 确保 Android 手机和电脑连接可互访的同一网络。
-3. 在 `app/` 执行 `flutter pub get`，再将 App 运行到 Android 手机。
+3. 在 `apps/alloop-kit/` 执行 `flutter pub get`，再将 App 运行到 Android 手机。
 4. 在 Alloop App 中扫描并连接戒指。
 5. 进入 History Sync Debug，执行历史数据同步。
 6. App 会从 `measurement` 记录中选择时间最新、`hrv > 0` 且 `hrSuccess=true` 的一条记录上传；成功时提示 `Latest HRV ... sent to Pigeon backend`。
@@ -87,4 +87,4 @@ Alloop SDK 中 `hrv=0` 代表没有有效读数，因此不会上传。客户端
 - 接口文档：<http://127.0.0.1:8010/docs>
 - HRV 状态：<http://127.0.0.1:8010/api/v1/hrv/latest?device_id=alloop-demo-001>
 
-注意：`app/` 是正式需要构建的 Alloop 客户端；`alloop-hackathon-reference/` 仅用于核对官方 SDK 文档，不要从参考目录运行交付版本。
+注意：`apps/alloop-kit/` 是正式需要构建的 Alloop 客户端；`alloop-hackathon-reference/` 仅用于核对官方 SDK 文档，不要从参考目录运行交付版本。

@@ -1,6 +1,6 @@
 """EDA：字段理解 + 统计 + 可视化。
 
-用法（在 pc/ 目录下）：
+用法（在 tools/wearable-analysis/ 目录下）：
     python eda.py
 输出写入 output/。
 """
@@ -15,7 +15,7 @@ import pandas as pd
 from loader import describe_valid, load_activity, load_measurement, valid_measurement
 
 ROOT = Path(__file__).resolve().parent
-DATA_DIR = ROOT.parent / "data" / "sample_data"
+DATA_DIR = ROOT.parents[1] / "data" / "sample_data"
 OUT = ROOT / "output"
 OUT.mkdir(exist_ok=True)
 

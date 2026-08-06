@@ -5,7 +5,7 @@
 The Capacitor iOS project is generated with the repository-pinned Capacitor
 8.5.0 toolchain and the Capacitor Community Bluetooth LE 8.2.0 plugin. The
 project uses Swift Package Manager (SPM), not CocoaPods, and targets iOS 15.0 in
-both the Xcode project and `ios/App/CapApp-SPM/Package.swift`.
+both the Xcode project and `apps/software-mvp/ios/App/CapApp-SPM/Package.swift`.
 
 Native dependency resolution and an unsigned simulator build can validate the
 project structure. They cannot validate Bluetooth radio behavior, microphone
@@ -37,25 +37,25 @@ npx cap sync ios
 
 `npx cap add ios` is the one-time project-generation command. Do not run it over
 an existing customized native project. `npx cap sync ios` is repeatable: it
-refreshes `ios/App/App/public`, `capacitor.config.json`, `config.xml`, and the
+refreshes `apps/software-mvp/ios/App/App/public`, `capacitor.config.json`, `config.xml`, and the
 managed `CapApp-SPM/Package.swift` while preserving `Info.plist` usage
 descriptions and native source files.
 
 Keep the generated Xcode project, app source, asset catalog, storyboards,
 `Info.plist`, `CapApp-SPM/Package.swift`, shared workspace data, and
 `Package.resolved`. Build output, `DerivedData`, `xcuserdata`, copied web assets,
-and generated Capacitor config files remain excluded by `ios/.gitignore` and
+and generated Capacitor config files remain excluded by `apps/software-mvp/ios/.gitignore` and
 are recreated by the commands above.
 
 The root ignore rule used during the earlier Capacitor-foundation task has been
-removed now that the native-project task owns `ios/`. Keep the native source
-tree under version control while allowing `ios/.gitignore` to exclude copied
+removed now that the native-project task owns `apps/software-mvp/ios/`. Keep the native source
+tree under version control while allowing `apps/software-mvp/ios/.gitignore` to exclude copied
 web assets, generated Capacitor config files, build output, and user-specific
 Xcode state.
 
 ## Permissions and consent
 
-`ios/App/App/Info.plist` contains these user-facing descriptions:
+`apps/software-mvp/ios/App/App/Info.plist` contains these user-facing descriptions:
 
 - Bluetooth: Loop discovers and connects only to a device the user selects,
   receives foreground device events, and presents connection diagnostics.
@@ -117,7 +117,7 @@ packet bytes, audio samples, physiological values, signing data, or vendor
 secrets. Do not add packet or audio dumps to JavaScript logs or the Xcode
 console. Redact diagnostics before attaching them to an issue.
 
-The copied web bundle in `ios/App/App/public` is application code, not a place
+The copied web bundle in `apps/software-mvp/ios/App/App/public` is application code, not a place
 for captured user content. Before any recording feature writes an audio file,
 that feature must define iOS file protection, backup exclusion, retention,
 deletion, and export consent and must validate them on a physical device. This
@@ -129,7 +129,7 @@ An unsigned simulator build needs no Apple account:
 
 ```sh
 xcodebuild \
-  -project ios/App/App.xcodeproj \
+  -project apps/software-mvp/ios/App/App.xcodeproj \
   -scheme App \
   -configuration Debug \
   -destination 'platform=iOS Simulator,name=iPhone 16 Pro,OS=18.5' \
@@ -140,7 +140,7 @@ xcodebuild \
 For a physical-device build:
 
 1. Run `npm run build && npx cap sync ios`.
-2. Open `ios/App/App.xcodeproj` in Xcode and select the `App` target.
+2. Open `apps/software-mvp/ios/App/App.xcodeproj` in Xcode and select the `App` target.
 3. In Signing & Capabilities, use automatic signing and select an authorized
    development account locally.
 4. Connect and trust the target iPhone, enable Developer Mode, choose it as the
@@ -206,11 +206,11 @@ npm run typecheck
 npm test
 npm run build
 npx cap sync ios
-plutil -lint ios/App/App/Info.plist
-plutil -extract NSBluetoothAlwaysUsageDescription raw ios/App/App/Info.plist
-plutil -extract NSMicrophoneUsageDescription raw ios/App/App/Info.plist
-xcodebuild -project ios/App/App.xcodeproj -scheme App -resolvePackageDependencies
-xcodebuild -project ios/App/App.xcodeproj -scheme App \
+plutil -lint apps/software-mvp/ios/App/App/Info.plist
+plutil -extract NSBluetoothAlwaysUsageDescription raw apps/software-mvp/ios/App/App/Info.plist
+plutil -extract NSMicrophoneUsageDescription raw apps/software-mvp/ios/App/App/Info.plist
+xcodebuild -project apps/software-mvp/ios/App/App.xcodeproj -scheme App -resolvePackageDependencies
+xcodebuild -project apps/software-mvp/ios/App/App.xcodeproj -scheme App \
   -configuration Debug \
   -destination 'platform=iOS Simulator,name=iPhone 16 Pro,OS=18.5' \
   CODE_SIGNING_ALLOWED=NO build
@@ -221,6 +221,6 @@ project has no `Podfile`; `pod install` is therefore not part of the build.
 Podspec syntax can still be inspected without converting the SPM project:
 
 ```sh
-pod ipc spec node_modules/@capacitor/ios/Capacitor.podspec >/dev/null
-pod ipc spec node_modules/@capacitor-community/bluetooth-le/CapacitorCommunityBluetoothLe.podspec >/dev/null
+pod ipc spec apps/software-mvp/node_modules/@capacitor/ios/Capacitor.podspec >/dev/null
+pod ipc spec apps/software-mvp/node_modules/@capacitor-community/bluetooth-le/CapacitorCommunityBluetoothLe.podspec >/dev/null
 ```
